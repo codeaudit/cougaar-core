@@ -38,6 +38,7 @@ import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.Node;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.util.log.Logging;
+import org.cougaar.util.log.Logger;
 
 /** A container for Agents.
  * Although the AgentManager can hold Components other than Agents, the 
@@ -77,8 +78,10 @@ implements AgentContainer
     try {
       ComponentInitializerService cis = (ComponentInitializerService) 
         sb.getService(this, ComponentInitializerService.class, null);
-      Logging.getLogger(AgentManager.class).info(
-          nodeName + " AgentManager.load about to look for CompDesc's of Agent Binders.");
+      Logger logger = Logging.getLogger(AgentManager.class);
+      if (logger.isInfoEnabled()) {
+        logger.info(nodeName + " AgentManager.load about to look for CompDesc's of Agent Binders.");
+      }
       // Get all items _below_ given insertion point.
       // To get just binders, must use extract method later....
       cds = new ComponentDescriptions(cis.getComponentDescriptions(nodeName, INSERTION_POINT));

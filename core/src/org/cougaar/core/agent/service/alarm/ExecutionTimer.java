@@ -330,10 +330,14 @@ public class ExecutionTimer extends Timer {
       getNow();                   // Bring parameters up-to-now
       if (parameters.compareTo(theParameters[theParameterCount - 1]) > 0) {
         if (theParameterCount < theParameters.length) {
-          logger.warn("Setting parameters " + theParameterCount + " to " + parameters);
+          if (logger.isInfoEnabled()) {
+            logger.info("Setting parameters " + theParameterCount + " to " + parameters);
+          }
           theParameters[theParameterCount++] = parameters;
         } else {
-          logger.warn("Setting parameters " + (theParameterCount-1) + " to " + parameters);
+          if (logger.isInfoEnabled()) {
+            logger.info("Setting parameters " + (theParameterCount-1) + " to " + parameters);
+          }
           theParameters[theParameterCount - 1] = parameters;
         }
       }
@@ -361,7 +365,9 @@ public class ExecutionTimer extends Timer {
   public ExecutionTimer() {
     long offset = computeInitialOffset();
     if (offset != 0L) {
-      logger.warn("Starting Time set to "+new Date(System.currentTimeMillis()+offset)+" offset="+offset+"ms");
+      if (logger.isWarnEnabled()) {
+        logger.warn("Starting Time set to "+new Date(System.currentTimeMillis()+offset)+" offset="+offset+"ms");
+      }
       theParameters[0] = new Parameters(1.0, offset, 0L);
     }
   }
@@ -387,7 +393,9 @@ public class ExecutionTimer extends Timer {
     long target = adt.time;
     if (target == DATE_ERROR) {
       if (adt.date != DATE_ERROR) {
-        logger.warn("Inexact agent.startTime specified:  Will default to midnight.");
+        if (logger.isWarnEnabled()) {
+          logger.warn("Inexact agent.startTime specified:  Will default to midnight.");
+        }
         target = adt.date;
       }
     }

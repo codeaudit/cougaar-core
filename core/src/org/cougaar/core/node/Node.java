@@ -57,6 +57,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.Configuration;
 import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logging;
+import org.cougaar.util.log.Logger;
 
 /**
  * The Node is the root component of the
@@ -238,14 +239,18 @@ extends ContainerSupport
         // old "-n node" pattern
         String name = args[++i];
         System.setProperty("org.cougaar.node.name", name);
-        Logging.getLogger(Node.class).info(
-            "Set node name to "+name+
-            "\nThe command line format \"-n "+name+"\" has been deprecated"+
-            "\nPlease use \"-Dorg.cougaar.node.name="+name+"\"");
+        Logger logger = Logging.getLogger(Node.class);
+        if (logger.isInfoEnabled()) {
+          logger.info( "Set node name to "+name+
+                       "\nThe command line format \"-n "+name+"\" has been deprecated"+
+                       "\nPlease use \"-Dorg.cougaar.node.name="+name+"\"");
+        }
       } else if (argi.equals("-c")) {
         // ignore
-        Logging.getLogger(Node.class).info(
-            "Ignoring unused command-line argument \"-c\"");
+        Logger logger = Logging.getLogger(Node.class);
+        if (logger.isInfoEnabled()) {
+          logger.info( "Ignoring unused command-line argument \"-c\"");
+        }
       } else {
         // some form of exit
         if (argi.equals("-version") || argi.equals("--version")) {
@@ -436,9 +441,10 @@ extends ContainerSupport
         component +
         "ComponentInitializerServiceComponent";
     }
-    Logging.getLogger(getClass()).info(
-        "Will intialize components from " + component);
-
+    Logger logger = Logging.getLogger(Node.class);
+    if (logger.isInfoEnabled()) {
+      logger.info( "Will intialize components from " + component);
+    }
     return component;
   }
 
@@ -447,22 +453,26 @@ extends ContainerSupport
   private String getOldComponentString() {
     String filename = System.getProperty(FILENAME_PROP);
     String expt = System.getProperty(EXPTID_PROP);
+    Logger logger = Logging.getLogger(Node.class);
     if ((filename == null) && (expt == null)) {
       // use the default "name.ini"
-      Logging.getLogger(getClass()).info(
-          "Got no filename or experimentId! Using default File");
+      if (logger.isWarnEnabled()) {
+        logger.warn("Got no filename or experimentId! Using default File");
+      }
       return "File";
     }
     if (filename == null) {
       // use the experiment ID to read from the DB
-      Logging.getLogger(getClass()).info(
-          "Got no filename, using exptID " + expt);
+      if (logger.isWarnEnabled()) {
+        logger.warn("Got no filename, using exptID " + expt);
+      }
       return "DB";
     }
     if (expt == null) {
       // use the filename provided
-      Logging.getLogger(getClass()).info(
-          "Got no exptID, using given filename " + filename);
+      if (logger.isWarnEnabled()) {
+        logger.warn("Got no exptID, using given filename " + filename);
+      }
     }
 
     return "File";
@@ -488,11 +498,12 @@ extends ContainerSupport
       repositoryTime = rtf.getLong(null);
     } catch (Exception e) {}
 
-    Logging.getLogger(Node.class).info(
-        "COUGAAR "+version+" "+buildTime+
+    Logger logger = Logging.getLogger(Node.class);
+    if (logger.isInfoEnabled()) {
+      logger.info("COUGAAR "+version+" "+buildTime+
         " "+repositoryTag+" "+repositoryModified+
         " "+repositoryTime);
-
+    }
 
     if (!(fullFormat)) {
       System.out.println(
@@ -569,7 +580,10 @@ extends ContainerSupport
       Vector cache = new Vector();
       File myCertFile = new File(installpath + File.separatorChar + certPath );
 
-      Logging.getLogger(Node.class).info("Using certificate from: "+myCertFile);
+      Logger logger = Logging.getLogger(Node.class);
+      if (logger.isInfoEnabled()) {
+        logger.info("Using certificate from: "+myCertFile);
+      }
 
       java.security.cert.Certificate myCert = null;
       myCert = getAlpineCertificate(myCertFile);
@@ -580,7 +594,9 @@ extends ContainerSupport
             installpath+File.separatorChar+
             jarSubdirectory+File.separatorChar+filename);
 
-        Logging.getLogger(Node.class).info("Testing Plugin jar "+f);
+        if (logger.isInfoEnabled()) {
+          logger.info("Testing Plugin jar "+f);
+        }
       
         FileInputStream fis = new FileInputStream(f);
         JarInputStream jis = new  JarInputStream(fis);
