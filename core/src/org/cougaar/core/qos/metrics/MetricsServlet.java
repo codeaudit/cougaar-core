@@ -45,7 +45,7 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
     protected WhitePagesService wpService;
     protected MetricsService metricsService;
     protected String nodeID;
-    protected DecimalFormat f4_2,f6_3,f3_0,f7_0;
+    protected DecimalFormat f4_2,f6_3,f3_0,f7_0,f4_0,f2_0;
 
     private AgentContainer agentContainer;
 
@@ -87,7 +87,9 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
 
 	f4_2 = new DecimalFormat("#0.00");
 	f6_3 = new DecimalFormat("##0.000");
+	f2_0 = new DecimalFormat("#0");
 	f3_0 = new DecimalFormat("##0");
+	f4_0 = new DecimalFormat("###0");
 	f7_0 = new DecimalFormat("#######0");
     }
     protected abstract String myPath();

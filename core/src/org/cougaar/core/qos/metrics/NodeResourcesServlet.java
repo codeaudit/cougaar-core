@@ -58,6 +58,7 @@ public class NodeResourcesServlet
 	out.print(Color.valueTable(metric, ignore, 
 				   highlight,greater,formatter));
 	out.print(Color.credTable(metric));
+
 	out.print("</tr>\n");	
     }
 
@@ -74,7 +75,11 @@ public class NodeResourcesServlet
 
 	//Rows
 	outputMetric(out,nodePath,"EffectiveMJips",
-		     10.0, 400.0, false, f3_0);
+		     10.0, 400.0, false, f2_0);
+	outputMetric(out,nodePath,"LoadAverage",
+		     0.0, 4.0, true, f4_2);
+	outputMetric(out,nodePath,"Count",
+		     1.0, 5.0, true, f2_0);
 	outputMetric(out,nodePath,"TcpInUse",
 		     0.0, 20.0, true, f3_0);
 	outputMetric(out,nodePath,"UdpInUse",
