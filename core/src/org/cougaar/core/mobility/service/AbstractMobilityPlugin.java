@@ -225,26 +225,18 @@ public abstract class AbstractMobilityPlugin
             "Unable to obtain the topology-reader service");
       }
     }
-
-    if (log.isDebugEnabled()) {
-      log.debug("Loaded");
-    }
   }
 
   public void start() {
     super.start();
 
     if (isNode) {
-      if (log.isDebugEnabled()) {
-        log.debug("Starting agent-mobility support for "+nodeId);
-      }
-
       if (mobileAgentSP == null) {
         this.mobileAgentSP = new MobileAgentServiceProviderImpl();
         nodeSB.addService(MobileAgentService.class, mobileAgentSP);
 
         if (log.isDebugEnabled()) {
-          log.debug("Added mobile agent registry service for "+nodeId);
+          log.debug("Created mobile agent registry service for "+nodeId);
         }
       } else {
         if (log.isErrorEnabled()) {
@@ -298,10 +290,6 @@ public abstract class AbstractMobilityPlugin
   }
 
   protected void execute() {
-    if (log.isDebugEnabled()) {
-      log.debug("Execute");
-    }
-
     if (!isNode) return;
 
     // fire pending blackboard changes
@@ -435,11 +423,6 @@ public abstract class AbstractMobilityPlugin
         ServiceBroker sb, 
         Object requestor, 
         Class serviceClass) {
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "Request for mobile agent registry service by "+
-            requestor);
-      }
       // check service class
       if (serviceClass != MobileAgentService.class) {
         throw new IllegalArgumentException(
@@ -463,6 +446,10 @@ public abstract class AbstractMobilityPlugin
       }
 
       registerAgent(id, desc, agent);
+
+      if (log.isDebugEnabled()) {
+        log.debug("Registered agent "+id+" for agent mobility");
+      }
 
       // create a dummy service instance
       return SINGLE_SERVICE_INSTANCE;

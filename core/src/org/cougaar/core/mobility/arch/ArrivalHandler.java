@@ -49,7 +49,11 @@ public class ArrivalHandler extends AbstractHandler {
     // FIXME do handshake
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" move arrival on node "+nodeId);
+      log.info(
+          "Received request to add agent "+id+
+          ", which is moving from node "+
+          moveTicket.getOriginNode()+
+          " to local node "+nodeId);
     }
 
     try {
@@ -69,10 +73,6 @@ public class ArrivalHandler extends AbstractHandler {
       return;
     }
 
-    if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" added to node "+nodeId);
-    }
-
     try {
 
       sendAck();
@@ -83,16 +83,30 @@ public class ArrivalHandler extends AbstractHandler {
 
       if (log.isErrorEnabled()) {
         log.error(
-            "Unable to send acknowledgement for move of agent "+
-            id+" to node "+nodeId, e);
+            "Unable to send acknowledgement for"+
+            " move of agent "+id+" to node "+nodeId, e);
       }
 
     }
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" move acknowledgement sent");
+      log.info(
+          "Sent acknowledgement back to node "+
+          moveTicket.getOriginNode()+
+          ": agent "+id+" has successfully moved to node "+
+          nodeId);
     }
 
+  }
+
+  protected void addAgent(StateTuple tuple) {
+    if (log.isInfoEnabled()) {
+      log.info("Add   agent "+id);
+    }
+    super.addAgent(tuple);
+    if (log.isInfoEnabled()) {
+      log.info("Added agent "+id);
+    }
   }
 
   public String toString() {

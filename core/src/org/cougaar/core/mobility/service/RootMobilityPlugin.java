@@ -72,6 +72,10 @@ extends AbstractMobilityPlugin
 
     AbstractTicket abstractTicket = control.getAbstractTicket();
 
+    if (log.isDebugEnabled()) {
+      log.debug("Observed add of "+control.getUID());
+    }
+
     if (abstractTicket instanceof AddTicket) {
 
       AddTicket addTicket = (AddTicket) abstractTicket;
@@ -160,11 +164,10 @@ extends AbstractMobilityPlugin
         // FIXME note that this assumes that the agent is
         // on this node, and doesn't do a redirect.
         String s =
-          "Move request "+control.getUID()+
-          " of agent "+id+
+          "Agent "+id+
           " is currently on node "+nodeId+
-          ", not on the ticket's asserted origin node "+
-          origNode;
+          ", not on the ticket's asserted origin node "+origNode+
+          " (uid: "+control.getUID()+")";
         if (log.isErrorEnabled()) {
           log.error(s);
         }
@@ -191,24 +194,22 @@ extends AbstractMobilityPlugin
               destNode.getAddress());
         String s;
         if (te == null) {
-          s = "Unknown destination node "+destNode;
+          s = "It's unknown (not listed in the topology)";
         } else if (
             te.getType() != TopologyReaderService.NODE_AGENT_TYPE) {
-          s = "Destination "+destNode+" is not a node agent"+
-            ", it's of type "+te.getTypeAsString();
+          s = "It's not a node agent ("+te.getTypeAsString()+")";
         } else if (
             te.getStatus() != TopologyEntry.ACTIVE) {
-          s = "Destination node "+destNode+" is not active"+
-            ", its status is "+te.getStatusAsString();
+          s = "It's not active ("+te.getStatusAsString()+")";
         } else {
           s = null;
         }
         if (s != null) {
           // destination node is invalid!
-          s +=
-            ", for move of agent "+id+
-            " from "+nodeId+
-            " for move "+control.getOwnerUID();
+          s =
+            "Invalid destination node "+destNode+
+            " for move of agent "+agentId+": "+
+            s+", request uid is "+control.getOwnerUID();
           if (log.isErrorEnabled()) {
             log.error(s);
           }
@@ -216,11 +217,6 @@ extends AbstractMobilityPlugin
           control.setStatus(AgentControl.FAILURE, stack);
           blackboard.publishChange(control);
           return;
-        }
-        if (log.isDebugEnabled()) {
-          log.debug(
-              "Remote destination node "+destNode+
-              " located at "+te);
         }
       }
 
@@ -328,13 +324,19 @@ extends AbstractMobilityPlugin
         }
         return;
       } else if (!(nodeId.equals(destNode))) {
-        // created by this plugin
-        if (log.isDebugEnabled()) {
-          log.debug(
-              "Ignoring agent transfer to node "+destNode+
-              " that doesn't match this node "+nodeId);
+        if (nodeId.equals(control.getSource())) {
+          // created by this plugin, ignore
+          return;
+        } else {
+          // created by this plugin
+          if (log.isErrorEnabled()) {
+            log.error(
+                "Invalid agent transfer with source "+
+                control.getSource()+" to node "+destNode+
+                " doesn't match this node "+nodeId);
+          }
+          return;
         }
-        return;
       }
 
       MessageAddress id = moveTicket.getMobileAgent();
@@ -397,6 +399,11 @@ extends AbstractMobilityPlugin
     if (!(isNode)) return;
 
     AbstractTicket abstractTicket = control.getAbstractTicket();
+
+    if (log.isDebugEnabled()) {
+      log.debug("Observed change of "+control.getUID());
+    }
+
     if (!(abstractTicket instanceof TransferTicket)) {
       return;
     }
@@ -409,13 +416,18 @@ extends AbstractMobilityPlugin
     MessageAddress origNode = moveTicket.getOriginNode();
     if ((origNode != null) &&
         (!(nodeId.equals(origNode)))) {
-      if (log.isDebugEnabled()) {
-        log.debug(
-            "Ignore change in transfer "+control.getUID()+
-            ", intended for origin node "+origNode+
-            ", not local node "+nodeId);
+      if (origNode.equals(control.getSource())) {
+        // ignore, changed by this plugin
+        return;
+      } else {
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Invalid change in transfer "+control.getUID()+
+              ", intended for origin node "+origNode+
+              ", not local node "+nodeId);
+        }
+        return;
       }
-      return;
     }
 
     int status = control.getStatusCode();
@@ -522,6 +534,15 @@ extends AbstractMobilityPlugin
 
   /** a control was removed. */
   protected void removedAgentControl(AgentControl control) {
+
+    if (!(isNode)) return;
+
+    AbstractTicket abstractTicket = control.getAbstractTicket();
+
+    if (log.isDebugEnabled()) {
+      log.debug("Observed removal of "+control.getUID());
+    }
+
     // nothing for now
   }
 
@@ -890,28 +911,41 @@ extends AbstractMobilityPlugin
     public void run() {
 
       // add into this node
+      if (log.isInfoEnabled()) {
+        log.info("Add agent "+id+" to node "+nodeId);
+      }
+
       int resultState;
       Throwable resultStack = null;
       try {
+
         agentContainer.addAgent(id, tuple);
+
         // success!
         resultState = AgentControl.CREATED;
+
+        if (log.isInfoEnabled()) {
+          log.info("Added agent "+id+" to node "+nodeId);
+        }
+
       } catch (Exception e) {
         // either already exists or unable to add
         //
         // HACK: check the exception message
-        if (e.getMessage().indexOf(" already exists") > 0) {
+        String msg = e.getMessage();
+        if (msg != null && msg.indexOf(" already exists") > 0) {
           // already exists
           resultState = AgentControl.ALREADY_EXISTS;
           if (log.isErrorEnabled()) {
-            log.error("Agent " + id + " already exists");
+            log.error(
+                "Agent " + id + " already exists on node "+nodeId);
           }
         } else {
           // couldn't add
           resultState = AgentControl.FAILURE;
           resultStack = e;
           if (log.isErrorEnabled()) {
-            log.error("Unable to add agent " + id);
+            log.error("Unable to add agent " + id, e);
           }
         }
       }
@@ -942,28 +976,36 @@ extends AbstractMobilityPlugin
     public void run() {
 
       // remove agent from this node
+      if (log.isInfoEnabled()) {
+        log.info("Remove agent "+id+" from node "+nodeId);
+      }
+
       int resultState;
       Throwable resultStack = null;
       try {
         agentContainer.removeAgent(id);
         // success!
         resultState = AgentControl.REMOVED;
+        if (log.isInfoEnabled()) {
+          log.info("Removed agent "+id+" from node "+nodeId);
+        }
       } catch (Exception e) {
         // either already removed or unable to remove
         //
         // HACK: check the exception message
-        if (e.getMessage().indexOf(" is not loaded") > 0) {
+        String msg = e.getMessage();
+        if (msg != null && msg.indexOf(" is not loaded") > 0) {
           // already exists
           resultState = AgentControl.DOES_NOT_EXIST;
           if (log.isErrorEnabled()) {
-            log.error("Agent " + id + " already Removed");
+            log.error("Agent " + id + " is not on node "+nodeId);
           }
         } else {
           // couldn't add
           resultState = AgentControl.FAILURE;
           resultStack = e;
           if (log.isErrorEnabled()) {
-            log.error("Unable to remove agent " + id);
+            log.error("Unable to remove agent " + id, e);
           }
         }
       }

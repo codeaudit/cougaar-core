@@ -61,17 +61,17 @@ public class DispatchTestHandler extends AbstractHandler {
     boolean didSuspend = false;
     try {
 
+      checkTicket();
+
       if (log.isInfoEnabled()) {
         log.info(
-            "Agent "+id+" forced restart on node "+
-            nodeId+" initiated");
+            "Begin local restart of agent "+id+" on node "+
+            nodeId);
       }
-
-      checkTicket();
 
       onDispatch();
 
-      model.suspend();
+      suspendAgent();
       didSuspend = true;
 
       Object state = getAgentState();
@@ -97,8 +97,8 @@ public class DispatchTestHandler extends AbstractHandler {
     }
 
     try {
-      model.stop();
-      model.unload();
+      stopAgent();
+      unloadAgent();
       removeAgent();
     } catch (Exception e) {
 
@@ -127,19 +127,13 @@ public class DispatchTestHandler extends AbstractHandler {
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Completed agent "+id+" forced restart on node "+
+          "Agent "+id+" has successfully restarted on node "+
           nodeId);
     }
 
   }
 
   private void checkTicket() {
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Check dispatch ticket on node "+nodeId+
-          " of agent "+id+" and ticket "+moveTicket);
-    }
 
     // check for restart
     if (!(moveTicket.isForceRestart())) {
@@ -174,12 +168,18 @@ public class DispatchTestHandler extends AbstractHandler {
     }
   }
 
+  private void suspendAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Suspend   agent "+id);
+    }
+    model.suspend();
+    if (log.isInfoEnabled()) {
+      log.info("Suspended agent "+id);
+    }
+  }
+
   private Object getAgentState() {
     // capture the agent state
-
-    if (log.isDebugEnabled()) {
-      log.debug("Agent "+id+" suspended, now capturing state");
-    }
 
     if (stateProvider == null) {
       if (log.isWarnEnabled()) {
@@ -188,8 +188,8 @@ public class DispatchTestHandler extends AbstractHandler {
       return null;
     }
 
-    if (log.isDebugEnabled()) {
-      log.debug("Capture state for agent "+id);
+    if (log.isInfoEnabled()) {
+      log.info("Capture  state for agent "+id);
     }
 
     Object state;
@@ -203,12 +203,52 @@ public class DispatchTestHandler extends AbstractHandler {
             ", will attempt resume", e);
     }
 
-    if (log.isDebugEnabled()) {
+    if (log.isInfoEnabled()) {
       // FIXME maybe not log this -- state may be very verbose!
-      log.debug("Agent "+id+" state: "+state);
+      log.info("Captured state for agent "+id+": "+state);
     }
 
     return state;
+  }
+
+  private void stopAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Stop      agent "+id);
+    }
+    model.stop();
+    if (log.isInfoEnabled()) {
+      log.info("Stopped   agent "+id);
+    }
+  }
+
+  private void unloadAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Unload    agent "+id);
+    }
+    model.unload();
+    if (log.isInfoEnabled()) {
+      log.info("Unloaded  agent "+id);
+    }
+  }
+
+  protected void addAgent(StateTuple tuple) {
+    if (log.isInfoEnabled()) {
+      log.info("Add       agent "+id);
+    }
+    super.addAgent(tuple);
+    if (log.isInfoEnabled()) {
+      log.info("Added     agent "+id);
+    }
+  }
+
+  protected void removeAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Remove    agent "+id);
+    }
+    super.removeAgent();
+    if (log.isInfoEnabled()) {
+      log.info("Removed   agent "+id);
+    }
   }
 
   private StateTuple forceSerialize(StateTuple tuple) {
@@ -217,7 +257,7 @@ public class DispatchTestHandler extends AbstractHandler {
 
     ComponentDescription ndesc;
     try {
-      ndesc = (ComponentDescription) testSerial(odesc);
+      ndesc = (ComponentDescription) testSerial(odesc, " desc");
     } catch (Exception e) {
       throw new MobilityException(
             "Serialize/Deserialize (description) test on agent "+
@@ -233,7 +273,7 @@ public class DispatchTestHandler extends AbstractHandler {
 
     Object nstate;
     try {
-      nstate = testSerial(state);
+      nstate = testSerial(state, "state");
     } catch (Exception e) {
       throw new MobilityException(
             "Serialize/Deserialize (state) test on agent "+
@@ -245,16 +285,28 @@ public class DispatchTestHandler extends AbstractHandler {
     return new StateTuple(ndesc, nstate);
   }
 
-  private Object testSerial(Object o) throws Exception {
+  private Object testSerial(Object o, String type) throws Exception {
+    if (log.isInfoEnabled()) {
+      log.info("Serialize    "+type+" of agent "+id);
+    }
     ByteArrayOutputStream bos = new ByteArrayOutputStream();
     ObjectOutputStream os = new ObjectOutputStream(bos);
     os.writeObject(o);
     os.flush();
+    if (log.isInfoEnabled()) {
+      log.info("Serialized   "+type+" of agent "+id);
+    }
     o = null;
+    if (log.isInfoEnabled()) {
+      log.info("Deserialize  "+type+" of agent "+id);
+    }
     byte[] b = bos.toByteArray();
     ByteArrayInputStream bis = new ByteArrayInputStream(b);
     ObjectInputStream is = new ObjectInputStream(bis);
     Object newO = is.readObject();
+    if (log.isInfoEnabled()) {
+      log.info("Deserialized "+type+" of agent "+id);
+    }
     return newO;
   }
 

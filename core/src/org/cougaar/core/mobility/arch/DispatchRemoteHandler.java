@@ -58,20 +58,22 @@ public class DispatchRemoteHandler extends AbstractHandler {
     boolean didSuspend = false;
     try {
 
+      checkTicket();
+
       if (log.isInfoEnabled()) {
         log.info(
-            "Begin remote transfer of agent "+id+" from "+
-            nodeId+" to "+moveTicket.getDestinationNode());
+            "Begin move of agent "+id+" from "+
+            nodeId+" to "+moveTicket.getDestinationNode()+
+            ", move id is "+moveTicket.getIdentifier());
       }
-
-      checkTicket();
 
       onDispatch();
 
-      model.suspend();
+      suspendAgent();
       didSuspend = true;
 
       Object state = getAgentState();
+
       tuple = new StateTuple(desc, state);
 
     } catch (Exception e) {
@@ -81,7 +83,7 @@ public class DispatchRemoteHandler extends AbstractHandler {
 
       if (log.isErrorEnabled()) {
         log.error(
-            "Unable to prepare agent for transfer", e);
+            "Unable to move agent "+id, e);
       }
       if (didSuspend) {
         model.resume();
@@ -114,15 +116,17 @@ public class DispatchRemoteHandler extends AbstractHandler {
       return;
     }
 
+    if (log.isInfoEnabled()) {
+      log.info(
+          "Transfering agent "+id+" to node "+
+          moveTicket.getDestinationNode()+
+          ", waiting for an acknowledgement from node "+
+          moveTicket.getDestinationNode());
+    }
+
   }
 
   private void checkTicket() {
-
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Check dispatch ticket on node "+nodeId+
-          " of agent "+id+" and ticket "+moveTicket);
-    }
 
     // check for non-local destination
     MessageAddress destNode = moveTicket.getDestinationNode();
@@ -151,12 +155,20 @@ public class DispatchRemoteHandler extends AbstractHandler {
     }
   }
 
+  private void suspendAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Suspend   agent "+id);
+    }
+
+    model.suspend();
+
+    if (log.isInfoEnabled()) {
+      log.info("Suspended agent "+id);
+    }
+  }
+
   private Object getAgentState() {
     // capture the agent state
-
-    if (log.isDebugEnabled()) {
-      log.debug("Agent "+id+" suspended, now capturing state");
-    }
 
     if (stateProvider == null) {
       if (log.isWarnEnabled()) {
@@ -165,8 +177,8 @@ public class DispatchRemoteHandler extends AbstractHandler {
       return null;
     }
 
-    if (log.isDebugEnabled()) {
-      log.debug("Capture state for agent "+id);
+    if (log.isInfoEnabled()) {
+      log.info("Capture  state for agent "+id);
     }
 
     Object state;
@@ -178,9 +190,9 @@ public class DispatchRemoteHandler extends AbstractHandler {
             ", will attempt resume", e);
     }
 
-    if (log.isDebugEnabled()) {
+    if (log.isInfoEnabled()) {
       // FIXME maybe not log this -- state may be very verbose!
-      log.debug("Agent "+id+" state: "+state);
+      log.info("Captured state for agent "+id+": "+state);
     }
 
     return state;

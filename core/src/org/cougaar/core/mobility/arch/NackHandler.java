@@ -51,18 +51,19 @@ public class NackHandler extends AbstractHandler {
     if (log.isInfoEnabled()) {
       log.info(
           "Handling failed move of agent "+id+
+          " from "+nodeId+
           " to node "+moveTicket.getDestinationNode());
     }
 
     // agent is suspended -- let's resume it.
 
     try {
-      model.resume();
+      resumeAgent();
     } catch (Exception e) {
       // did we lose an agent?!
       // should we kill it and reclaim the memory?
       if (log.isErrorEnabled()) {
-        log.error("Nack resume of agent "+id+" failed", e);
+        log.error("Unable to resume agent "+id, e);
       }
       return;
     }
@@ -80,9 +81,19 @@ public class NackHandler extends AbstractHandler {
     }
 
     if (log.isInfoEnabled()) {
-      log.info("Completed failed transfer (nack) of agent "+id);
+      log.info("Completed failed move of agent "+id);
     }
 
+  }
+
+  private void resumeAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Resume  agent "+id);
+    }
+    model.resume();
+    if (log.isInfoEnabled()) {
+      log.info("Resumed agent "+id);
+    }
   }
 
   public String toString() {

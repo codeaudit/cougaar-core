@@ -51,14 +51,15 @@ public class AckHandler extends AbstractHandler {
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Move of agent "+id+
-          " acknowledged, removing original agent");
+          "Received acknowledgement from node "+
+          moveTicket.getDestinationNode()+
+          " for move of agent "+id);
     }
 
     try {
 
-      model.stop();
-      model.unload();
+      stopAgent();
+      unloadAgent();
       removeAgent();
 
     } catch (Exception e) {
@@ -80,9 +81,42 @@ public class AckHandler extends AbstractHandler {
     // agent will be GC'ed now
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" removed");
+      log.info(
+          "Agent "+id+" has successfully moved to node "+
+          moveTicket.getDestinationNode()+
+          " and has been removed from node "+nodeId);
     }
 
+  }
+
+  private void stopAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Stop     agent "+id);
+    }
+    model.stop();
+    if (log.isInfoEnabled()) {
+      log.info("Stopped  agent "+id);
+    }
+  }
+
+  private void unloadAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Unload   agent "+id);
+    }
+    model.unload();
+    if (log.isInfoEnabled()) {
+      log.info("Unloaded agent "+id);
+    }
+  }
+
+  protected void removeAgent() {
+    if (log.isInfoEnabled()) {
+      log.info("Remove   agent "+id);
+    }
+    super.removeAgent();
+    if (log.isInfoEnabled()) {
+      log.info("Removed  agent "+id);
+    }
   }
 
   public String toString() {

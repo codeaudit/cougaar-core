@@ -83,12 +83,6 @@ extends ComponentPlugin
       return;
     }
 
-    if (log.isInfoEnabled()) {
-      log.info(
-          "Loading the redirect-control-plugin in agent "+
-          agentId+" on node "+nodeId);
-    }
-
     // get the mobility factory
     DomainService domain = (DomainService)
       getServiceBroker().getService(
@@ -108,10 +102,6 @@ extends ComponentPlugin
     }
     getServiceBroker().releaseService(
         this, DomainService.class, domain);
-
-    if (log.isDebugEnabled()) {
-      log.debug("Loaded");
-    }
   }
 
   public void unload() {
@@ -144,10 +134,6 @@ extends ComponentPlugin
   protected void execute() {
     if (isNode) {
       return;
-    }
-
-    if (log.isDebugEnabled()) {
-      log.debug("Execute");
     }
 
     if (incomingControlSub.hasChanged()) {
@@ -185,13 +171,6 @@ extends ComponentPlugin
     // redirect to our parent node
 
     AbstractTicket abstractTicket = inControl.getAbstractTicket();
-
-    if (log.isInfoEnabled()) {
-      log.info(
-          "Redirecting agent control request "+
-          inControl.getUID()+" for agent "+
-          agentId+" to the parent node "+nodeId);
-    }
 
     if (mobilityFactory == null) {
       String msg =
@@ -252,10 +231,10 @@ extends ComponentPlugin
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Submitted redirected control request "+
-          outControl.getUID()+
-          " for agent "+agentId+" to node "+nodeId+
-          ", original control request is "+inControl.getUID());
+          "Redirected control request for agent "+
+          agentId+" to its parent node "+nodeId+
+          " (original request: "+inControl.getUID()+
+          ", redirected request: "+outControl.getUID()+")");
     }
   }
 
@@ -266,8 +245,10 @@ extends ComponentPlugin
       // attempt to cancel the control
       if (log.isInfoEnabled()) {
         log.info(
-            "Removing in-progress control request "+outControl.getUID()+
-            " redirected from original request "+inControlUID);
+            "Removing in-progress control request for agent "+
+            agentId+" that was redirected to its parent node "+
+            nodeId+" (original request: "+outControl.getUID()+
+            ", redirected request: "+inControlUID+")");
       }
       blackboard.publishRemove(outControl);
     }
@@ -280,20 +261,21 @@ extends ComponentPlugin
       // not done yet.
       if (log.isDebugEnabled()) {
         log.debug(
-            "Ignoring \"no status\" change of control request "+
-            outControl.getUID()+" for agent "+agentId);
+            "Ignoring \"no status\" change of control request"+
+            " for agent "+agentId+" (uid: "+
+            outControl.getUID()+")");
       }
       return;
     }
 
     UID inControlUID = outControl.getOwnerUID();
     if (inControlUID == null) {
-      // we need a better tag!
+      // the owner tag is null, so this isn't a redirect
       if (log.isDebugEnabled()) {
         log.debug(
-            "Ignoring change to control "+outControl.getUID()+
-            ", it has a null ownerUID and is therefore"+
-            " not a redirect");
+            "Ignoring change to control request for agent "+
+            agentId+", it is not a redirect (uid: "+
+            outControl.getUID()+")");
       }
       return;
     }
@@ -326,12 +308,13 @@ extends ComponentPlugin
       return;
     }
 
-    if (log.isInfoEnabled()) {
-      log.info(
-          "Copying redirected agent "+agentId+" control status "+
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Copy the new control status "+
           outControl.getStatusCodeAsString()+
-          " from "+outControl.getUID()+" to original "+
-          inControl.getUID());
+          " for agent "+agentId+
+          " (from: "+outControl.getUID()+", to:"+
+          inControl.getUID()+")");
     }
 
     inControl.setStatus(
@@ -344,8 +327,9 @@ extends ComponentPlugin
 
     if (log.isInfoEnabled()) {
       log.info(
-          "Original control request \""+inControl.getUID()+
-          "\" status updated to "+inControl.getStatusCodeAsString());
+          "Updated status of control request for agent "+
+          agentId+" to "+inControl.getStatusCodeAsString()+
+          " (uid: "+inControl.getUID()+")");
     }
   }
 
