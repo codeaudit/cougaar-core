@@ -17,7 +17,7 @@
 <b><font size=+2>Release Notes</font></b></h2>
 
 <h2>
-<b><font size=+2>COUGAAR 8.4.0</font></b></h2>
+<b><font size=+2>COUGAAR 8.4.2</font></b></h2>
 </td>
 
 <td ALIGN=CENTER WIDTH="200"><a href="http://www.cougaar.org"><img SRC="cougaar-smalllogo.jpg" BORDER=0 ></a></td>
@@ -64,6 +64,30 @@
 <hr>
 <h2>
 <a NAME="overview"></a>Overview of this Release</h2>
+Build 8.4.2 is a patch release of COUGAAR 8.4.0.&nbsp; Notable additions
+for this release include:
+<ul>
+<li> <b> Additional javadoc support </b> New javadoc
+	      doclet generates additional file <a href="api/Parameters.html">Parameters.html</a> which
+	      is a catalog of System Properties (-D flags) used. The
+	      file is generated on the basis of @property javadoc tags
+	      in the source code.  Also, generated javadoc is now
+	      placed within doc directories rather than parallel to
+	      the doc directory.
+ </li>
+</ul>
+
+Build 8.4.1 is a patch release of COUGAAR 8.4.0.&nbsp; Notable additions
+for this release include:
+<ul>
+<li> Secure Whitepages/Yellowpages (naming) communications implementation using SSL. </li>
+<li> <a href="#jvm">
+Requires installation of Java Secure Socket Extension (JSSE).
+</a></li>
+<li> Extended INI-format: see <a href="details/INIFormat.txt">details/INIFormat.txt</a>.</li>
+<li> Full support for layered/combined Binders at all levels.</li>
+</ul>
+
 Build 8.4 is a point release along COUGAAR 8.0.&nbsp; Notable additions
 for this release include:
 <ul>
@@ -179,7 +203,8 @@ docs</li>
 <a href="CHANGES">CHANGES</a> and doc/details</li>
 
 <li>
-core/doc/Javadoc</li>
+<a href="api/index.html">Core infrastructure javadoc</a> (available in
+	      api/index.html if the cougaar-api.zip archive has been installed).</li>
 
 <li>
 Cougaar Developers Guide, v8.4 (dated 31-August-2001)</li>
