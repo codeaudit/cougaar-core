@@ -64,6 +64,10 @@ import org.cougaar.util.ReusableThread;
  *      to a Node-level message transport.
  * org.cougaar.message.useServerProxies=false: if true, will use cluster-specific proxies on
  *      the server side rather than a single server for the server node.
+ * org.cougaar.message.lazyLookup=true: if true, will batch namespace lookups to a single
+ *      service thread to avoid starting lots of mostly wasted threads doing little but
+ *      poll the nameserver.  This is especially useful when useNodeDelivery=true and
+ *      the society has more than 2 "missing" clusters.
  * org.cougaar.message.fastTransport = false : if true, will optimize transport and
  *      nameserver interaction to the fastest values.  Activates
  *      useLocalDelivery, useNodeDelivery, useNodeRedirect and disables 
@@ -123,6 +127,9 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
   /** Attempt message delivery forever **/
   private static boolean tryForeverDelivery = true;
 
+  /** Do target lookups in a separate thread rather than in each destination queue **/
+  private static boolean lazyLookup = true;
+
   /** Total of all queue length measurements **/
   private long totalElapsedTime = 0L;
 
@@ -170,7 +177,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     useNodeDelivery = getBool("org.cougaar.message.useNodeDelivery", useNodeDelivery);
     useNodeRedirect = getBool("org.cougaar.message.useNodeRedirect", useNodeRedirect);
     useServerProxies = getBool("org.cougaar.message.useServerProxies", useServerProxies);
-
+    lazyLookup = getBool("org.cougaar.message.lazyLookup", lazyLookup);
   }
 
   /** hold the local (client-side) nameserver instance **/
@@ -569,6 +576,62 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     return super.findLocalClient(id);
   }
 
+  // nameserver target pinger
+  private static class TargetPinger implements Runnable {
+    private Thread thread = null;
+
+    private ArrayList pingers = new ArrayList();
+    private ArrayList back = new ArrayList();
+    
+    public void run() {
+      while (true) {
+        try {
+          Thread.sleep(retryInterval); // 5 seconds at a time
+        } catch (InterruptedException ie) {}
+        try {
+          synchronized (this) {
+            int l = pingers.size();
+            if (l == 0) {
+              thread = null;       // nothing to do?  exit
+              return;
+            }
+            for (int i=0; i<l; i++) {
+              DestinationQueue dq = (DestinationQueue) pingers.get(i);
+              if (dq.ping()) {
+                //System.err.println("Lazyfound "+dq); // MIK
+              } else {
+                //put back on list
+                back.add(dq);
+              }
+            }
+            pingers.clear();
+            // swap lists
+            ArrayList tmp = back;
+            back = pingers;
+            pingers = tmp;
+          }
+        } catch (Exception e) {}
+      }
+    }
+    
+    public void add(DestinationQueue dq) {
+      synchronized (this) {
+        pingers.add(dq);
+        //System.err.println("LazyAdd "+dq); //MIK
+        if (thread == null) {
+          thread = new Thread(this, "DestinationQueue Lookup");
+          thread.start();
+        }
+      }
+    }
+  }
+
+  private static TargetPinger myTargetPinger = new TargetPinger();
+  
+  static void queueTargetLookup(DestinationQueue dq) {
+    myTargetPinger.add(dq);
+  }
+
   // destination queue hackery
 
   private class DestinationQueue implements Runnable {
@@ -580,6 +643,9 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
 
     /** current value for the remote message transport for dest */
     KeyedMT remote = null;
+
+    /** are we lazy-sleeping?   This check must be done within a synchronize on this. **/
+    boolean lazy = false;
 
     /** are we redirecting? **/
     boolean isRedirecting = false;
@@ -621,6 +687,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     /** millis of failed sends **/
     private long failureMillis = 0L;
 
+    public String toString() { return name; }
     public DestinationQueue(MessageAddress address, boolean disableRetransmission) {
       dest = address;
       this.disableRetransmission = disableRetransmission;
@@ -633,6 +700,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
       then = now;
     }
 
+    //private boolean isFirst = true; // MIK
     public synchronized void add(Message m) {
       //queue.addLast(m);         // fifo
       if (keepStatistics) {
@@ -645,7 +713,17 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
       } else {
         queue.add(m);
         if (isLogging) log("dQ+", m.toString()+" ("+size()+")");
-        activate();
+        if (!lazy) {
+          /*
+          if (isFirst) {          // MIK
+            lazy=true;
+            isFirst = false;
+            queueTargetLookup(this);
+          }
+          */
+          // only activate if not in lazy mode.
+          activate();
+        }
       }
     }
 
@@ -681,6 +759,7 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
     }
       
     private synchronized void activate() {
+      lazy = false;             // by definition
       if (thread == null) {
         thread = getThread(this, name);
         thread.start();
@@ -727,34 +806,63 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
       previousTry = now;
     }
 
+    /** called by pinger to redo a lookup if we aren't doing it in our main thread. 
+     * @return true on successful lookup and reactivation.
+     **/
+    boolean ping() {
+      if (lookupTarget()) {
+        activate();
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+    /** lookup the target - return true on success. **/
+    boolean lookupTarget() {
+      if (localClient==null && remote == null) {   // need to look it up?
+        // might as well check to see if a local client has shown up...
+        if (useLocalDelivery) {
+          localClient = findLocalClient(dest);
+          if (localClient!=null) return true;
+        }
+
+        // no local client (yet, at any rate), so try the lookup...
+        try {
+          remote = lookupRMIObject(dest);
+          firstUse = true;
+          if (remote != null) return true;
+        } catch (RuntimeException rre) {
+          System.err.println("\nWarning namespace exception: "+rre+"\n"+
+                             "\t Will retry in "+ ((int)(retryInterval/1000))+
+                             " seconds.");
+
+        } catch (Exception e) {
+          if (isLogging) {
+            log("Error (Name) : ",e.toString());
+          }
+        } 
+        return false;
+      }
+      return true;
+    }      
+
+    private void deactivate() {
+      thread = null;
+      releaseThread();
+    }
+
     public void run() {
       while (true) {
-        if (localClient==null && remote == null) {   // need to look it up?
-          // might as well check to see if a local client has shown up...
-          if (useLocalDelivery) {
-            localClient = findLocalClient(dest);
-            //if (localClient!=null) System.err.println("Found local client "+dest);
-            if (localClient!=null) continue; // re-enter
-          }
-
-          // no local client (yet, at any rate), so try the lookup...
-          try {
-            remote = lookupRMIObject(dest);
-            firstUse = true;
-          } catch (RuntimeException rre) {
-            System.err.println("\nWarning namespace exception: "+rre+"\n"+
-                               "\t Will retry in "+ ((int)(retryInterval/1000))+
-                               " seconds.");
-
-          } catch (Exception e) {
-            if (isLogging) {
-              log("Error (Name) : ",e.toString());
-              //e.printStackTrace();
+        if (!lookupTarget()) {
+          if (lazyLookup) {
+            synchronized (this) {
+              lazy = true;      // enable lazy queue mode
+              queueTargetLookup(this);
+              deactivate();
+              return;
             }
-            //e.printStackTrace(); // MTMTMT
-          } //  ignore exception - we'll try again later.
-
-          if (remote == null) {
+          } else {
             noteFailure();
             pause();            // pause a few seconds
             continue;           // keep retrying until success
@@ -772,9 +880,8 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
             if (isLogging) log("dS-", dest.toString());
             m = pop();          
             if (m == null) {    // still nothing?
-              thread = null;    // don't keep running
-              releaseThread();  // tell the thread pool
               if (isLogging) log("dS0", dest.toString());
+              deactivate();
               return;           // exit the thread 
             }
           }
@@ -838,10 +945,9 @@ public class RMIMessageTransport extends MessageTransport implements MessageStat
                 try {
                   redirection = remote.getMessageAddress();
                   isRedirecting = true;
-                  // exit the thread
-                  thread = null;    // don't keep running
-                  releaseThread();  // tell the thread pool
                   if (isLogging) log("dS0", dest.toString());
+                  // exit the thread
+                  deactivate();
                   return;           // exit the thread 
                 } catch (RemoteException re) { 
                   System.err.println("Cannot happen! "+re);

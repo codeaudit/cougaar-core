@@ -128,9 +128,85 @@ public class Transaction {
   }
 
   // Thread-binding to a Transaction instance
-  private static final ThreadLocal theTransaction = new ThreadLocal() {};
+  private static final HashMap transactionTable = new HashMap(89);
 
   /** Register a transaction as open **/
+  public final static void open(Transaction t) {
+    synchronized (transactionTable) {
+      Thread me = Thread.currentThread();
+      Object o = transactionTable.get(me);
+      if (o != null) {
+        throw new RuntimeException("Attempt to open a nested transaction:\n"+
+                                   "\tPrevious was: "+o+"\n"+
+                                   "\tNext is: "+t);
+      }
+      transactionTable.put(me, t);
+    }
+  }
+
+  /** Register a transaction as closed **/
+  public final static void close(Transaction t) {
+    synchronized (transactionTable) {
+      Thread me = Thread.currentThread();
+      Object o = transactionTable.get(me);
+      if (o != t) {
+        throw new RuntimeException("Attempt to close a transaction inappropriately:\n"+
+                                   "\tPrevious was: "+o+"\n"+
+                                   "\tNext is: "+t);
+      }
+      // we could do transactionTable.remove(me), but that would lead to more
+      // consing of entries than we want.  Instead, we'll have a GC thread which
+      // removes empty entries periodically.
+      //transactionTable.remove(me);
+      transactionTable.put(me, null);
+    }
+  }
+
+  /** get the current Transaction.  **/
+  public final static Transaction getCurrentTransaction() {
+    synchronized (transactionTable) {
+      return (Transaction) transactionTable.get(Thread.currentThread());
+    }
+  }
+
+  static {
+    Runnable gc = new Runnable() {
+        public void run() {
+          while (true) {
+            try {
+              Thread.sleep(10*1000); // run every 10 seconds.
+              synchronized (transactionTable) {
+                int c = 0;
+                int a = 0;
+                for (Iterator i = transactionTable.entrySet().iterator(); i.hasNext();) {
+                  a++;
+                  Map.Entry entry = (Map.Entry) i.next();
+                  if (entry.getValue() == null) {
+                    i.remove();
+                    c++;
+                  }
+                }
+                /*
+                if (c>0) {
+                  System.err.println("TransactionTable GC reclaimed "+c+"/"+a+" Transaction entries");
+                }
+                */
+              }
+            } catch (Exception e) {
+              e.printStackTrace();
+            }
+          }
+        }
+      };
+    (new Thread(gc, "TransactionTable GC")).start();
+  }
+
+  /*
+    // old implementation using ThreadLocal
+
+  private static final ThreadLocal theTransaction = new ThreadLocal() {};
+
+
   public final static void open(Transaction t) {
     synchronized (theTransaction) {
       Object o = theTransaction.get();
@@ -143,7 +219,7 @@ public class Transaction {
     }
   }
 
-  /** Register a transaction as closed **/
+
   public final static void close(Transaction t) {
     synchronized (theTransaction) {
       Object o = theTransaction.get();
@@ -156,10 +232,11 @@ public class Transaction {
     }
   }
 
-  /** get the current Transaction.  **/
+
   public final static Transaction getCurrentTransaction() {
     //No synchronization because it  doesn't buy us any actual safety
     return (Transaction) theTransaction.get();
   }
+  */
 
 }

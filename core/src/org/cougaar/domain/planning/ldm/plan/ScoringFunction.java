@@ -600,6 +600,14 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
    */
 
   public static class StrictValueScoringFunction extends SinglePointScoringFunction {
+    private transient AspectScorePoint basp = null;
+    private synchronized AspectScorePoint getB() {
+      if (basp == null) {
+        basp = new AspectScorePoint(point, BEST);
+      }
+      return basp;
+    }
+
     public StrictValueScoringFunction(AspectValue value) {
       super(value);
     }
@@ -609,12 +617,12 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
   
     public AspectScorePoint getBest() {
-      return new AspectScorePoint(point, BEST);
+      return getB();
     }
 
     public AspectScorePoint getMinInRange(AspectValue lowerbound, AspectValue upperbound){
       if (point.isBetween(lowerbound, upperbound)) {
-        return new AspectScorePoint(point, BEST); 
+        return getB();
       } else {
         return new AspectScorePoint(lowerbound, WORST);
       }
@@ -622,14 +630,14 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public AspectScorePoint getMaxInRange(AspectValue lowerbound, AspectValue upperbound){
       if (point.equals(lowerbound) &&
           point.equals(upperbound)) {
-        return new AspectScorePoint(point, BEST); 
+        return getB();
       } else {
         return new AspectScorePoint(lowerbound, WORST);      
       }
     }
     public Enumeration getValidRanges(AspectValue lowerbound, AspectValue upperbound) {
       if (point.isBetween(lowerbound, upperbound)) {
-        AspectScorePoint asp = new AspectScorePoint(point, BEST);
+        AspectScorePoint asp = getB();
         return new SingleElementEnumeration(new AspectScoreRange(asp, asp));
       } else {
         return Empty.enumeration;
@@ -652,6 +660,14 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
   public static class PreferredValueScoringFunction extends SinglePointScoringFunction {
     protected double slope;
 
+    private transient AspectScorePoint basp = null;
+    private synchronized AspectScorePoint getB() {
+      if (basp == null) {
+        basp = new AspectScorePoint(point, BEST);
+      }
+      return basp;
+    }
+
     public PreferredValueScoringFunction(AspectValue value, double slope) { 
       super(value);
       this.slope = slope;
@@ -662,7 +678,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     }
   
     public AspectScorePoint getBest() {
-      return new AspectScorePoint(point, BEST);
+      return getB();
     }
 
     public Enumeration getValidRanges(AspectValue lowerbound, AspectValue upperbound){
@@ -683,7 +699,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     public AspectScorePoint getMinInRange(AspectValue lowerbound, AspectValue upperbound){
       AspectScorePoint asp = null;
       if (point.isBetween(lowerbound, upperbound)) 
-	asp = new AspectScorePoint(point, BEST);
+	asp = getB();
       else if (upperbound.isLessThan(point))
 	asp = new AspectScorePoint(upperbound, getScore(upperbound));
       else

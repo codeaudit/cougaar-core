@@ -36,19 +36,22 @@ import java.net.UnknownHostException;
  * @property org.cougaar.nameserver.verbosity verbosity level 0=quiet, 1=exceptions, 2=progress.
  * @property org.cougaar.nameserver.auto Start the nameserver automatically if possible (local) 
  * without an admin node.
+ * @property org.cougaar.nameserver.local Circumvent RMI if possible for nameservice.
  **/
 
 public class RMINameServer implements NameServer {
   
   private static int verbosity = 0;
   private static boolean autoStart = true;
-
+  private static boolean fastLocal = true;
   static {
     if (Boolean.getBoolean("org.cougaar.nameserver.verbose"))
       verbosity=1;
 
     autoStart=(Boolean.valueOf(System.getProperty("org.cougaar.nameserver.auto",
                                                   autoStart?"true":"false"))).booleanValue();
+    fastLocal=(Boolean.valueOf(System.getProperty("org.cougaar.nameserver.local",
+                                                  fastLocal?"true":"false"))).booleanValue();
 
     int i = Integer.getInteger("org.cougaar.nameserver.verbosity",-1).intValue();
     if (i>=0) verbosity=i;
@@ -59,6 +62,13 @@ public class RMINameServer implements NameServer {
 
   /** lazy-eval function to find the remote NS **/
   private NS getNS() {
+
+    // maybe circumvent RMI
+    if (fastLocal) {
+      NS tns = getLocalNS();
+      if (tns != null) return tns;
+    }
+
     synchronized (this) {
       if (ns != null) return ns;// Now do it safely
       ns = contactNS();
@@ -324,6 +334,16 @@ public class RMINameServer implements NameServer {
   //// actually create a server
   ////
 
+  /** keep the NSImpl around for fastLocal use **/
+  private static NS actual = null;
+  private static Object actualLock = new Object();
+
+  private static NS getLocalNS() { 
+    synchronized (actualLock) {
+      return actual;
+    }
+  }
+
   public static void create() {
     create(true);               // try really hard by default
   }
@@ -354,10 +374,13 @@ public class RMINameServer implements NameServer {
     if (verbosity>1) System.err.print(" Creating Nameservice at "+url+":");
     try {
       NS ns = new NSImpl();
-
       r.rebind(url, ns);
       //System.err.println("Bound "+ns+" to "+url);
       if (verbosity>1) System.err.println("OK");
+
+      synchronized (actualLock) {
+        actual = ns;
+      }
 
       System.err.println("RMI NameServer started at "+url);
     } catch (Exception e) {

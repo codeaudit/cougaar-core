@@ -64,4 +64,9 @@ public interface LogPlanServesLogicProvider extends BlackboardServesLogicProvide
   void incPlanElementCount(int inc);
   void incTaskCount(int inc);
   void incWorkflowCount(int inc);
+
+  /** Add a DelayedLPAction to the set of actions to execute after
+   * most of the transaction work has completed.
+   **/
+  void delayLPAction(DelayedLPAction dla);
 }

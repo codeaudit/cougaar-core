@@ -16,7 +16,7 @@ import org.cougaar.core.cluster.ClusterServesLogicProvider;
 import org.cougaar.core.cluster.LogPlanLogicProvider;
 import org.cougaar.core.cluster.LogPlanServesLogicProvider;
 import org.cougaar.core.cluster.MessageLogicProvider;
-
+import org.cougaar.core.cluster.DelayedLPAction;
 
 import org.cougaar.domain.planning.ldm.plan.Aggregation;
 import org.cougaar.domain.planning.ldm.plan.Allocation;
@@ -42,8 +42,6 @@ import org.cougaar.domain.planning.ldm.plan.WorkflowImpl;
 import org.cougaar.core.society.UID;
 
 import java.util.*;
-
-import java.lang.InterruptedException;
 
 import org.cougaar.util.UnaryPredicate;
 
@@ -71,7 +69,7 @@ public class ReceiveNotificationLP
       processNotification((Notification) dir, changes);
     }
   }
-     
+
   private void processNotification(Notification not, Collection changes) {
     UID tuid = not.getTaskUID();
     UID childuid = not.getChildTaskUID();
@@ -87,20 +85,23 @@ public class ReceiveNotificationLP
 
   // default protection so that NotificationLP can call this method
   static final void propagateNotification(LogPlanServesLogicProvider logplan,
-                                          UID tuid, AllocationResult result, 
+                                          UID tuid, AllocationResult result,
                                           UID childuid, Collection changes) {
     PlanElement pe = logplan.findPlanElement(tuid.toString());
     if (pe == null) {
-//    System.out.println("Received notification about unknown task: " + tuid);
+      // System.out.println("Received notification about unknown task: " + tuid);
       return;
     }
-    
+
     if ((pe instanceof Allocation) ||
         (pe instanceof AssetTransfer) ||
         (pe instanceof Aggregation)) {
       ((PEforCollections) pe).setReceivedResult(result);
       logplan.change(pe, changes);
     } else if (pe instanceof Expansion) {
+      logplan.delayLPAction(new DelayedAggregateResults((Expansion)pe, childuid));
+
+      /*
       Workflow wf = ((Expansion)pe).getWorkflow();
       AllocationResult ar = wf.aggregateAllocationResults();
       if (ar != null) {
@@ -111,10 +112,11 @@ public class ReceiveNotificationLP
         ((PEforCollections) pe).setReceivedResult(ar);
 	logplan.change(pe, changes);
       } // if we can't successfully aggregate the results - don't send a notification
+      */
     /*
     } else if (pe instanceof Disposition) {
       // drop the notification on the floor - cannot possibly be valid
-    } 
+    }
     */
     } else {
       System.err.print("Got a Notification for an inappropriate PE:\n"+
@@ -122,6 +124,67 @@ public class ReceiveNotificationLP
                        "\tFrom="+childuid+"\n"+
                        "\tResult="+result+"\n"+
                        "\tPE="+pe);
+    }
+  }
+
+  /** delay the results aggregation of an expansion until the end in case
+   * we have lots of them to do.
+   **/
+  private final static class DelayedAggregateResults
+    implements DelayedLPAction
+  {
+    private final Expansion pe;
+    private final ArrayList ids = new ArrayList(1);
+    DelayedAggregateResults(Expansion pe, UID id) {
+      this.pe = pe;
+      ids.add(id);
+    }
+
+    public void execute(LogPlanServesLogicProvider logplan) {
+      Workflow wf = pe.getWorkflow();
+
+      // compute the new result from the subtask results.
+      AllocationResult ar = wf.aggregateAllocationResults();
+      if (ar != null) {         // if the aggragation is defined:
+
+	// get the TaskScoreTable used in the aggregation
+	TaskScoreTable aggTST = ((WorkflowImpl)wf).getCurrentTST();
+
+	// get the UID of the child task that caused this aggregation
+        int l = ids.size();
+        for (int i = 0; i<l; i++) {
+          UID childuid = (UID) ids.get(i);
+          // yuck! another n^2 operation.  sigh.
+          // surely we should be able to do better...
+          ((ExpansionImpl)pe).setSubTaskResults(aggTST,childuid);
+        }
+
+        // set the result on the
+        ((PEforCollections) pe).setReceivedResult(ar);
+
+        // publish the change to the blackboard.
+	logplan.change(pe, null); // drop the change details.
+	//logplan.change(pe, changes);
+        //System.err.print("=");
+      }
+    }
+
+    /** hashcode is the hashcode of the expansion **/
+    public int hashCode() {
+      return pe.hashCode();
+    }
+
+    /** these guys are equal iff the they have the same PE **/
+    public boolean equals(Object e) {
+      return (e instanceof DelayedAggregateResults &&
+              ((DelayedAggregateResults)e).pe == pe);
+    }
+
+    /** merge another one into this one **/
+    public void merge(DelayedLPAction e) {
+      // don't bother to check, since we will only be here if this.equals(e).
+      DelayedAggregateResults other = (DelayedAggregateResults) e;
+      ids.addAll(other.ids);
     }
   }
 }

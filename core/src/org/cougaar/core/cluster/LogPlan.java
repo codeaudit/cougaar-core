@@ -24,7 +24,8 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
 import org.cougaar.core.society.UniqueObject;
 import org.cougaar.core.society.UID;
 
-public class LogPlan implements LogPlanServesLogicProvider, XPlanServesBlackboard
+public class LogPlan
+  implements LogPlanServesLogicProvider, XPlanServesBlackboard, SupportsDelayedLPActions
 {
   private Blackboard alpPlan;      // Delegate ALPPLanServesLogicProvider methods to this
 
@@ -242,4 +243,51 @@ public class LogPlan implements LogPlanServesLogicProvider, XPlanServesBlackboar
   public PublishHistory getHistory() {
     return alpPlan.getHistory();
   }
+
+  //
+  // DelayedLPAction support
+  //
+  
+  private Object dlpLock = new Object();
+  private HashMap dlpas = new HashMap(11);
+  private HashMap dlpas1 = new HashMap(11);
+
+  public void executeDelayedLPActions() {
+    synchronized (dlpLock) {
+      // loop in case we get cascades somehow (we don't seem to)
+      while (dlpas.size() > 0) {
+        // flip the map
+        HashMap pending = dlpas;
+        dlpas = dlpas1;
+        dlpas1 = pending;
+
+        // scan the pending map
+        for (Iterator i = pending.values().iterator(); i.hasNext(); ) {
+          DelayedLPAction dla = (DelayedLPAction) i.next();
+          try {
+            dla.execute(this);
+          } catch (RuntimeException re) {
+            System.err.println("DelayedLPAction "+dla+" threw: "+re);
+            re.printStackTrace();
+          }
+        }
+
+        // clear the pending queue before iterating.
+        pending.clear();
+      }
+    }
+  }
+  
+  public void delayLPAction(DelayedLPAction dla) {
+    synchronized (dlpLock) {
+      DelayedLPAction old = (DelayedLPAction) dlpas.get(dla);
+      if (old != null) {
+        old.merge(dla);
+      } else {
+        dlpas.put(dla,dla);
+      }
+    }
+  }
+
+
 }

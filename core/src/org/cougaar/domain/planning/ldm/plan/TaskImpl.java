@@ -111,13 +111,14 @@ public class TaskImpl extends DirectiveImpl
     if (phrases == null || preposition == null)
       return null;
 
-    preposition = preposition.intern(); // so we can use == below
+    //preposition = preposition.intern(); // so we can use == below
 
     int l = phrases.size();
     for (int i = 0; i<l; i++) {
       PrepositionalPhrase pp = (PrepositionalPhrase) phrases.get(i);
       String op = pp.getPreposition();
-      if (preposition==op) return pp;
+      //if (preposition==op) return pp;
+      if (preposition.equals(op)) return pp;
     }
     return null;
   }

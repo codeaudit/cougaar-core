@@ -1,3 +1,73 @@
+2001-05-04  Michael Thome  <mthome@bbn.com>
+
+	* RMIMessageTransport
+	Add a default-enabled setting org.cougaar.message.lazyLookup which
+	batches namespace lookups instead of having each destination queue
+	do the job.  This can dramatically reduce the number of threads
+	used in "cut down" societies, and is an expecially big win when
+	useNodeDelivery=true or fastTransport=true.
+
+2001-05-01  Michael Thome  <mthome@bbn.com>
+
+	* DBConnectionPool
+	Add additional debugging support when runtime-enabled.
+
+	* ScoringFunction
+	Cache Best points which had often been recomputed every time.
+
+	* RMINameServer
+	Implement a fast, RMI-less query path when the nameserver is in
+	the same VM.
+
+2001-04-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/util/TimeSpanSet.java:
+	Bug #373
+	Reimplement search as binary search to speed up insertions.
+
+	* org/cougaar/util/MoreMath.java:
+	Bug #372
+	New method: nearlyEqual compares two doubles for near equality.
+	Equality comparisons of doubles is instrinsically difficult
+	because of rounding. This methods checks the relative difference
+	between two doubles and their values. There are two versions, one
+	with a fixed tolerance of one part per billion and one with a
+	specifiable tolerance.
+
+2001-04-19  Michael Thome  <mthome@bbn.com>
+
+	* AllocationResultAggregator
+	Aggregate only results actually reported.  Actually has a
+	significantly lower memory load then before as well.
+	Fixes bug 322. 
+
+2001-04-16  Michael Thome  <mthome@bbn.com>
+
+	* LogPlan, Distributor, etc
+	Added functionality to allow LPs to delay execution of a body of
+	code until the end of the LP transaction.  The most important use
+	of this is to "roll up" redundant operations into fewer
+	operations).
+
+2001-04-13  Michael Thome  <mthome@bbn.com>
+
+	* Bootstrapper
+	Add support for org.cougaar.core.society.bootstrapper.loud={false,true,shout}.
+	false, the default, leaves behavior untouched.  true dumps the
+	ordered list of jar,zip,directorys searched by the classloader at
+	startup time. shout additionally lists the file used to load every
+	class loaded by the bootstrap classloader. (bug 299)
+
+2001-04-12  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/domain/planning/ldm/lps/RescindLP.java:
+	Suppress DeferredRescind failed message. This is innocuous and
+	happens when a TaskRescind is repeated as part of rehydration
+	recovery.
+	Force remove of plan element added after its task has been
+	rescinded. Because of timing issues, the plan element may not be
+	in the PlanElementSet, but may need to be removed anyway.
+
 2001-04-12  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/domain/planning/ldm/lps/RescindLP.java:
@@ -47,6 +117,11 @@
 	* version.def
 	Bump version 8.0, even though we are still officially only at
 	7.3. 
+
+2001-03-26  Michael Thome  <mthome@bbn.com>
+
+	* version.def
+	Bump version to 7.2.0.
 
 2001-03-22  Michael Thome  <mthome@bbn.com>
 

@@ -1,3 +1,32 @@
+2001-05-01  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* util/PlugInHelper.java:
+	Update allocation results only when the change reports include a
+	PlanElementImpl.ReportedResultChangeReport instance. This should
+	be the only case in which it is necessary to update the estimated
+	result. A new method, checkChangeReports, checks a set of reports
+	for an instance of a given class. Used by the above, but available
+	for plugins to use, too.
+
+2001-04-30  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* util/AllocationResultHelper.java: Reuse newResult list instead
+	creating a new one for each change. This is a major memory hog and
+	reduces performance considerably.
+
+2001-04-06  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* util/PlugInHelper.java:
+	Applies Bug #196
+	Use isEqual instead of == to compare allocation results. Reduces
+	extraneous plugin activation.
+
+	* util/AllocationResultHelper.java:
+	Applies Bug #196
+	Fix reconcialition of task preferences with phased results. The
+	preferences are not necessarily in the same order as the
+	allocation results.
+
 2001-04-03  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* util/PlugInHelper.java:

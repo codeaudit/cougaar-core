@@ -21,23 +21,33 @@ import java.security.cert.*;
 
 /**
  * A bootstrapping launcher, in particular, for a node.
- *
+ * <p>
  * Figures out right classpath, creates a new classloader and 
  * then invokes the usual static main method on the specified class
  * (using the new classloader).
- *
+ * <p>
  * Main job is to search for jar files, building up a collection
  * of paths to give to a special NodeClassLoader so that we don't
  * have to maintain many different script files.
- *
+ * <p>
+ * <pre>
  * The following locations are examined, in order:
  *  -Dorg.cougaar.class.path=...	(like a classpath)
  *  $CLASSPATH
+<<<<<<<<<<<<<< variant A
  *  $COUGAAR_INSTALL_PATH/lib/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/plugins/*.{jar,zip,plugin}
  *  -Dorg.cougaar.system.path=whatever/*.{jar,zip,plugin}
  *  $COUGAAR_INSTALL_PATH/sys/*.{jar,zip,plugin} 
  *
+>>>>>>>>>>>>>> variant B
+ *  $ALP_INSTALL_PATH/lib/*.{jar,zip,plugin}
+ *  $ALP_INSTALL_PATH/plugins/*.{jar,zip,plugin}
+ *  -Dalp.system.path=whatever/*.{jar,zip,plugin}
+ *  $ALP_INSTALL_PATH/sys/*.{jar,zip,plugin} 
+ * </pre>
+ * <p>
+======= end of combination
  * As an added bonus, Bootstrapper may be run as an application
  * which takes the fully-qualified class name of the class to run
  * as the first argument.  All other arguments are passed
@@ -50,9 +60,37 @@ import java.security.cert.*;
  * list may be extended by supplying a -Dorg.cougaar.core.society.bootstrapper.exclusions=foo.:bar.
  * System property.  The value of the property should be a list of 
  * package prefixes separated by colon (":") characters.
+ * <p>
+ * A common problem is the attempt to use "patch" jar files to repair a few 
+ * classes of some much larger archive.  There are two problems with this
+ * use pattern: (1) the order that Bootstrapper will find jar files in a
+ * directory is undefined - there is no guarantee that the patch will take
+ * precedence over the original.  Also, (2) classloaders will refuse to
+ * load classes of a given package from multiple jar files - if the patch jar
+ * does not contain the whole package, the classloader will likely be
+ * unable to load the rest of the classes.  Both problems tend to 
+ * crop up when you can least afford this confusion.
+ * <p>
+ * The System property <em>org.cougaar.core.society.bootstrapper.loud</em> 
+ * controls debugging output of the bootstrapping classloader.  When set to
+ * "true" will output the list of jar/zip files used to load classes (in order).
+ * When set to "shout" will additionally print the location of the jar/zip file
+ * used to load each and every class.
  **/
 public class Bootstrapper
 {
+  private static int loudness = 0;
+  static {
+    String s = System.getProperty("org.cougaar.core.society.bootstrapper.loud");
+    if ("true".equals(s)) {
+      loudness = 1;
+    } else if ("shout".equals(s)) {
+      loudness = 2;
+    } else if ("false".equals(s)) {
+      loudness = 0;
+    }
+  }
+
   private static boolean isBootstrapped = false;
 
   public static void main(String[] args) {
@@ -225,6 +263,16 @@ public class Bootstrapper
 
     public BootstrapClassLoader(URL urls[]) {
       super(urls);
+      if (loudness>0) {
+        synchronized(System.err) {
+          System.err.println();
+          System.err.println("Bootstrapper URLs: ");
+          for (int i=0; i<urls.length; i++) {
+            System.err.println("\t"+urls[i]);
+          }
+          System.err.println();
+        }
+      }
     }
     protected synchronized Class loadClass(String name, boolean resolve)
       throws ClassNotFoundException
@@ -248,6 +296,15 @@ public class Bootstrapper
           ClassLoader parent = getParent();
           if (parent == null) parent = getSystemClassLoader();
           c = parent.loadClass(name);
+        }
+        if (loudness>1 && c != null) {
+          java.security.ProtectionDomain pd = c.getProtectionDomain();
+          if (pd != null) {
+            java.security.CodeSource cs = pd.getCodeSource();
+            if (cs != null) {
+              System.err.println("BCL: "+c+" loaded from "+cs.getLocation());
+            }
+          }
         }
       }
       if (resolve) {

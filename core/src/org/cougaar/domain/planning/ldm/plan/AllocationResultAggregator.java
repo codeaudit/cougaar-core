@@ -10,8 +10,7 @@
 
 package org.cougaar.domain.planning.ldm.plan;
 
-import java.util.Vector;
-import java.util.Enumeration;
+import java.util.*;
 
 /** AllocationResultAggregator is a class which specifies how allocationresults
  * should be aggregated.  Currenlty used by Workflow.computeAllocationResult
@@ -19,7 +18,7 @@ import java.util.Enumeration;
  **/
 
 public interface AllocationResultAggregator 
-  extends AspectType // for Constants
+  extends java.io.Serializable, AspectType // for Constants
 {
   public static final double SIGNIFICANT_CONFIDENCE_RATING_DELTA = 0.0001;
   
@@ -90,6 +89,8 @@ public interface AllocationResultAggregator
       acc[TOTAL_SHIPMENTS] = 0.0;
       acc[CUSTOMER_SATISFACTION] = 1.0; // start at best
 
+      boolean ap[] = new boolean[AspectType._ASPECT_COUNT];
+
       boolean suc = true;
       double rating = 0.0;
       
@@ -104,6 +105,7 @@ public interface AllocationResultAggregator
         auxqsummary[aqs] = UNDEFINED;
       }
 
+      int hash = 0;
       for (int i = 0; i < tstSize; i++) {
         Task t = tst.getTask(i);
         AllocationResult ar = tst.getAllocationResult(i);
@@ -117,28 +119,58 @@ public interface AllocationResultAggregator
         for (int b = 0; b < al; b++) {
           // accumulate the values for the defined aspects
           switch (definedaspects[b]) {
-          case START_TIME: acc[START_TIME] = Math.min(acc[START_TIME], ar.getValue(START_TIME));
+          case START_TIME:
+            acc[START_TIME] = Math.min(acc[START_TIME], ar.getValue(START_TIME));
+            ap[START_TIME] = true;
+            hash |= (1<<START_TIME);
             break;
-          case END_TIME: acc[END_TIME] = Math.max(acc[END_TIME], ar.getValue(END_TIME));
+          case END_TIME: 
+            acc[END_TIME] = Math.max(acc[END_TIME], ar.getValue(END_TIME));
+            ap[END_TIME] = true;
+            hash |= (1<<END_TIME);
             break;
             // compute duration later
-          case COST: acc[COST] += ar.getValue(COST);
+          case COST: 
+            acc[COST] += ar.getValue(COST);
+            ap[COST] = true;
+            hash |= (1<<COST);
             break;
-          case DANGER: acc[DANGER] = Math.max(acc[DANGER], ar.getValue(DANGER));
+          case DANGER:
+            acc[DANGER] = Math.max(acc[DANGER], ar.getValue(DANGER));
+            ap[DANGER] = true;
+            hash |= (1<<DANGER);
             break;
-          case RISK: acc[RISK] = Math.max(acc[RISK], ar.getValue(RISK));
+          case RISK: 
+            acc[RISK] = Math.max(acc[RISK], ar.getValue(RISK));
+            ap[RISK] = true;
+            hash |= (1<<RISK);
             break;
-          case QUANTITY: acc[QUANTITY] += ar.getValue(QUANTITY);
+          case QUANTITY:
+            acc[QUANTITY] += ar.getValue(QUANTITY);
+            ap[QUANTITY] = true;
+            hash |= (1<<QUANTITY);
             break;
             // for now simply add the repetitve task values
-          case INTERVAL: acc[INTERVAL] += ar.getValue(INTERVAL);
+          case INTERVAL: 
+            acc[INTERVAL] += ar.getValue(INTERVAL);
+            ap[INTERVAL] = true;
+            hash |= (1<<INTERVAL);
             break;
-          case TOTAL_QUANTITY: acc[TOTAL_QUANTITY] += ar.getValue(TOTAL_QUANTITY);
+          case TOTAL_QUANTITY: 
+            acc[TOTAL_QUANTITY] += ar.getValue(TOTAL_QUANTITY);
+            ap[TOTAL_QUANTITY] = true;
+            hash |= (1<<TOTAL_QUANTITY);
             break;
-          case TOTAL_SHIPMENTS: acc[TOTAL_SHIPMENTS] += ar.getValue(TOTAL_SHIPMENTS);
+          case TOTAL_SHIPMENTS:
+            acc[TOTAL_SHIPMENTS] += ar.getValue(TOTAL_SHIPMENTS);
+            ap[TOTAL_SHIPMENTS] = true;
+            hash |= (1<<TOTAL_SHIPMENTS);
             break;
             //end of repetitive task specific aspects
-          case CUSTOMER_SATISFACTION: acc[CUSTOMER_SATISFACTION] += ar.getValue(CUSTOMER_SATISFACTION);
+          case CUSTOMER_SATISFACTION:
+            acc[CUSTOMER_SATISFACTION] += ar.getValue(CUSTOMER_SATISFACTION);
+            ap[CUSTOMER_SATISFACTION] = true;
+            hash |= (1<<CUSTOMER_SATISFACTION);
             break;
           }
         }
@@ -166,18 +198,23 @@ public interface AllocationResultAggregator
 
       } // end of looping through all subtasks
       
-      acc[DURATION] = acc[END_TIME] - acc[START_TIME];
-      acc[CUSTOMER_SATISFACTION] /= tstSize;
+      // compute duration IFF defined.
+      if (ap[START_TIME] && ap[END_TIME]) {
+        acc[DURATION] = acc[END_TIME] - acc[START_TIME];
+        ap[DURATION] = true;
+        hash |= (1<<DURATION);
+      } else {
+        // redundant
+        acc[DURATION] = 0.0;
+        ap[DURATION] = false;
+      }
 
-      rating /= tstSize;
+      if (tstSize>0) {
+        acc[CUSTOMER_SATISFACTION] /= tstSize;
+        rating /= tstSize;
+      }
 
       boolean delta = false;
-      //for (int i = 0; i <= _LAST_ASPECT; i++) {
-        //if (acc[i] != currentar.getValue(i)) {
-          //delta = true;
-          //break;
-        //}
-      //}
       
       // only check the defined aspects and make sure that the currentar is not null
       if (currentar == null) {
@@ -192,7 +229,7 @@ public interface AllocationResultAggregator
           int il = caraspects.length;
           for (int i = 0; i < il; i++) {
             int da = caraspects[i];
-            if (acc[da] != currentar.getValue(da)) {
+            if (ap[da] && acc[da] != currentar.getValue(da)) {
               delta = true;
               break;
             }
@@ -209,7 +246,71 @@ public interface AllocationResultAggregator
       }
 
       if (delta) {
-        AllocationResult artoreturn = new AllocationResult(rating, suc, _STANDARD_ASPECTS, acc);
+        int keys[] = _STANDARD_ASPECTS;
+        int al = AspectType._ASPECT_COUNT;
+
+        // see if we should compress the results array
+        int lc = 0;
+        for (int b = 0; b < al; b++) {
+          if (ap[b]) lc++;
+        }
+      
+        if (lc < al) {            // need to compress the arrays
+          double nv[] = new double[lc];
+
+          // slow, big, general case
+          /*
+          {
+            int nk[] = new int[lc];
+            int i = 0;
+            for (int b = 0; b<al; b++) {
+              if (ap[b]) {
+                nv[i] = acc[b];
+                nk[i] = keys[b];
+                i++;
+              }
+            }
+            acc = nv;
+            keys = nk;
+          }
+          */
+
+          // lazy cache the key patterns
+          synchronized (hack) {
+            Integer ihash = new Integer(hash);
+            KeyHolder kh = (KeyHolder) hack.get(ihash);
+            if (kh == null) {
+              //System.err.println("Caching key "+hash);
+              int nk[] = new int[lc];
+              int i = 0;
+              for (int b = 0; b<al; b++) {
+                if (ap[b]) {
+                  nv[i] = acc[b];
+                  nk[i] = keys[b];
+                  i++;
+                }
+              }
+              acc = nv;
+              keys = nk;
+              kh = new KeyHolder(nk);
+              hack.put(ihash,kh);
+            } else {
+              keys = kh.keys;
+              int i = 0;
+              for (int b = 0; b<al; b++) {
+                if (ap[b]) {
+                  nv[i] = acc[b];
+                  i++;
+                }
+              }
+              acc = nv;
+            }
+          }
+
+        }
+
+        AllocationResult artoreturn = new AllocationResult(rating, suc, keys, acc);
+
         int aqll = auxqsummary.length;
         for (int aqt = 0; aqt < aql; aqt++) {
           String aqdata = auxqsummary[aqt];
@@ -221,6 +322,19 @@ public interface AllocationResultAggregator
       } else {
         return currentar;
       }
+    }
+  }
+
+  static final int[] K02 = new int[] {0,2};
+  static final int[] K012 = new int[] {0,1,2};
+  static final int[] K0126 = new int[] {0,1,2,6};
+
+  static final HashMap hack = new HashMap();
+  
+  static final class KeyHolder {
+    int[] keys;
+    KeyHolder(int keys[]) {
+      this.keys = keys;
     }
   }
 }

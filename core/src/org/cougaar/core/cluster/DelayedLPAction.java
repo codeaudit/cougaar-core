@@ -1,0 +1,22 @@
+/*
+ * <copyright>
+ *  Copyright 2001 Defense Advanced Research Projects
+ *  Agency (DARPA) and ALPINE (a BBN Technologies (BBN) and
+ *  Raytheon Systems Company (RSC) Consortium).
+ *  This software to be used only in accordance with the
+ *  COUGAAR licence agreement.
+ * </copyright>
+ */
+
+package org.cougaar.core.cluster;
+
+public interface DelayedLPAction
+{
+  /** Called when it is finally time to execute the delayed action **/
+  void execute(LogPlanServesLogicProvider logplan);
+  
+  /** Merge a second (equals) LPAction into this one. **/
+  void merge(DelayedLPAction other);
+
+  // also hashcode and equals should be properly implemented.
+}
