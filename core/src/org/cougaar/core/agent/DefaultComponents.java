@@ -277,8 +277,8 @@ abstract class DefaultComponents {
           new String[] {
             //("name=Node "+nodeName),
             "isRoot=true",
-            "BestEffortAbsCapacity=300",
-            "WillBlockAbsCapacity=30",
+            "BestEffortAbsCapacity=30",
+            "WillBlockAbsCapacity=300",
             "CpuIntenseAbsCapacity=2",
             "WellBehavedAbsCapacity=2",
           }),
