@@ -29,6 +29,11 @@ package org.cougaar.core.thread;
 import java.util.Timer;
 import java.util.TimerTask;
 
+/**
+ * This implementation of @link Schedulable is used by the
+ * trivial @link ThreadService, which has no queueing and always runs
+ * threads immediately.
+ */
 class TrivialSchedulable implements Schedulable
 {
     private Object consumer;

@@ -32,6 +32,10 @@ import java.util.Timer;
 
 import org.cougaar.core.service.ThreadService;
 
+/**
+ * This class is used to represent the hierarchy of the standard
+ * layered {@link ThreadService}.  
+ */
 final class TreeNode
 {
     private static Timer timer;

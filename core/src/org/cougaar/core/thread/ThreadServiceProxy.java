@@ -29,7 +29,7 @@ package org.cougaar.core.thread;
 import org.cougaar.core.service.ThreadService;
 
 /**
- * The proxy implementation of Thread Service.
+ * The default implementation of {@link ThreadService}.
  */
 final class ThreadServiceProxy 	implements ThreadService
 {

@@ -32,6 +32,11 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 
+/**
+ * A simple pool of Java threads, used by the trivial @link
+ * ThreadService.   The pool can grown without bounds, since there are
+ * no limits on the number of concurrent threads.
+ */
 class TrivialThreadPool
 {
     private static TrivialThreadPool singleton = new TrivialThreadPool();

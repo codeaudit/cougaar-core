@@ -33,10 +33,21 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
 
 /**
- * This component creates the "/threads/top" servlet which displays
- * the state of COUGAAR ThreadService threads (Schedulables) in a way
- * that's vaguely remniscent of the unix 'top' command.
+ * This component is used to create the {@link TopServlet}, which it
+ * will do unless the "servlet" parameter is set to "false", and the
+ * {@link RogueThreadDetector}, which it will do unless the "detector"
+ * parameter is set to "false".  
  * 
+ * The period of the @link RogueThreadDetector defaults to 5000 and
+ * can be set to some other value with the "period" value.  It will
+ * run as a TimerTask in a native @link Timer, rather than using
+ * the {@link ThreadService}.
+ *
+ * As if that weren't enough, it can also be used for yet another
+ * purpose, to run a test of the @link RogueThreadDetector, which it
+ * exercises by running a Schedulable that intentionally runs for too
+ * long.  To enable this test, set the "test" parameter to "true".
+ *
  * This is designed to be a Node-level plugin.
  */
 public class TopPlugin extends ParameterizedComponent // not a Plugin

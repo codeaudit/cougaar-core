@@ -44,7 +44,9 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * The ServiceProvider for ThreadService and ThreadControlService.
+ * This component is the @link ServiceProvider for the {@link
+ * ThreadService}, {@link ThreadControlService}, {@link
+ * ThreadListenerService}, and {@link ThreadStatusService}.
  *
  */
 public final class ThreadServiceProvider 

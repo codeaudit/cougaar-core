@@ -33,6 +33,11 @@ import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
+/**
+ * A pool of native Java threads used by the standard implementation
+ * of the {@link ThreadService}.  By default this pool has a fixed
+ * size.  
+ */
 class ThreadPool 
 {
     

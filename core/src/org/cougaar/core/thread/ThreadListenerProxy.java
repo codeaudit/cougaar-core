@@ -31,7 +31,7 @@ import java.util.ArrayList;
 import org.cougaar.core.service.ThreadListenerService;
 
 /**
- * Proxy for ThreadListenerService
+ * Implementation of {@link ThreadListenerService}.
  */
 final class ThreadListenerProxy implements ThreadListenerService
 {

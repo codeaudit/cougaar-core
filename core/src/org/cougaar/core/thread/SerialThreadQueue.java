@@ -26,8 +26,7 @@ import org.cougaar.util.CircularQueue;
 /**
  * The simplest thread service implementation, which runs its {@link
  * Schedulable}s serially, uses this utility class to hold a set of {@link
- * Schedulable}s in proper sequence. Each @link SerialThreadRunner has
- * its own queue.
+ * Schedulable}s in proper sequence.
  */
 final class SerialThreadQueue
 {

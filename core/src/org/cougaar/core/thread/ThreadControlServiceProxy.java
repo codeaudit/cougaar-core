@@ -31,6 +31,11 @@ import java.util.Comparator;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.UnaryPredicate;
 
+/**
+ * The implementation of {@link ThreadControlService}.  Most of the
+ * real work happens in the @link TreeNode or the @link Schedulable
+ * for the corresponding {@link ThreadService}.
+ */
 class ThreadControlServiceProxy
     implements ThreadControlService
 {
