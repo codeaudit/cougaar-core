@@ -23,8 +23,12 @@ package org.cougaar.core.examples;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.component.*;
-import org.cougaar.core.cluster.*;
-import org.cougaar.core.cluster.persist.*;
+import org.cougaar.core.agent.*;
+import org.cougaar.core.domain.*;
+import org.cougaar.core.blackboard.*;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.persist.*;
 import org.cougaar.core.blackboard.*;
 import org.cougaar.core.plugin.PluginManagerForBinder;
 
@@ -184,7 +188,7 @@ public class PluginServiceFilter
     public boolean shouldBePersisted() {
       return bs.shouldBePersisted();
     }
-    public void persistNow() throws org.cougaar.core.cluster.persist.PersistenceNotEnabledException {
+    public void persistNow() throws org.cougaar.core.persist.PersistenceNotEnabledException {
       bs.persistNow();
     }
     public boolean didRehydrate() {

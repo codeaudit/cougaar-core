@@ -49,7 +49,7 @@ endif
 
 # domains are now usually defined by the config file LDMDomains.ini.
 # But you may still use properties if you wish.
-#set MYDOMAINS="-Dorg.cougaar.domain.alp=org.cougaar.domain.glm.GLMDomain"
+#set MYDOMAINS="-Dorg.cougaar.domain.alp=org.cougaar.glm.GLMDomain"
 set MYDOMAINS=""
 set MYPROPERTIES="$MYDOMAINS -Dorg.cougaar.install.path=$COUGAAR_INSTALL_PATH -Duser.timezone=GMT"
 set MYMEMORY=""
@@ -92,12 +92,12 @@ endif
 set javaargs="-Dorg.cougaar.core.cluster.persistence.enable=true -Xbootclasspath:$COUGAAR_INSTALL_PATH/lib/javaiopatch.jar:$JDK_INSTALL_PATH/jre/lib/rt.jar $osargs $MYPROPERTIES $MYMEMORY -classpath $LIBPATHS"
 
 if ($?COUGAAR_DEV_PATH) then
-    echo java $javaargs org.cougaar.core.society.Node $args
+    echo java $javaargs org.cougaar.core.node.Node $args
 endif
 
 
 # exec instead of eval
-exec java $javaargs org.cougaar.core.society.Node $args
+exec java $javaargs org.cougaar.core.node.Node $args
 
 
 

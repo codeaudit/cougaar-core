@@ -28,22 +28,22 @@ package org.cougaar.core.examples;
 
   import org.cougaar.core.plugin.ComponentPlugin;
 
-  import org.cougaar.core.blackboard.BlackboardMetricsService;
+  import org.cougaar.core.service.BlackboardMetricsService;
 
-  import org.cougaar.core.mts.MessageStatisticsService;
-  import org.cougaar.core.mts.MessageWatcherService;
+  import org.cougaar.core.service.MessageStatisticsService;
+  import org.cougaar.core.service.MessageWatcherService;
   import org.cougaar.core.mts.MessageTransportWatcher;
 
-  import org.cougaar.core.society.NodeMetricsService;
-  import org.cougaar.core.society.MessageStatistics.Statistics;
-  import org.cougaar.core.society.MessageAddress;
-  import org.cougaar.core.society.Message;
+  import org.cougaar.core.service.NodeMetricsService;
+  import org.cougaar.core.mts.MessageStatistics.Statistics;
+  import org.cougaar.core.mts.MessageAddress;
+  import org.cougaar.core.mts.Message;
 
-  import org.cougaar.domain.planning.ldm.PrototypeRegistryService;
-  import org.cougaar.domain.planning.ldm.plan.Notification;
-  import org.cougaar.domain.planning.ldm.plan.Directive;
+  import org.cougaar.core.service.PrototypeRegistryService;
+  import org.cougaar.planning.ldm.plan.Notification;
+  import org.cougaar.planning.ldm.plan.Directive;
 
-  import org.cougaar.core.cluster.DirectiveMessage;
+  import org.cougaar.core.blackboard.DirectiveMessage;
 
   import org.cougaar.core.component.ServiceRevokedListener;
   import org.cougaar.core.component.ServiceRevokedEvent;

@@ -24,7 +24,7 @@ package org.cougaar.core.examples;
 
 import java.sql.*;
 import java.util.*;
-import org.cougaar.domain.planning.ldm.asset.*;
+import org.cougaar.planning.ldm.asset.*;
 
 // Simple plugin to read a JDBC datasource
 // and create instances of specified prototypes

@@ -28,8 +28,8 @@ import java.net.MalformedURLException;
 import java.util.*;
 import javax.swing.*;
 
-import org.cougaar.domain.planning.ldm.plan.*;
-import org.cougaar.domain.planning.ldm.asset.*;
+import org.cougaar.planning.ldm.plan.*;
+import org.cougaar.planning.ldm.asset.*;
 
 public class AlertCreatorPlugIn extends org.cougaar.core.plugin.SimplePlugIn 
 {

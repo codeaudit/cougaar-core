@@ -21,8 +21,8 @@
  
 package org.cougaar.core.examples;
 
-import org.cougaar.domain.planning.ldm.plan.*;
-import org.cougaar.domain.planning.ldm.asset.*;
+import org.cougaar.planning.ldm.plan.*;
+import org.cougaar.planning.ldm.asset.*;
 import java.util.*;
 import java.awt.event.*;
 import java.awt.*;

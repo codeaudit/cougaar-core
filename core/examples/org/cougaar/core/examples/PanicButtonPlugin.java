@@ -29,16 +29,16 @@ import java.awt.BorderLayout;
 
 import org.cougaar.core.plugin.ComponentPlugin;
 
-import org.cougaar.core.society.Message;
-import org.cougaar.core.society.MessageAddress;
-import org.cougaar.core.society.MulticastMessageAddress;
-import org.cougaar.core.society.NodeTrustPolicy;
-import org.cougaar.core.society.PolicyMulticastMessage;
+import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MulticastMessageAddress;
+import org.cougaar.core.node.NodeTrustPolicy;
+import org.cougaar.core.node.PolicyMulticastMessage;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.MessageTransportService;
+import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.ServiceRevokedEvent;
-import org.cougaar.domain.planning.ldm.DomainService;
+import org.cougaar.core.service.DomainService;
 
 public class PanicButtonPlugin
   extends ComponentPlugin implements MessageTransportClient
@@ -195,7 +195,7 @@ public class PanicButtonPlugin
     trustpolicy.setTrustLevel(trustlevel);
     //create a message to contain the trust policy
     MulticastMessageAddress dest = 
-      new MulticastMessageAddress(org.cougaar.core.society.NodePolicyWatcher.class);
+      new MulticastMessageAddress(org.cougaar.core.node.NodePolicyWatcher.class);
     PolicyMulticastMessage policymsg = 
       new PolicyMulticastMessage(getMessageAddress(), dest, trustpolicy);
     messageTransService.sendMessage(policymsg);

@@ -21,10 +21,10 @@ package org.cougaar.core.examples;
  * </copyright>
  */
 
-import org.cougaar.core.cluster.IncrementalSubscription;
-import org.cougaar.core.cluster.PlanElementSet; 
-import org.cougaar.domain.planning.ldm.plan.*;
-import org.cougaar.domain.planning.ldm.asset.Asset;
+import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.PlanElementSet; 
+import org.cougaar.planning.ldm.plan.*;
+import org.cougaar.planning.ldm.asset.Asset;
 import org.cougaar.util.UnaryPredicate;
 import java.util.Enumeration;
 import java.util.Vector;
