@@ -40,7 +40,8 @@ public class PluginManagerBinderFactory extends BinderFactorySupport
    * the child component or null.
    **/
   public Binder bindChild(Class binderClass, Object child) {
-    Agent agent = (Agent) getParentComponent();
+    //Agent agent = (Agent) getParentComponent();
+    Agent agent = (Agent) getBindingSite();
     try {
       Constructor constructor = binderClass.getConstructor(new Class[]{Object.class, Component.class});
       Binder binder = (Binder) constructor.newInstance(new Object[] {agent, child});

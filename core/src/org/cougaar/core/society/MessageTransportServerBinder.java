@@ -1,6 +1,7 @@
 package org.cougaar.core.society;
 
 import org.cougaar.core.component.BinderSupport;
+import org.cougaar.core.component.BinderFactory;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.Component;
@@ -11,10 +12,9 @@ public class MessageTransportServerBinder
     extends BinderSupport
     implements MessageTransportServerBindingSite
 {
-    public MessageTransportServerBinder(Object container,
-					Component child)
+    public MessageTransportServerBinder(BinderFactory bf, Object child)
     {
-	super((ContainerAPI) container, child);
+      super(bf, child);
     }
 
     public void deliverMessage(Message m) {

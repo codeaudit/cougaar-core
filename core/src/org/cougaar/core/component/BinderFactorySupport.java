@@ -20,17 +20,14 @@ import java.lang.reflect.*;
  * <p>
  * The default implementation does not implement setParameter or request any services.
  **/
-public abstract class BinderFactorySupport implements BinderFactory
+public abstract class BinderFactorySupport 
+  extends org.cougaar.util.GenericStateModelAdapter
+  implements BinderFactory
 {
 
-  private Object parentComponent = null;
-  public final void setParentComponent(Object parent) {
-    this.parentComponent = parent;
-  }
-  /** get a handle on the parent component/container of this BinderFactory **/
-  protected final Object getParentComponent() {
-    return parentComponent;
-  }
+  private BindingSite parentComponent = null;
+  public void setBindingSite(BindingSite bs) { parentComponent = bs; }
+  protected final BindingSite getBindingSite() { return parentComponent; }
 
   // 
   /** Override to choose the class of the Binder to use.
@@ -56,10 +53,9 @@ public abstract class BinderFactorySupport implements BinderFactory
    * the child component or null.
    **/
   protected Binder bindChild(Class binderClass, Object child) {
-    ContainerAPI pi = (ContainerAPI) getParentComponent();
     try {
-      Constructor constructor = binderClass.getConstructor(new Class[]{Object.class, Component.class});
-      Binder binder = (Binder) constructor.newInstance(new Object[] {pi, child});
+      Constructor constructor = binderClass.getConstructor(new Class[]{BinderFactory.class, Object.class});
+      Binder binder = (Binder) constructor.newInstance(new Object[] {this, child});
       return binder;
     } catch (Exception e) {
       e.printStackTrace();
@@ -84,5 +80,13 @@ public abstract class BinderFactorySupport implements BinderFactory
     if (bc == null) return null;
 
     return bindChild(bc, child);
+  }
+
+  /** Provide a default ComponentFactory instance.  This implementation
+   * simply returns a default ComponentFactory static instance.  It should <em>not</em>
+   * return a new instance each time.
+   **/
+  public ComponentFactory getComponentFactory() {
+    return ComponentFactory.getInstance();
   }
 }

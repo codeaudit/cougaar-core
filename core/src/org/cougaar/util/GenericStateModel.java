@@ -15,7 +15,7 @@ package org.cougaar.util;
  *  clusters, components and plugins.
  *
  * @author  ALPINE <alpine-software@bbn.com>
- * @version $Id: GenericStateModel.java,v 1.2 2001-04-05 19:27:26 mthome Exp $
+ * @version $Id: GenericStateModel.java,v 1.3 2001-07-23 19:12:50 mthome Exp $
  */
 
 public interface GenericStateModel {
@@ -32,20 +32,21 @@ public interface GenericStateModel {
   public static final int IDLE = 4;
 
   /** Initialize.  Transition object from undefined to UNLOADED state.
+   * Treat initialize() as an extended constructor.
    *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
    **/
 
   void initialize() throws StateModelException;
 
-  /** Notify object about its "parent"
+  /**
    *  Object should transition to the LOADED state.
-   *  Called object should check that caller is an instanceof
-   *  the appropriate class
-   *  @param o the "parent" object of the object being loaded
+   * After initialize and before load, an object in notified about its
+   * parents, services, etc.  After load, it should be ready to run (but not 
+   * actually running). 
    *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
    **/
 
-  void load(Object o) throws StateModelException;
+  void load() throws StateModelException;
 
   /** Called object should start any threads it requires.
    *  Called object should transition to the ACTIVE state.

@@ -11,8 +11,11 @@
 package org.cougaar.core.society;
 
 import org.cougaar.core.component.Component;
+import org.cougaar.util.GenericStateModelAdapter;
 
-public abstract class MessageTransport implements Component
+public abstract class MessageTransport 
+  extends GenericStateModelAdapter
+  implements Component
 {
     private MessageTransportServerBindingSite binder;
 

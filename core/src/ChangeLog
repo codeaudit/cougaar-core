@@ -1,3 +1,31 @@
+2001-07-23  Michael Thome  <mthome@bbn.com>
+
+	* GenericStateModel
+	load() no longer takes an argument.  PlugInAdapter keeps support
+	for one-argument load for backward compatability.
+
+	* BindingUtilities
+	A set of introspection-based utility methods for walking
+	components and Binders through their activation states.
+
+	* Binder
+	Standard binder constructors now take a different pattern of
+	arguments.  The first argument is the matching BinderFactory so
+	that the binder can have access to binderFactory facilities, if
+	desired. The second argument is the child as before.  Note that
+	Wrapping binders would take the second argument as a Binder
+	instead of Component.  The "parent" component is now set by
+	setBindingSite - hopefully, this will be setContainerAPI by the 8.3
+	release and retrieved by setContainerAPI. 
+
+	* org.cougaar.core.component.*
+	Binders are now responsible for construction of the Component the
+	bind, usually with the help of a binderfactory.  Better
+	conformance to the statemodel: binder chain is put together before
+	initialize,load,start is called, and these messages propagate down
+	the chain to keep proper nesting. 
+	
+
 2001-07-20  Michael Thome  <mthome@bbn.com>
 
 	* ServiceFilter, ServiceFilterBinder

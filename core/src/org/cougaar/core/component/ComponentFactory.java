@@ -31,6 +31,18 @@ public abstract class ComponentFactory
 
   private final static Class[] VO = new Class[]{Object.class};
 
+  /** Override to change how a class is constructed.  Should return 
+   * a Component in order for the rest of the default code to work.
+   **/
+  protected Object instantiateClass(Class cc) {
+    try {
+      return cc.newInstance();
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
   /** instantiate the class - override to check the class before instantiation. **/
   protected Component instantiateComponent(ComponentDescription desc, Class cc)
     throws ComponentFactoryException
@@ -65,5 +77,10 @@ public abstract class ComponentFactory
     throws ComponentFactoryException
   {
     return instantiateComponent(desc, loadClass(desc));
+  }
+
+  private static final ComponentFactory singleton = new ComponentFactory() {};
+  public static final ComponentFactory getInstance() {
+    return singleton;
   }
 }

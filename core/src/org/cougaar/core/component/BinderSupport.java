@@ -14,22 +14,74 @@ import java.lang.reflect.*;
 
 /** A Shell implementation of a Binder which does introspection-based
  * initialization and hooks for startup of the child component.
+ * <p>
+ * Note that the child is likely to still be a ComponentDescription object at
+ * Binder Construction time.
  **/
-public abstract class BinderSupport implements Binder
+public abstract class BinderSupport 
+  implements Binder
 {
+  private BinderFactory binderFactory;
   private ServiceBroker servicebroker;
   private ContainerAPI parent;
+  private ComponentDescription childD;
   private Component child;
 
-  protected BinderSupport(ContainerAPI parent, Component child) {
-    this.servicebroker = parent.getServiceBroker();
-    this.parent = parent;
-    this.child = child;
+  protected BinderSupport(BinderFactory bf, Object cd) {
+    binderFactory = bf;
+    attachChild(cd);
+  }
+
+  public void setBindingSite(BindingSite bs) {
+    if (bs instanceof ContainerAPI) {
+      parent = (ContainerAPI) bs;
+      servicebroker = parent.getServiceBroker();
+    } else {
+      throw new RuntimeException("Help: BindingSite of Binder not a ContainerAPI!");
+    }
+  }
+
+  protected void attachChild(Object cd) {
+    if (cd instanceof ComponentDescription) {
+      childD = (ComponentDescription) cd;
+      child = null;
+    } else if (cd instanceof Component) {
+      childD = null;
+      child = (Component) cd;
+    } else {
+      throw new IllegalArgumentException("Child is neither a ComponentDescription nor a Component: "+cd);
+    }
+  }
+
+  protected ComponentFactory getComponentFactory() {
+    if (binderFactory != null) {
+      return binderFactory.getComponentFactory();
+    } else {
+      throw new RuntimeException("No ComponentFactory");
+    }
+  }
+
+  protected Component constructChild() {
+    if (child != null) return child;
+    ComponentFactory cf = getComponentFactory();
+    if (cf == null) {
+      throw new RuntimeException("No ComponentFactory, so cannot construct child component!");
+    }
+    if (childD == null) {
+      throw new RuntimeException("No valid ComponentDescription.");
+    }
+      
+    try {
+      return cf.createComponent(childD);
+    } catch (ComponentFactoryException cfe) {
+      cfe.printStackTrace();
+      throw new RuntimeException("Failed to construct child: "+cfe);
+    }
   }
 
   public ServiceBroker getServiceBroker() { return servicebroker; }
   public void requestStop() { 
-    parent.remove(child);
+    if (child != null) parent.remove(child);
   }
   protected final ContainerAPI getContainer() {
     return parent;
@@ -49,6 +101,19 @@ public abstract class BinderSupport implements Binder
   // child services initialization
   //
   
+  public void initialize() {
+    if (child == null) {
+      child = constructChild();
+    }
+    initializeChild();
+  }
+  public void load() {
+    child.load();
+  }
+  public void start() {
+    child.start();
+  }
+
   /** Call (once) from subclass
    * to hook up all the requested services for the child component.
    * <p>
@@ -68,87 +133,18 @@ public abstract class BinderSupport implements Binder
    * child.initialize() method will call back into the services api.
    */
   protected void initializeChild() {
-    Class childClass = child.getClass();
-
     BindingSite proxy = getBinderProxy();
-    try {
-      Method m = childClass.getMethod("setBindingSite", new Class[]{BindingSite.class});
-      if (m != null) {          // use a non-throwing variation in the future
-        m.invoke(child, new Object[]{proxy});
-      } 
-    } catch (Exception e) {
-      //e.printStackTrace();
-      // ignore - maybe they'll use initialize(BindingSite) or maybe they don't
-      // care.
-    }
-
+    BindingUtility.setBindingSite(child, proxy);
     if (servicebroker != null) {
-      try {
-        Method[] methods = childClass.getMethods();
-
-        int l = methods.length;
-        for (int i=0; i<l; i++) { // look at all the methods
-          Method m = methods[i];
-          String s = m.getName();
-          if ("setBindingSite".equals(s)) continue;
-          Class[] params = m.getParameterTypes();
-          if (s.startsWith("set") &&
-              params.length == 1) {
-            Class p = params[0];
-            if (Service.class.isAssignableFrom(p)) {
-              String pname = p.getName();
-              {                     // trim the package off the classname
-                int dot = pname.lastIndexOf(".");
-                if (dot>-1) pname = pname.substring(dot+1);
-              }
-            
-              if (s.endsWith(pname)) {
-                // ok: m is a "public setX(X)" method where X is a Service.
-                // Let's try getting the service...
-                Object service = servicebroker.getService(child, p, null);
-                Object[] args = new Object[] { service };
-                try {
-                  m.invoke(child, args);
-                } catch (InvocationTargetException ite) {
-                  ite.printStackTrace();
-                }
-              }
-            }
-          }
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new RuntimeException(e.toString());
-      }
+      BindingUtility.setServices(child, servicebroker);
     }
+    child.initialize();
+  }    
 
-    // now call child.initialize, if there.
-    try {
-      Method init = null;
-      try {
-        init = childClass.getMethod("initialize", new Class[]{BindingSite.class});
-      } catch (NoSuchMethodException e1) { }
-      if (init != null) {
-        init.invoke(child, new Object[] {proxy});
-        // bail out!
-        return;                 
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
-      // no initialize(Binder - oh well, fall through.
-    }
-
-    try {
-      Method init = null;
-      try {
-        init = childClass.getMethod("initialize", null);
-      } catch (NoSuchMethodException e1) { }
-      if (init != null) {
-        init.invoke(child, new Object[] {});
-      }
-    } catch (Exception e) {
-      // no initialize!  strange, but maybe it doesn't need it.
-    }
-    // all done.
+  public String toString() {
+    String s = this.getClass().toString();
+    int i = s.lastIndexOf(".");
+    return s.substring(i+1);
   }
+
 }

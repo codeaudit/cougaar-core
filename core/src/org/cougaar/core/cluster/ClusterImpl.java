@@ -184,6 +184,7 @@ public class ClusterImpl extends Agent
   private AgentBindingSite bindingSite = null;
 
   public final void setBindingSite(BindingSite bs) {
+    //System.err.println("ClusterImpl.setBindingSite("+bs+")");
     if (bs instanceof AgentBindingSite) {
       bindingSite = (AgentBindingSite) bs;
     } else {
@@ -249,23 +250,8 @@ public class ClusterImpl extends Agent
    **/
   private ClusterIdentifier myClusterIdentity_;
     
-  /**
-   * myClusterStateModelState_ is the private representation of this
-   * instance's state.
-   **/
-  private int myClusterStateModelState_ = GenericStateModel.UNINITIALIZED;
-       
   /** Container which manages the plugins **/
   private PluginManager pluginManager;
-
-  /**
-   * Privately set ClusterStateModelState.  Raise an
-   * StateModelException if the transition is invalid.
-   **/
-     
-  private void setState ( int newState ) throws StateModelException {
-    myClusterStateModelState_ = newState;
-  }
 
   protected Persistence createPersistence() {
     if (System.getProperty("org.cougaar.core.cluster.persistence.enable", "false").equals("false"))
@@ -316,30 +302,21 @@ public class ClusterImpl extends Agent
   }
 
     
-  /** Initialize.  Transition object from undefined to INITIALIZED state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
-   **/
-
-  public void initialize() throws StateModelException {
-    setState(GenericStateModel.UNLOADED);
-  }
-    
-
   /** Notify object about its "parent"
    *  Object should transition to the LOADED state.
    *  Called object should check that caller is an instanceof
    *  the appropriate class
-   *  @param o the "parent" object of the object being loaded
    *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
    **/
 
-  public void load(Object o) throws StateModelException {
+  public void load() throws StateModelException {
+    //System.err.println("Cluster.load()");
     // Confirm that my container is indeed ClusterManagement
-    if (!( o instanceof ClusterManagementServesCluster ) ) {
-      throw new StateModelException ("Container does not implement ClusterManagementServesCluster");
+    if (!( getBindingSite() instanceof ClusterManagementServesCluster ) ) {
+      throw new StateModelException ("Container ("+getBindingSite()+") does not implement ClusterManagementServesCluster");
     }
 
-    ClusterManagementServesCluster cm = (ClusterManagementServesCluster) o;
+    ClusterManagementServesCluster cm = (ClusterManagementServesCluster) getBindingSite();
     setClusterManagement(cm);
 
     // get the Messenger instance from ClusterManagement
@@ -430,7 +407,8 @@ public class ClusterImpl extends Agent
     pluginManager = new PluginManager(this);
 
     // transit the state.
-    setState(GenericStateModel.LOADED);
+    super.load();
+    //System.err.println("Cluster.load() completed");
   }
 
   /** Called object should start any threads it requires.
@@ -454,64 +432,9 @@ public class ClusterImpl extends Agent
       metricsOn = true;
     }
 
-    setState(GenericStateModel.ACTIVE);
+    super.start();
   }
 
-  /** Called object should pause operations in such a way that they may
-   *  be cleanly resumed or the object can be unloaded.
-   *  Called object should transition from the ACTIVE state to
-   *  the IDLE state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
-   **/
-
-  public void suspend() throws StateModelException {
-    setState(GenericStateModel.IDLE);
-    
-  }
-
-  /** Called object should transition from the IDLE state back to
-   *  the ACTIVE state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
-   **/
-
-  public void resume() throws StateModelException {
-    setState(GenericStateModel.ACTIVE);
-  }
-
-  /** Called object should transition from the IDLE state
-   *  to the LOADED state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
-   **/
-
-  public void stop() throws StateModelException {
-    setState(GenericStateModel.LOADED);
-  }
-
-  /**  Called object should transition from ACTIVE or SERVING state
-   *   to the LOADED state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
-   **/
-
-  public void halt() throws StateModelException {
-    setState(GenericStateModel.LOADED);
-  }
-
-  /** Called object should perform any cleanup operations and transition
-   *  to the UNLOADED state.
-   *  @exception org.cougaar.util.StateModelException Cannot transition to new state.
-   **/
-
-  public void unload() throws StateModelException {
-    setState(GenericStateModel.UNLOADED);
-  }
-
-
-  /** Return the current state of the object: LOADED, UNLOADED, 
-   * ACTIVE, or IDLE.
-   * @return object state
-   **/
-
-  public int getState() { return myClusterStateModelState_; }
 
   /** Standard, no argument constructor. */
   public ClusterImpl() {

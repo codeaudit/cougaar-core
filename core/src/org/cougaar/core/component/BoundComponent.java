@@ -17,13 +17,13 @@ import java.util.*;
 public class BoundComponent
 {
   private final Binder b;
-  private final Component c;
+  private final Object c;
 
-  public BoundComponent(Binder b, Component c) {
+  public BoundComponent(Binder b, Object c) {
     this.b = b;
     this.c = c;
   }
 
   public final Binder getBinder() { return b; }
-  public final Component getComponent() { return c; }
+  public final Object getComponent() { return c; }
 }

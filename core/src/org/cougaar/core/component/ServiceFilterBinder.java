@@ -23,8 +23,8 @@ import java.lang.reflect.*;
 public abstract class ServiceFilterBinder 
   extends BinderSupport         // only uses part of it...
 {
-  protected ServiceFilterBinder(ContainerAPI parent, Component child) {
-    super(parent, child);
+  protected ServiceFilterBinder(BinderFactory bf, Component child) {
+    super(bf, child);
   }
 
   /** Defines a pass-through insulation layer to ensure that the plugin cannot 

@@ -34,7 +34,7 @@ public class PluginManager
   ClusterImpl getAgent() { return agent; }
 
   public PluginManager() {
-    if (!loadComponent(new DefaultPluginBinderFactory())) {
+    if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
       throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
   }
@@ -44,7 +44,7 @@ public class PluginManager
    **/
   public PluginManager(ClusterImpl agent) {
     this.agent = agent;
-    if (!loadComponent(new DefaultPluginBinderFactory())) {
+    if (!attachBinderFactory(new DefaultPluginBinderFactory())) {
       throw new RuntimeException("Failed to load the DefaultPluginBinderFactory");
     }
 
@@ -128,46 +128,17 @@ public class PluginManager
       AddPlugInMessage message = (AddPlugInMessage) o;
       String pluginclass = message.getPlugIn();
       PlugInServesCluster newPlugIn = null;
-      try {
-        Vector args = message.getArguments();
-
-        // get the class of the plugin
-        Class pc = Class.forName(pluginclass);
-        if (PlugIn.class.isAssignableFrom(pc)) {
-          // is a stateless plugin
-          newPlugIn = new StatelessPlugInAdapter(getPurePlugIn(pc));
-        } else {
-          //newPlugIn = (PlugInServesCluster)Beans.instantiate(getClass().getClassLoader(), pluginclass);
-          Class c = Class.forName(pluginclass);
-          newPlugIn = (PlugInServesCluster) c.newInstance();
-        }
-
-        if (newPlugIn instanceof ParameterizedPlugIn) {
-          if (args != null) {
-            Class pic = newPlugIn.getClass();
-            Method m = pic.getMethod("setParameter", new Class[]{Object.class});
-            m.invoke(newPlugIn, new Object[]{args});
-          }
-        }
-      } catch (Exception e) {
-        e.printStackTrace();
-        throw new RuntimeException("Could not instantiate "+pluginclass+": "+e);
-      }
-
-      if (newPlugIn == null) 
-        throw new RuntimeException("Could not instantiate "+pluginclass);
-      try {
-        boolean succ =  super.add(newPlugIn);
-        //System.err.println("Loaded a "+pluginclass);
-        return succ;
-      } catch(Throwable ex) {
-        synchronized (System.err) {
-          System.err.println("Failed to load "+pluginclass+":\n"+ex);
-          if (!(ex instanceof ClassNotFoundException))
-            ex.printStackTrace();
-        }
-      }
-      return false;
+      Vector args = message.getArguments();
+      System.err.println("Got AddPluginMessage: "+o);
+      ComponentDescription cd = new ComponentDescription("Plugin-"+pluginclass, 
+                                                         "Node.AgentManager.Agent.PluginManager.plugin",
+                                                         pluginclass,
+                                                         null,
+                                                         args,
+                                                         null,
+                                                         null,
+                                                         null);
+      return super.add(cd);
     } else {
       return super.add(o);
     }
@@ -195,25 +166,6 @@ public class PluginManager
   }
 
 
-  //
-  // class hackery for old-style pure plugin caching
-  //
-
-  private static final HashMap purePlugIns = new HashMap(11);
-  private static PlugIn getPurePlugIn(Class c) {
-    synchronized (purePlugIns) {
-      PlugIn plugin = (PlugIn)purePlugIns.get(c);
-      if (plugin == null) {
-        try {
-          plugin = (PlugIn) c.newInstance();
-          purePlugIns.put(c, plugin);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-      return plugin;
-    }
-  }
 
   // 
   // other services

@@ -27,7 +27,8 @@ public abstract class Agent
 {
 
   public Agent() {
-    if (!loadComponent(new PluginManagerBinderFactory())) {
+    BinderFactory pmbf = new PluginManagerBinderFactory();
+    if (!attachBinderFactory(pmbf)) {
       throw new RuntimeException("Failed to load the PluginManagerBinderFactory");
     }
   }
@@ -36,7 +37,8 @@ public abstract class Agent
    * when we are a contained by a Node component
    **/
   public Agent(ComponentDescription comdesc) {
-    if (!loadComponent(new PluginManagerBinderFactory())) {
+    BinderFactory pmbf = new PluginManagerBinderFactory();
+    if (!attachBinderFactory(pmbf)) {
       throw new RuntimeException("Failed to load the PluginManagerBinderFactory");
     }
     //no agent services for now... all are loaded from cluster (specific type of agent)
@@ -44,7 +46,7 @@ public abstract class Agent
   }
 
   // Do we need state model stuff here???
-  protected void initialize() {}
+  //protected void initialize() {}
 
   protected ComponentFactory specifyComponentFactory() {
     return super.specifyComponentFactory();

@@ -273,13 +273,9 @@ public abstract class PlugInAdapter
     load(null);                 // unloaded->loaded
   }
 
-
-  /** Load the plugin.  No longer pays any attention to the passed object,
-   * as it will now always be null.  Called from this.initialize().
-   **/
-  public void load(Object object) throws StateModelException {
+  public void load() throws StateModelException {
     setThreadingChoice(getThreadingChoice()); // choose the threading model
-    super.load(object);
+    super.load();
     theLDM = getLDMService().getLDM();
     theLDMF = getLDMService().getFactory();
 
@@ -297,11 +293,20 @@ public abstract class PlugInAdapter
 
     // fire up the threading model
     setThreadingModel(createThreadingModel());
-    startThreadingModel();
+    // invoke the backward-compatability method
+    load(null);
+  }
+
+  /** Load the plugin.  No longer pays any attention to the passed object,
+   * as it will now always be null.
+   **/
+  public void load(Object object) {
   }
 
   /** */
-  public void start() throws StateModelException {}
+  public void start() throws StateModelException {
+    startThreadingModel();
+  }
 
 
   //
@@ -871,7 +876,7 @@ public abstract class PlugInAdapter
   /** called from PluginBinder **/
   public void plugin_prerun() {
     try {
-      start(); // just in case..
+      //start(); // just in case..  ACK! NO!
       BlackboardClient.current.set(this);
       prerun();
     } finally {
@@ -959,7 +964,7 @@ public abstract class PlugInAdapter
    **/
   protected final void setThreadingChoice(int m) {
     if (threadingModel != null) 
-      throw new IllegalArgumentException("Too late to select threading model.");
+      throw new IllegalArgumentException("Too late to select threading model for "+this);
     threadingChoice = m;
   }
 
@@ -1019,7 +1024,7 @@ public abstract class PlugInAdapter
   public void startThreadingModel() {
     try {
       threadingModel.initialize();
-      threadingModel.load(null);
+      threadingModel.load();
       threadingModel.start();
     } catch (RuntimeException e) {
       System.err.println("Caught exception during threadingModel initialization: "+e);
@@ -1031,7 +1036,7 @@ public abstract class PlugInAdapter
   protected abstract class Threading implements GenericStateModel {
     public void initialize() {}
     /** the argument passed to load is a ClusterServesPlugIn **/
-    public void load(Object o) {}
+    public void load() {}
     public void start() {}
     public void suspend() {}
     public void resume() {}
@@ -1117,7 +1122,7 @@ public abstract class PlugInAdapter
       isYielding = v;
     }
 
-    public void load(Object object) {
+    public void load() {
       setWaker(getBlackboardService().registerInterest());
     }
 

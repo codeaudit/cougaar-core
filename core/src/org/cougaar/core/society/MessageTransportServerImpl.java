@@ -12,12 +12,15 @@ import java.util.StringTokenizer;
 import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.ContainerAPI;
 import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.ComponentFactory;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Container;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.*;
 import org.cougaar.core.society.rmi.RMIMessageTransport;
 import org.cougaar.util.CircularQueue;
+import org.cougaar.util.GenericStateModelAdapter;
 
 class MessageTransportServerImpl 
   extends ContainerSupport
@@ -41,7 +44,8 @@ class MessageTransportServerImpl
 	// register with Node
 
 	binderFactory = new MessageTransportServerBinderFactory();
-	binderFactory.setParentComponent(this);
+        binderFactory.setBindingSite(this);
+	//binderFactory.setParentComponent(this);
 
 	transports = new HashMap();
 
@@ -51,6 +55,7 @@ class MessageTransportServerImpl
 	    (MessageTransportServerBinder)
 	    binderFactory.getBinder(MessageTransportServerBindingSite.class,
 				    tpt);
+        loopback.setBindingSite(this);
 	transports.put(tpt, loopback);
 	
 	RMIMessageTransport rtpt = new RMIMessageTransport(id);
@@ -59,6 +64,7 @@ class MessageTransportServerImpl
 	    (MessageTransportServerBinder)
 	    binderFactory.getBinder(MessageTransportServerBindingSite.class,
 				rtpt);
+        remote.setBindingSite(this);
 	transports.put(rtpt, remote);
 
 	makeOtherTransports();
@@ -85,7 +91,7 @@ class MessageTransportServerImpl
 	Object binder =
 	    binderFactory.getBinder(MessageTransportServerBindingSite.class,
 				    transport);
-
+        BindingUtility.setBindingSite(binder, this);
 	transports.put(transport, binder);
 	return transport;
     }
@@ -157,15 +163,15 @@ class MessageTransportServerImpl
 
 
     private static class MessageTransportServerBinderFactory 
-	implements BinderFactory
+      extends BinderFactorySupport
     {
 	// BinderFactory
 	private Vector binders = new Vector();
-	private Container parent;
+	private ContainerAPI parent;
 
-	public void setParentComponent(Object parent) {
-	    this.parent = (Container) parent;
-	}
+      public void setBindingSite(BindingSite parent) {
+	    this.parent = (ContainerAPI) parent;        
+      }
 
 	public int getPriority() {
 	    return NORM_PRIORITY;
@@ -178,11 +184,14 @@ class MessageTransportServerImpl
 	public Binder getBinder(Class bindingSite, Object child) {
 	    // verify bindingSite == MessageTransportServerBinder
 	    MessageTransportServerBinder binder = 
-		new MessageTransportServerBinder(parent, (Component) child);
+		new MessageTransportServerBinder(this, child);
 	    binders.addElement(binder);
 	    ((MessageTransport)child).setBinder(binder);
 	    return binder;
 	}
+      public ComponentFactory getComponentFactory() {
+        return ComponentFactory.getInstance();
+      }
     }
 
 

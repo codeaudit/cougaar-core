@@ -35,9 +35,10 @@ import org.cougaar.core.plugin.RemovePlugInMessage;
 import org.cougaar.core.cluster.ClusterInitializedMessage;
 
 import org.cougaar.core.cluster.ClusterIdentifier;
-import org.cougaar.util.ConfigFinder;
-import org.cougaar.util.PropertyTree;
+import org.cougaar.core.agent.*;
+import org.cougaar.util.*;
 
+import org.cougaar.core.component.*;
 import java.beans.Beans;
 
 /**
@@ -686,6 +687,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
       }
       cluster = (ClusterServesClusterManagement)clusterInstance;
     } catch (Exception e) {
+      e.printStackTrace();
       throw new IllegalArgumentException(
           "Unable to load agent class: \""+clusterClassname+"\"");
     }
@@ -707,16 +709,35 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster
     cluster.setClusterIdentifier(cid);
 
     //move the cluster to the intialized state
-    cluster.initialize();
-    cluster.load(this);
-    cluster.start();
-    if (cluster.getState() != cluster.ACTIVE) {
+    BindingUtility.activate(cluster,new NodeProxy(), null);
+    if (cluster.getState() != GenericStateModel.ACTIVE) {
       System.err.println("Cluster "+cluster+" is not Active!");
     }
 
     return cluster;
   }
   
+  private class NodeProxy implements AgentBindingSite, ClusterManagementServesCluster, BindingSite {
+    // ClusterManagementServesCluster
+    public Object instantiateBean(String className) throws ClassNotFoundException {
+      return Node.this.instantiateBean(className);
+    }
+    public Object instantiateBean(ClassLoader classLoader, String className) throws ClassNotFoundException {
+      return Node.this.instantiateBean(classLoader, className);
+    }
+    public void logEvent( Object anEvent ) { Node.this.logEvent(anEvent);}
+    public void sendMessage(Message message) throws MessageTransportException {
+      Node.this.sendMessage(message);
+    }
+    public MessageTransportServer getMessageTransportServer() {return Node.this.getMessageTransportServer(); }
+    public String getName() {return Node.this.getName(); }
+
+    // BindingSite
+    public ServiceBroker getServiceBroker() {return null; }
+    public void requestStop() {}
+  }
+
+
   // replace with Container's add, but keep this basic code
   private final void add(ComponentDescription desc) {
     // simply wrap as a single-element "bulk" operation

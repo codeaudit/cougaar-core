@@ -23,14 +23,8 @@ public class DefaultPluginBinder
   implements PluginBinder
 {
   /** All subclasses must implement a matching constructor. **/
-  public DefaultPluginBinder(Object parentInterface, Component child) {
-    super((PluginManagerForBinder) parentInterface, 
-          child);
-  }
-
-  /** package-private kickstart method for use by the PluginBinderFactory **/
-  protected void initialize() {
-    initializeChild();          // set up initial services
+  public DefaultPluginBinder(BinderFactory bf, Object child) {
+    super(bf, child);
   }
 
   protected final PluginBase getPlugin() {
@@ -66,9 +60,8 @@ public class DefaultPluginBinder
     }
   }
 
-
   public String toString() {
-    return (this.getClass().toString())+"/"+getPlugin();
+    return (super.toString())+"/"+getPlugin();
   }
 
   /** useful shorthand for binder functions **/

@@ -24,15 +24,6 @@ import java.util.*;
  **/
 public interface BinderFactory extends Component
 {
-  /**  Sets the parent component (Container) the BinderFactory
-   * is to serve. Note that this is likely to be a proxy for the
-   * actual container to prevent abuse by a rogue BinderFactory.
-   * The actual object passed will depend on the Container.
-   * <p>
-   * Called after construction but before any calls to getBinder.
-   **/
-  public void setParentComponent(Object c);
-
   /** Lowest-priority for a BinderFactory.  Default infrastructure
    * BinderFactories are generally at this level.
    **/
@@ -78,6 +69,11 @@ public interface BinderFactory extends Component
   }
 
   /** a comparator for keeping Binder Factories sorted **/
-  public final static Comparator comparator = new BFComparator();
+  final static Comparator comparator = new BFComparator();
+
+  /** Get the BinderFactory's ComponentFactory.  
+   * May return null if the BinderFactory doesn't make components.
+   **/
+  ComponentFactory getComponentFactory();
 }
 

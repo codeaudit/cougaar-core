@@ -34,7 +34,10 @@ import java.util.Iterator;
  * Use it as a base class. Make a derived class simply by overriding 
  * setupSubscriptions() and execute()
  **/
-public class ComponentPlugin implements PluginBase, BlackboardClient {
+public class ComponentPlugin 
+  extends org.cougaar.util.GenericStateModelAdapter
+  implements PluginBase, BlackboardClient 
+{
 
   // Do we have a rule of thumb as to what should be private versus protected?
   protected boolean readyToRun = false;

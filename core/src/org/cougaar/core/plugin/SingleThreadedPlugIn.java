@@ -22,9 +22,9 @@ import org.cougaar.util.StateModelException;
 
 public abstract class SingleThreadedPlugIn extends PlugInAdapter
 {
-  public void load(Object object) throws StateModelException {
+  public void initialize() throws StateModelException {
+    super.initialize();
     chooseThreadingModel(SINGLE_THREAD);
-    super.load(object);
   }
 }
 

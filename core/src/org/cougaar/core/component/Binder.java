@@ -32,5 +32,11 @@ import java.net.URL;
 
 public interface Binder // extends BindingSite 
 {
+  /** initilize the Binder and the component tree below **/
+  void initialize();
+  /** load the binder and the component tree below **/
+  void load();
+  /** start the binder and the component tree below **/
+  void start();
 }
 

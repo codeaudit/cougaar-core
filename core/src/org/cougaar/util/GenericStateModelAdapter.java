@@ -39,7 +39,7 @@ public abstract class GenericStateModelAdapter
    * also transit to LOADED.
    *  @exception org.cougaar.util.StateModelException If Cannot transition to new state.  
    **/
-  public synchronized void load(Object obj) throws StateModelException {
+  public synchronized void load() throws StateModelException {
     transitState("load()", UNLOADED, LOADED);
   }
 

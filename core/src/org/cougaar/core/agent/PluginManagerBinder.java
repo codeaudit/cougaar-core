@@ -21,12 +21,13 @@ import org.cougaar.core.plugin.PluginManager;
 public class PluginManagerBinder extends BinderSupport implements PluginManagerBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
-  public PluginManagerBinder(Object parentInterface, Component child) {
-    super((ContainerAPI) parentInterface, child);
+  public PluginManagerBinder(BinderFactory parentInterface, Object child) {
+    super(parentInterface, child);
   }
 
   /** package-private kickstart method for use by the PluginManagerBinderFactory **/
-  protected void initialize() {
+  public void initialize() {
+    super.initialize();
     initializeChild();          // set up initial services
   }
 

@@ -18,12 +18,13 @@ import org.cougaar.core.component.*;
 public class AgentBinder extends BinderSupport implements AgentBindingSite
 {
   /** All subclasses must implement a matching constructor. **/
-  public AgentBinder(Object parentInterface, Component child) {
-    super((ContainerAPI) parentInterface, child);
+  public AgentBinder(BinderFactory bf, Component child) {
+    super(bf, child);
   }
 
   /** package-private kickstart method for use by the AgentBinderFactory **/
-  protected void initialize() {
+  public void initialize() {
+    super.initialize();
     initializeChild();          // set up initial services
   }
 

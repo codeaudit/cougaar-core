@@ -10,6 +10,7 @@
 package org.cougaar.core.component;
 
 import java.util.*;
+import org.cougaar.util.GenericStateModel;
 
 /** A Component is the base class of the Component and
  * Service Model.  Components form a strict hierarchy
@@ -36,5 +37,6 @@ import java.util.*;
  * @see java.beans.beancontext.BeanContextChild
  **/
 public interface Component 
+  extends GenericStateModel
 {
 }

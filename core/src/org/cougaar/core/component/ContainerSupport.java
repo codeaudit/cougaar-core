@@ -10,10 +10,12 @@
 package org.cougaar.core.component;
 
 import java.util.*;
+import org.cougaar.util.GenericStateModelAdapter;
 
 /** A basic implementation of a Container.
  **/
 public abstract class ContainerSupport
+  extends GenericStateModelAdapter
   implements Container 
 {
   protected final ComponentFactory componentFactory = specifyComponentFactory();
@@ -112,25 +114,26 @@ public abstract class ContainerSupport
       if (ip.startsWith(containmentPrefix)) {
         // match! - now do we load it here or below - look for any more dots beyond 
         // the one trailing the prefix...
-        int subi = ip.indexOf('.',containmentPrefix.length());
-        if (subi == -1) {
-          // no more dots: insert here
-          try {
-            Component c = componentFactory.createComponent(cd);
-            return loadComponent(c);
-          } catch (ComponentFactoryException cfe) {
-            cfe.printStackTrace();
-            return false;
-          }
+        String tail = ip.substring(containmentPrefix.length());
+        if ("Binder".equals(tail) || "BinderFactory".equals(tail)) {
+          return loadBinderFactory(cd);
         } else {
-          // more dots: try inserting in subcomponents
-          synchronized (boundComponents) {
-            int l = boundComponents.size();
-            for (int i=0; i<l; i++) {
-              Object p = boundComponents.get(i);
-              if (p instanceof Container) {
-                // try loading into this guy.
-                if (((Container)p).add(o)) return true;    // someone claimed it!
+          int subi = tail.indexOf(".");
+          if (subi == -1) {
+            // no more dots: insert here
+            return loadComponent(cd);
+          } else {
+            // more dots: try inserting in subcomponents
+            synchronized (boundComponents) {
+              int l = boundComponents.size();
+              for (int i=0; i<l; i++) {
+                Object p = boundComponents.get(i);
+                if (p instanceof Container) {
+                  // try loading into this guy.
+                  if (((Container)p).add(o)) {
+                    return true;    // someone claimed it!
+                  }
+                }
               }
             }
           }
@@ -140,8 +143,10 @@ public abstract class ContainerSupport
         // wrong insertion point!
         return false;
       }
+    } else if (o instanceof BinderFactory) {
+      return attachBinderFactory((BinderFactory)o);
     } else if (o instanceof Component) {
-      return loadComponent((Component) o);
+      return loadComponent( o);
     } else {
       // not a clue.
       return false;
@@ -180,24 +185,28 @@ public abstract class ContainerSupport
    * the requested level, but might not be certain how much we trust
    * it as of yet.  In particular, we may need to treat different classes
    * of Components differently.
+   *<P>
+   * The component (and the binder tree) should be loaded and started
+   * when this loadComponent complete successfully.
    *
    * @return true on success.
    **/
-  protected boolean loadComponent(Component c) {
-    Binder b = bindComponent(c);
-    if (b != null) {
-      BoundComponent bc = new BoundComponent(b,c);
-      synchronized (boundComponents) {
-        boundComponents.add(bc);
-      }
-      // should we sync(this) to avoid this gap?
-      if (c instanceof BinderFactory) {
-        synchronized (binderFactories) {
-          binderFactories.add(c);
+  protected boolean loadComponent(Object c) {
+    try {
+      Binder b = bindComponent(c);
+      if (b != null) {
+        BoundComponent bc = new BoundComponent(b,c);
+        synchronized (boundComponents) {
+          boundComponents.add(bc);
         }
+        b.load();
+        b.start();
+        return true;
+      } else {
+        return false;
       }
-      return true;
-    } else {
+    } catch (RuntimeException e) {
+      e.printStackTrace();
       return false;
     }
   }
@@ -207,8 +216,10 @@ public abstract class ContainerSupport
    * binders for the child components.  If the child
    * component is the first BinderFactory, then we'll
    * call bindBinderFactory after failing to find a binder.
+   * <p>
+   * A Component is initialized (but not loaded) s a side-effect of binding 
    **/
-  protected Binder bindComponent(Component c) {
+  protected Binder bindComponent(Object c) {
     synchronized (binderFactories) {
       ArrayList wrappers = null;
       Binder b = null;
@@ -232,39 +243,50 @@ public abstract class ContainerSupport
           if (w!= null) b = w;
         }
       }
-      
-      // chicken-and-egg case for BinderFactory
-      if (b == null && c instanceof BinderFactory) {
-        b = bindBinderFactory((BinderFactory) c);
-      }
 
+      if (b != null) {
+        BindingUtility.setBindingSite(b, getContainerProxy());
+        BindingUtility.setServices(b, getServiceBroker());
+        BindingUtility.initialize(b);
+      }
       // done
       return b;
     }    
   }
 
-  /** implements an extra, fall-through case for BinderFactories
-   * which may be acceptable even if no existing Factory will bind it.
-   * The default method accepts all BinderFactory components, binding
-   * them with a simple Binder which has only a link to the object
-   * returned by getProxyForBinderFactory().
+  /** Called when a componentDescription insertion point ends in .Binder or .BinderFactory 
+   *
    **/
-  protected Binder bindBinderFactory(BinderFactory c) {
-    // if there are already any BFs, bail out
-    synchronized (binderFactories) {
-      if (binderFactories.size()>0) return null;
-
-      return new BinderFactoryBinder(getContainerProxy(), c);
+  protected boolean loadBinderFactory(ComponentDescription cd) {
+    if (checkBinderFactory(cd)) {
+      try {
+        Component bfc = componentFactory.createComponent(cd);
+        if (bfc instanceof BinderFactory) {
+          return attachBinderFactory((BinderFactory)bfc);
+        } else {
+          System.err.println("Not a BinderFactory: "+bfc);
+        }
+      } catch (ComponentFactoryException cfe) {
+        cfe.printStackTrace();
+      }
+    } else {
+      System.err.println("Failed BinderFactory test: "+cd);
     }
+    return false;
   }
 
-  private static class BinderFactoryBinder implements Binder {
-    BinderFactoryBinder(Object parentProxy, BinderFactory c) {
-      c.setParentComponent(parentProxy);
-      // don't bother to keep a link around.
+  /** @return true iff the binderfactory is trusted enought to load **/
+  protected boolean checkBinderFactory(ComponentDescription cd) {
+    return true;
+  }
+
+  /** Activate a binder factory
+   **/
+  protected boolean attachBinderFactory(BinderFactory c) {
+    synchronized (binderFactories) {
+      binderFactories.add(c);
     }
-    public ServiceBroker getServiceBroker() { return null; }
-    public void requestStop() { }
+    return BindingUtility.activate(c, getContainerProxy(), getServiceBroker());
   }
 
   /** Specifies an object to use as the "parent" proxy object

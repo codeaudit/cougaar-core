@@ -25,8 +25,7 @@ public class DefaultPluginBinderFactory extends BinderFactorySupport
     return DefaultPluginBinder.class;
   }
   
-  /** Bind a plugin with a plugin binder.  Calls initialize 
-   * after constructing the binder.
+  /** Bind a plugin with a plugin binder. 
    **/
   protected Binder bindChild(Class binderClass, Object child) {
     Binder b = super.bindChild(binderClass, child);
@@ -34,7 +33,6 @@ public class DefaultPluginBinderFactory extends BinderFactorySupport
       return null;
     } else {
       if (b instanceof DefaultPluginBinder) {
-        ((DefaultPluginBinder)b).initialize();
         return b;
       } else {
         System.err.println("Illegal binder class specified: "+binderClass);
@@ -42,4 +40,45 @@ public class DefaultPluginBinderFactory extends BinderFactorySupport
       }
     }
   }
+
+
+  private final static ComponentFactory pluginCF = new PluginComponentFactory();
+  public final ComponentFactory getComponentFactory() {
+    return pluginCF;
+  }
+
+  protected static class PluginComponentFactory 
+    extends ComponentFactory 
+  {
+    protected Object instantiateClass(Class cc) {
+      Object o;
+      if (PlugIn.class.isAssignableFrom(cc)) {
+        o = new StatelessPlugInAdapter(getPurePlugIn(cc));
+      } else {
+        o = super.instantiateClass(cc);
+      }
+      return o;
+    }
+  }
+
+  //
+  // class hackery for old-style pure plugin caching
+  //
+
+  private static final HashMap purePlugIns = new HashMap(11);
+  private static PlugIn getPurePlugIn(Class c) {
+    synchronized (purePlugIns) {
+      PlugIn plugin = (PlugIn)purePlugIns.get(c);
+      if (plugin == null) {
+        try {
+          plugin = (PlugIn) c.newInstance();
+          purePlugIns.put(c, plugin);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+      return plugin;
+    }
+  }
+
 }

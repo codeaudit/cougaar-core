@@ -23,7 +23,10 @@ import org.cougaar.core.component.Trigger;
  * Minimal plugin. It uses the SchedulerService for a shared thread, but otherwise does nothing
  *
  **/
-public class MinPlugin implements PluginBase {
+public class MinPlugin 
+  extends org.cougaar.util.GenericStateModelAdapter
+  implements PluginBase 
+{
 
   // Do we have a rule of thumb as to what should be private versus protected?
   protected boolean readyToRun = false;
