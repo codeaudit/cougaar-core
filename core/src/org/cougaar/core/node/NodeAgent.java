@@ -355,7 +355,7 @@ extends SimpleAgent
      **/
     
     String mts_impl = "org.cougaar.mts.base.MessageTransportServiceProvider";
-    if (Boolean.getBoolean("org.cougaar.mts.singlenode"))
+    if (Boolean.getBoolean("org.cougaar.core.mts.singlenode"))
 	mts_impl = "org.cougaar.core.mts.singlenode.SingleNodeMTSProvider";
     add(new ComponentDescription(
 				 (getIdentifier()+"MessageTransport"),
