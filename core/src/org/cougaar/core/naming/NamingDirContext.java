@@ -483,7 +483,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
    */
   public void bind(Name name, Object obj, Attributes attrs)
     throws NamingException {
-    System.out.println("Attempt to bind: " + name + " in " + myDirectory.getPath()); 
+//      System.out.println("Attempt to bind: " + name + " in " + myDirectory.getPath()); 
     if (name.isEmpty()) {
       throw new InvalidNameException("Cannot bind empty name");
     }
@@ -1055,7 +1055,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     // Fill in expression
     String filter = format(filterExpr, filterArgs);
     
-    System.out.println("filter string: " + filter);
+//      System.out.println("filter string: " + filter);
     return search(name, filter, cons);
   }
 

@@ -487,7 +487,7 @@ public class NSImpl extends UnicastRemoteObject implements NS {
             currentMap = getDirMap(currentDir);
           } else {
             // entry exists but isn't a directory - bail now
-            System.out.println("bailing on " + currentDir + " object " + o + " " + o.getClass());
+//              System.out.println("bailing on " + currentDir + " object " + o + " " + o.getClass());
             break;
           }
         }

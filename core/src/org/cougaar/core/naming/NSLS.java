@@ -44,6 +44,13 @@ public class NSLS {
         while (enum.hasMoreElements()) {
             NameClassPair ncp = (NameClassPair) enum.nextElement();
             System.out.println(indent + ncp.getName() + ": " + ncp.getClassName());
+            Attributes attributes = ctx.getAttributes(ncp.getName());
+            if (attributes != null) {
+                for (NamingEnumeration attrs = attributes.getAll(); attrs.hasMore(); ) {
+                    Attribute attr = (Attribute) attrs.next();
+                    System.out.println(indent + "    " + attr);
+                }
+            }
             try {
                 Class cls = Class.forName(ncp.getClassName());
                 if (DirContext.class.isAssignableFrom(cls)) {
@@ -62,6 +69,13 @@ public class NSLS {
             Binding binding = (Binding) enum.nextElement();
             Object object = binding.getObject();
             System.out.println(indent + binding.getName() + ": " + object);
+            Attributes attributes = ctx.getAttributes(binding.getName());
+            if (attributes != null) {
+                for (NamingEnumeration attrs = attributes.getAll(); attrs.hasMore(); ) {
+                    Attribute attr = (Attribute) attrs.next();
+                    System.out.println(indent + "    " + attr);
+                }
+            }
             if (object instanceof DirContext) {
                 listBindings((DirContext) object, indent + "  ");
             }
