@@ -1,3 +1,10 @@
+2003-04-24  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* SimpleAgent.java: 
+	Bug #2838 -- Persistence lacks per-agent configurability
+	Pass all parameters PersistenceServiceComponent in case they
+	pertain thereto.
+
 2003-04-07  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* SimpleAgent.java:
