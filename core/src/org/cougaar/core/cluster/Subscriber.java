@@ -104,7 +104,40 @@ public class Subscriber {
           Subscription subscription = (Subscription) subscriptions.get(i);
           for (int j = 0, l = transactionEnvelopes.size(); j<l; j++) {
             Envelope envelope = (Envelope) transactionEnvelopes.get(j);
-            changedp |= envelope.applyToSubscription(subscription);
+            try {
+              changedp |= envelope.applyToSubscription(subscription);
+            } catch (PublishException pe) {
+              synchronized (System.err) {
+                System.err.println(pe.getMessage());
+                SubscriptionClient currentClient = null;
+                if (envelope instanceof OutboxEnvelope) {
+                  OutboxEnvelope e = (OutboxEnvelope) envelope;
+                  currentClient = e.theClient;
+                }
+                if (currentClient == null) {
+                  currentClient = SubscriptionClient.current.getClient();
+                }
+                String thisPublisher = null;
+                if (currentClient != null) {
+                  thisPublisher = currentClient.getSubscriptionClientName();
+                }
+                if (envelope instanceof ALPPlan.PlanEnvelope) {
+                  if (thisPublisher == null) {
+                    thisPublisher = "ALPPlan";
+                  } else {
+                    thisPublisher = "ALPPlan after " + thisPublisher;
+                  }
+                } else if (thisPublisher == null) {
+                  thisPublisher = "Unknown";
+                }
+                pe.printStackTrace(" This publisher: " + thisPublisher);
+                if (pe.priorStack == null) {
+                  System.err.println("Prior publisher: Unknown");
+                } else {
+                  pe.priorStack.printStackTrace();
+                }
+              }
+            }
           }
         }
       } catch (RuntimeException re) {
@@ -123,6 +156,8 @@ public class Subscriber {
     if (transactionEnvelopes != null) {
       recycleInbox(transactionEnvelopes);
       transactionEnvelopes = null;
+    } else {
+      recycleInbox(flushInbox());
     }
     return box;
   }
@@ -345,9 +380,17 @@ public class Subscriber {
     return result;
   }
 
+  public static class OutboxEnvelope extends Envelope {
+    public OutboxEnvelope(SubscriptionClient client) {
+      theClient = client;
+    }
+    public SubscriptionClient theClient;
+  }
+
   /** factory method for creating Envelopes of the correct type **/
   protected Envelope createEnvelope() {
     return new Envelope();
+// return new OutboxEnvelope(getClient());  // for debugging
   }
 
   // might want to make the syncs finer-grained
