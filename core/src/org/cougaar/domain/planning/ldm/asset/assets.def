@@ -27,7 +27,7 @@
 
 [AbstractAsset Asset]
 
-[Entity Asset]
+[Entity EntityAdapter]
 slots=ClusterPG, \
         EntityPG, \
         CommunityPG, \

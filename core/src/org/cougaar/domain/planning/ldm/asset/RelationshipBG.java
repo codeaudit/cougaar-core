@@ -104,8 +104,6 @@ public class RelationshipBG implements PGDelegate {
     } else if (!pgSchedule.getHasRelationships().equals(hasRelationships)) {
        throw new java.lang.IllegalArgumentException("");
     }
-
-
   }
 
   public boolean isSelf() {

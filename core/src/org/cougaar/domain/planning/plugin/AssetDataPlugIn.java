@@ -704,12 +704,6 @@ public class AssetDataPlugIn extends SimplePlugIn {
 	  // Parse [Relationship] part of prototype-ini file
           Asset otherAsset = getAsset(myAssetClassName, itemID, typeID, clusterID);
 
-          System.out.println("itemID: " + itemID + " typeID: " + typeID +
-                             " clusterID: " + clusterID + 
-                             " role: " + roleName +
-                             " start: " + new Date(start) +
-                             " end: " + new Date(end));
-
           Relationship relationship = 
             getFactory().newRelationship(Role.getRole(roleName),
                                          (HasRelationships) myLocalAsset,
