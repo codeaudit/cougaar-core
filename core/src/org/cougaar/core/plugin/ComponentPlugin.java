@@ -294,24 +294,36 @@ public class ComponentPlugin
   }
   
   protected void precycle() {
-    blackboard.openTransaction();
-    setupSubscriptions();
+    try {
+      blackboard.openTransaction();
+      setupSubscriptions();
     
-    // run execute here so subscriptions don't miss out on the first
-    // batch in their subscription addedLists
-    execute();
+      // run execute here so subscriptions don't miss out on the first
+      // batch in their subscription addedLists
+      execute();                // MIK: I don't like this!!!
     
-    readyToRun = false;  // don't need to run execute again
-    blackboard.closeTransaction();
-    primed = true;
-  }
+      readyToRun = false;  // don't need to run execute again
+    } catch (Throwable t) {
+      System.err.println("Error: Uncaught exception in "+this+": "+t);
+      t.printStackTrace();
+    } finally {
+      blackboard.closeTransaction();
+      primed = true;
+    }
+  }      
   
   protected void cycle() {
     // do stuff
     readyToRun = false;
-    blackboard.openTransaction();
-    execute();
-    blackboard.closeTransaction();
+    try {
+      blackboard.openTransaction();
+      execute();
+    } catch (Throwable t) {
+      System.err.println("Error: Uncaught exception in "+this+": "+t);
+      t.printStackTrace();
+    } finally {
+      blackboard.closeTransaction();
+    }
   }
   
   /**
