@@ -1,3 +1,11 @@
+2001-05-17  Ray Tomlinson  <rtomlinson@bbn.com>
+
+	* Blackboard.java:
+	Bug #411
+	Change default of org.cougaar.core.cluster.enablePublishException
+	to false. This will suppress these exceptions which are largely
+	false positives.
+
 2001-04-30  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* Distributor.java:
