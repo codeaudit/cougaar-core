@@ -42,6 +42,12 @@ import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 
+/**
+ * This Plugin periodically dumps Agent load data (1sec load average)
+ * for each local Agent to the file
+ * <code>&lt;node&gt;-agent-data.log</code>, where &lt;node&gt; is the
+ * name of the Node.
+ */
 public class AgentLoadLoggerPlugin 
     extends ComponentPlugin
     implements Constants

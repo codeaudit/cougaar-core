@@ -35,6 +35,10 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 
+/**
+ * This Servlet collects cpu and message data for each local Agent and
+ * displays the result in a nicely formatted web page.
+ */
 public class AgentLoadServlet 
     extends MetricsServlet
     implements Constants

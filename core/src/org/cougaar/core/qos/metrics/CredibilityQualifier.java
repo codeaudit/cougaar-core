@@ -28,7 +28,13 @@
 package org.cougaar.core.qos.metrics;
 
 
-
+/**
+ * Instances of this class can be used to restrict callbacks from
+ * MetricsService subscriptions unless the new value meets a given
+ * credoibility threshold.  Except for the threshold itself,
+ * CredibilityQualifiers are stateless, so the same qualifier can be
+ * used for multiple subscriptions.
+ */
 public class CredibilityQualifier implements MetricNotificationQualifier
 {
     private double min_credibility;
