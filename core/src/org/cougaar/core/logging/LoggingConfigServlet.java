@@ -24,7 +24,9 @@ import java.io.*;
 import javax.servlet.*;
 import javax.servlet.http.*;
 import java.util.*;
-import org.apache.log4j.*;
+//import org.apache.log4j.*;
+import org.apache.log4j.Category; // deprecated - should use Logger
+import org.apache.log4j.Priority; // deprecated - should use Level
 import org.cougaar.core.servlet.*;
 import org.cougaar.util.log.*;
 import org.cougaar.util.log.log4j.*;
