@@ -31,27 +31,95 @@ import java.util.Properties;
 
 import org.cougaar.core.component.Service;
 
+/**
+ * This is the query interface to the metrics services.  The two basic
+ * operations, query and unubscribe, have several optional paramters,
+ * which is wny each comes in four variants.  The structure of paths
+ * is defined in the Metrics Services html documenation and won't be
+ * covered here.
+ */
 public interface MetricsService extends Service
 {
-    Metric getValue(String path);
-    Metric getValue(String path, VariableEvaluator evaluator);
-    Metric getValue(String path, Properties qos_tags);
+    /**
+     * Retrieves the current value at the given path.  The path can
+     * include special context-dependent variables whose runtime value
+     * will be determined by the evaluator.  For now the qos_tags are
+     * not used.
+     */
     Metric getValue(String path, 
 		    VariableEvaluator evaluator,
 		    Properties qos_tags);
 
-    Object subscribeToValue(String path, Observer observer);
-    Object subscribeToValue(String path, 
-			    Observer observer,
-			    VariableEvaluator evaluator);
-    Object subscribeToValue(String path, 
-			    Observer observer,
-			    MetricNotificationQualifier qualifier);
+    /**
+     * Retrieves the current value at the given path.  The path can
+     * include special context-dependent variables whose runtime value
+     * will be determined by the evaluator.
+     */
+    Metric getValue(String path, VariableEvaluator evaluator);
+
+    /**
+     * Retrieves the current value at the given path. No
+     * context-dependent variable handling will be done.  For now the
+     * qos_tags are not used.
+     */
+    Metric getValue(String path, Properties qos_tags);
+
+    /**
+     * Retrieves the current value at the given path. No
+     * context-dependent variable handling will be done.
+     */
+    Metric getValue(String path);
+
+
+    /**
+     * Subscribes the given observer to the given path.  The usual
+     * Observer api will be used for callbacks. The path can include
+     * special context-dependent variables whose runtime value will be
+     * determined by the evaluator.  Ordinarily a callback will be
+     * invoked whenever the value at the path changes.  This can be
+     * restricted with the qualifier.
+    */
     Object subscribeToValue(String path, 
 			    Observer observer,
 			    VariableEvaluator evaluator,
 			    MetricNotificationQualifier qualifier);
 
+    /**
+     * Subscribes the given observer to the given path.  The usual
+     * Observer api will be used for callbacks. The path can include
+     * special context-dependent variables whose runtime value will be
+     * determined by the evaluator.  No restrictions are imposed
+     * on the callbacks, which will be invoked whenever the value at
+     * the path changes.
+    */
+    Object subscribeToValue(String path, 
+			    Observer observer,
+			    VariableEvaluator evaluator);
+
+    /**
+     * Subscribes the given observer to the given path.  The usual
+     * Observer api will be used for callbacks. No context-dependent
+     * variable handling will be done.  Ordinarily a callback will be
+     * invoked whenever the value at the path changes.  This can be
+     * restricted with the qualifier.
+    */
+    Object subscribeToValue(String path, 
+			    Observer observer,
+			    MetricNotificationQualifier qualifier);
+
+    /**
+     * Subscribes the given observer to the given path.  The usual
+     * Observer api will be used for callbacks. No context-dependent
+     * variable handling will be done, and no restrictions are imposed
+     * on the callbacks, which will be invoked whenever the value at
+     * the path changes.
+    */
+    Object subscribeToValue(String path, Observer observer);
+
+    /**
+     * End a previously established subscription.  The handle is as
+     * returned by one of the subscribeToValue calls.
+    */
     void unsubscribeToValue(Object subscription_handle);
 
 

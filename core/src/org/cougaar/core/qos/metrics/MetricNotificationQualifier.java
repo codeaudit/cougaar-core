@@ -27,7 +27,20 @@
 package org.cougaar.core.qos.metrics;
 
 
+/**
+ * This API is used to specify a qualification on potential callbacks
+ * from the MetricsService subscriptions.  By default subscribers to a
+ * given path are called back whenever the value at that path
+ * changes.  Notification qualifiers can limit that, for instance to
+ * prevent callbacks when the delta is too small or the credibility is
+ * too low.
+ */
 public interface MetricNotificationQualifier
 {
+    /**
+     * Decides whether the given metric, which would ordinarily be
+     * sent to subscribers through a callback, really should be
+     * propagated.
+    */ 
     boolean shouldNotify(Metric metric);
 }

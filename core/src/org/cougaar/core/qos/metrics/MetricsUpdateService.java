@@ -28,8 +28,18 @@ package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.Service;
 
+/**
+ * This service allows clients to insert raw data directly into the
+ * metrics services, using an implicit data feed.
+ */
 public interface MetricsUpdateService extends Service
 {
+    /**
+     * Add the given value with the given key.  Keys are not like the
+     * paths in a metrics lookup.  Instead they typically look more
+     * like snmp values, with an implicit structure.  Don't use this
+     * unless you know exactly whay you're doing.
+     */
     void updateValue(String key, Metric value);
 }
 

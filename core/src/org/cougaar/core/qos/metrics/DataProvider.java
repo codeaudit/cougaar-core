@@ -27,6 +27,9 @@
 package org.cougaar.core.qos.metrics;
 
 
+/**
+ * No longer used?
+ */
 public interface DataProvider
 {
     String getPath();

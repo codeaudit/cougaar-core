@@ -28,9 +28,25 @@ package org.cougaar.core.qos.metrics;
 
 import org.cougaar.core.component.Service;
 
+/**
+ * The MetricsService borrows the concept of DataFeeds (ie, raw data
+ * providers) from the ResourceStatusService.  The primary function of
+ * this API is simply to add new feeds on the fly.  The precise
+ * semantics of a 'data feed' is left indeterminate at this level.
+ */
 public interface DataFeedRegistrationService extends Service
 {
+    /**
+     * Add a new data feed.  Data feeds are used to inject raw data
+     * into the metrics services.
+     */
     boolean registerFeed(Object feed, String name);
+
+    /**
+     * This method is very specific to the RSS.  We need it in cougaar
+     * for the RSS-supported metrics services but the details are
+     * beyond of the scope of this javadoc.
+     */
     void populateSites(String sitesURLString);
 }
 
