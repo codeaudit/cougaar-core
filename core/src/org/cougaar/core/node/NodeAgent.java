@@ -562,7 +562,7 @@ public class NodeAgent
       } else {
         throw new UnsupportedOperationException(
             "Unsupported Message: "+
-            ((m != null) ? m.getClass().getName() : "null"));
+            ((m != null) ? m.toString() : "null"));
       }
     } catch (Exception e) {
       System.err.println("Node received invalid message: "+e.getMessage());
