@@ -12,6 +12,7 @@
 package org.cougaar.core.util;
 
 import java.io.OutputStream;
+import java.util.ArrayList;
 
 import com.ibm.xml.parser.TXDocument;
 import org.w3c.dom.Document;
@@ -49,4 +50,15 @@ public interface XMLObjectProvider
      // So this ObjectProvider can be reused
      //
      public void reset();
+
+     //
+     // Return number of objects in internal collection
+     //
+     public int size();
+
+     //
+     // Obtain handle to internal Object collection.  Can be empty
+     // if unused.
+     //
+     public ArrayList getCollection();
 }
