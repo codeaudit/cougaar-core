@@ -89,7 +89,7 @@ public final class ListAllNodes {
     if (USE_MTS_SHORTCUT) {
       // we know that each node's MTS binds "<node>(MTS)"
       if (s.endsWith("(MTS)")) {
-        return s.substring(0, s.length()-4);
+        return s.substring(0, s.length()-5);
       }
     } else {
       // do a WP lookup for the agent's node
