@@ -144,6 +144,13 @@ class LoggerImpl implements Logger {
   }
 
   public String toString() {
-    return "logger \""+cat+"\"";
+    return 
+      "logger \""+cat.getName()+"\" at "+
+      (isDebugEnabled() ? "debug" :
+       isInfoEnabled() ? "info" :
+       isWarnEnabled() ? "warn" :
+       isErrorEnabled() ? "error" :
+       isFatalEnabled() ? "fatal" :
+       "none");
   }
 }
