@@ -94,29 +94,25 @@ public class AssetDataDBReader implements AssetDataReader {
       String[][] relationships = initializerService.getAgentRelationships(cId);
       for (int i = 0; i < relationships.length; i++) {
         String[] r = relationships[i];
-        long start, end;
-        if (r[4] == null || r[5] == null) {
-          start = cb.getDefaultStartTime();
-          end = cb.getDefaultEndTime();
-        } else {
-          try {
-            start = cb.parseDate(r[4]);
-          } catch (java.text.ParseException pe) {
-            start = cb.getDefaultStartTime();
-            System.out.println("Unable to parse: "
-                               + r[4]
-                               + ". Start time defaulting to "
-                               + start);
-          }
-          try {
+        long start = cb.getDefaultStartTime();
+        long end = cb.getDefaultEndTime();
+        try {
+          start = cb.parseDate(r[4]);
+        } catch (java.text.ParseException pe) {
+          System.err.println("Unable to parse: "
+                             + r[4]
+                             + ". Start time defaulting to "
+                             + start);
+        }
+        try {
+          if (r[5] != null) {
             end = cb.parseDate(r[5]);
-          } catch (java.text.ParseException pe) {
-            end = cb.getDefaultEndTime();
-            System.out.println("Unable to parse: "
-                               + r[5]
-                               + ". End time defaulted to "
-                               + end);
           }
+        } catch (java.text.ParseException pe) {
+          System.err.println("Unable to parse: "
+                             + r[5]
+                             + ". End time defaulted to "
+                             + end);
         }
         cb.addRelationship(r[2],     // Type id
                            r[1],     // Item id
