@@ -21,9 +21,12 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.core.qos.metrics.MetricsServiceProvider;
 import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.util.PropertyParser;
 
+import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.Comparator;
 
 
@@ -142,22 +145,54 @@ public class Scheduler
     }
 
 
+    private static PrintWriter log;
+    private static final String LOGFILE_PROPERTY =
+	"org.cougaar.thread.logfile";
+
+    private synchronized static boolean ensureLog() {
+	if (log == null) {
+	    String filename = System.getProperty(LOGFILE_PROPERTY);
+	    if (filename == null) return false;
+	    try {
+		FileWriter fw = new FileWriter(filename);
+		log = new PrintWriter(fw);
+	    } catch (java.io.IOException ex) {
+		System.err.println(ex);
+	    }
+	}
+	return log != null;
+    }
+
+    private void log(String action, Object item) {
+	if (!ensureLog()) return;
+	long now = MetricsServiceProvider.relativeTimeMillis();
+	StringBuffer buf = new StringBuffer();
+	buf.append(Double.toString(now/1000.0));
+	buf.append('\t');
+	buf.append(action);
+	buf.append('\t');
+	buf.append(Integer.toString(runningThreadCount));
+	buf.append('\t');
+	buf.append(this.toString());
+	buf.append('\t');
+	if (item != null) buf.append(item.toString());
+	log.println(buf.toString());
+    }
 
     void threadDequeued(SchedulableObject thread) {
-	if (CougaarThread.Debug) System.err.println("### " +this+ " dequeue ");
+	log("dequeued", thread);
 	listenerProxy.notifyDequeued(thread);
     }
 
     // Called within the thread itself as the first thing it does.
     void threadClaimed(SchedulableObject thread) {
-	if (CougaarThread.Debug) System.err.println("### " +this+ " claim");
+	log("claimed", thread);
 	listenerProxy.notifyStart(thread);
     }
 
     // Called within the thread itself as the last thing it does.
     void threadReclaimed(SchedulableObject thread) {
-	
-	if (CougaarThread.Debug) System.err.println("### " +this+ " reclaim");
+	log("reclaimed", thread);
 	listenerProxy.notifyEnd(thread);
     }
 
@@ -172,23 +207,17 @@ public class Scheduler
 
 
     synchronized void incrementRunCount(Scheduler consumer) {
-	if (CougaarThread.Debug)
-	    System.err.println("### incrementing " +this+ " on behalf of "
-			       +consumer);
 	++runningThreadCount;
+	log("increment", consumer);
 	listenerProxy.notifyRightGiven(consumer);
     }
 
-    synchronized void decrementRunCount(Scheduler consumer) {
-	if (CougaarThread.Debug)
-	    System.err.println("### decrementing " +this+ " on behalf of "
-			       +consumer);
+    synchronized void decrementRunCount(Scheduler consumer, SchedulableObject thread) {
 	--runningThreadCount;
+	log("decrement", (consumer == this ? ((Object) thread) : ((Object) consumer)));
 	if (runningThreadCount < 0) {
-	    if (getTreeNode().getParent() == null || CougaarThread.Debug)
-		System.err.println("### " +this+ 
-				   " thread count is " +
-				   runningThreadCount);
+	    System.out.println("###" +this+ " thread count is " +
+			       runningThreadCount);
 	}
 	listenerProxy.notifyRightReturned(consumer);
     }
@@ -221,10 +250,10 @@ public class Scheduler
 	return false;
     }
 
-    synchronized void releaseRights(Scheduler consumer) {
+    synchronized void releaseRights(Scheduler consumer, SchedulableObject thread) {
 	// If the max has recently decreased it may be lower than the
 	// running count.  In that case don't do a handoff.
-	decrementRunCount(consumer);
+	decrementRunCount(consumer, thread);
 	SchedulableObject handoff = null;
 
 	if (runningThreadCount < maxRunningThreads) {

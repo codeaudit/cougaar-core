@@ -85,7 +85,7 @@ final class SchedulableObject implements Schedulable
 
     // Calback from the Reclaimer.
     void reclaimNotify() {
-	scheduler.releaseRights(scheduler);
+	scheduler.releaseRights(scheduler, this);
 	if (restart) scheduler.startOrQueue(this);
     }
 

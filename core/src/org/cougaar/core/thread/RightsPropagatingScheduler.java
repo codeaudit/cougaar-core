@@ -55,25 +55,25 @@ public class RightsPropagatingScheduler extends Scheduler
     }
 
     
-    void releaseRights(Scheduler consumer) { 
+    void releaseRights(Scheduler consumer, SchedulableObject thread) { 
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
-	    super.releaseRights(consumer);
+	    super.releaseRights(consumer, thread);
 	} else {
 	    long now = System.currentTimeMillis();
 	    if (now - lastReleaseTime > MaxTime) {
-		releaseToParent(consumer);
+		releaseToParent(consumer, thread);
 	    } else {
 		offerRights(consumer);
 	    }
 	}
    }
 
-    private void releaseToParent(Scheduler consumer) {
+    private void releaseToParent(Scheduler consumer, SchedulableObject thread) {
 	TreeNode parent_node = getTreeNode().getParent();
 	Scheduler parent = parent_node.getScheduler();
-	parent.releaseRights(this);
+	parent.releaseRights(this, thread);
 	lastReleaseTime = System.currentTimeMillis();
 	synchronized (this) { --ownedRights; }
     }
@@ -83,7 +83,7 @@ public class RightsPropagatingScheduler extends Scheduler
 	if (handoff != null) {
 	    handoff.thread_start();
 	} else {
-	    releaseToParent(consumer);
+	    releaseToParent(consumer, handoff);
 	}
     }
 

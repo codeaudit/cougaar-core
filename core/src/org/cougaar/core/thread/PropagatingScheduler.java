@@ -57,17 +57,17 @@ public class PropagatingScheduler extends Scheduler
     }
 
     
-    void releaseRights(Scheduler consumer) { 
+    void releaseRights(Scheduler consumer, SchedulableObject thread) { 
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
-	    super.releaseRights(consumer);
+	    super.releaseRights(consumer, thread);
 	} else {
 	    // In this simple scheduler, layers other than root always
 	    // give up the right at this point (root may hand it off).
-	    decrementRunCount(this);
+	    decrementRunCount(this, thread);
 	    Scheduler parent = parent_node.getScheduler();
-	    parent.releaseRights(this);
+	    parent.releaseRights(this, thread);
 	}
    }
 
