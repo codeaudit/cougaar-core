@@ -9,10 +9,12 @@ reorgglm	the perl script to do the GLM ldm package
 		cleanup. (see below)
 reorgocu	Perl script to help with the org.cougaar.util split
 		(some classes were moved to org.cougaar.core.util)
-	
+		We recommend that you only run reorgocu if you need to:
+		that is, if you directly use these moved classes
+		(XMLize and friends).
 
 To run the scripts, assuming that *your* software packags aren't
-changing:
+themselves moving:
 
 % cd RootOfYourSourceTree
 # if you want to see what it is going to do:
