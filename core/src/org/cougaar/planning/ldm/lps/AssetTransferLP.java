@@ -89,7 +89,9 @@ public class AssetTransferLP
     
       // create an AssetAssignment task
       boolean sendRelationships = o.isAdd();
-      if (!sendRelationships && changes != null) {
+      if (!sendRelationships && 
+          ((changes != AnonymousChangeReport.LIST) &&
+           (changes != null))) {
         for (Iterator i = changes.iterator(); i.hasNext(); ) {
           ChangeReport changeReport = (ChangeReport) i.next();
           if (changeReport instanceof RelationshipSchedule.RelationshipScheduleChangeReport) {
