@@ -72,7 +72,6 @@ public class QosMonitorServiceProvider
 		Object[] args = { nameSupport, sb };
 		Constructor cons = rss_class.getConstructor(types);
 		rms = (ResourceMonitorService) cons.newInstance(args);
-		System.out.println("!!!!! Made RSSLink !!!");
 	    } catch (Exception ex) {
 		// RSS not loaded
 		System.err.println("### No RSS, using default ResourceMonitorService: " + ex);
