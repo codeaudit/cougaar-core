@@ -28,6 +28,7 @@ import java.io.Serializable;
 import org.cougaar.core.agent.ClusterIdentifier;
 import org.cougaar.core.blackboard.Publishable;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.util.UniqueObject;
 import org.cougaar.core.util.UID;
 
@@ -50,6 +51,11 @@ public class AttributeBasedAddress extends ClusterIdentifier implements Serializ
   }
 
   public AttributeBasedAddress(String commName, String attrType, String attrValue) {
+    this(null, commName, attrType, attrValue);
+  }
+    
+  public AttributeBasedAddress(MessageAttributes qosAttributes, String commName, String attrType, String attrValue) {
+    super(qosAttributes);
     if (commName == null) {
       myCommunityName = "";
     } else {

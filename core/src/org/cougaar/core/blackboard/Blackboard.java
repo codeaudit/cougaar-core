@@ -41,6 +41,7 @@ import org.cougaar.planning.ldm.plan.Directive;
 import org.cougaar.planning.ldm.plan.Plan;
 
 import org.cougaar.multicast.AttributeBasedAddress;
+import org.cougaar.core.mts.MessageAttributes;
 
 import javax.naming.NamingException;
 import javax.naming.NameNotFoundException;
@@ -445,14 +446,19 @@ public class Blackboard extends Subscriber
 
       if(dest instanceof AttributeBasedAddress) {
         //System.out.println("-------BLACKBOARD ENCOUNTERED ABA-----");
+        MessageAttributes qosAttributes = dest.getQosAttributes();
 	List agents = getAllAddresses((AttributeBasedAddress)dest);   // List of CIs
 	// for all destinations, add a new directive array and insert a new directive, or add to 
 	// an existing array in the destinations hashmap
 	for (int i=0; i < agents.size(); i++) {
-	  dirs = (ArrayList)directivesByDestination.get(agents.get(i));
-	  if(dirs == null){
+          ClusterIdentifier agentAddress = (ClusterIdentifier) agents.get(i);
+          if (qosAttributes != null) {
+            agentAddress = new ClusterIdentifier(qosAttributes, agentAddress.getAddress());
+          }
+	  dirs = (ArrayList)directivesByDestination.get(agentAddress);
+	  if (dirs == null) {
 	    dirs = new ArrayList();
-	    directivesByDestination.put(agents.get(i), dirs); 
+	    directivesByDestination.put(agentAddress, dirs); 
 	  }
 	  dirs.add(dir);
 	}
