@@ -91,6 +91,7 @@ public class StandardBlackboard
     bb.init();
     d = bb.getDistributor();
 
+    bb.connectDomains();
 
     // offer hooks back to the Agent
     bbAgentSP = new BlackboardForAgentServiceProvider(bb);
@@ -102,8 +103,6 @@ public class StandardBlackboard
     sb.addService(BlackboardService.class, bbSP);
     sb.addService(BlackboardMetricsService.class, bbSP);
     sb.addService(BlackboardQueryService.class, bbSP);
-
-    bb.connectDomains();
 
     // add services here (none for now)
   }
