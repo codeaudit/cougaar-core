@@ -1,3 +1,30 @@
+2002-03-21  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/util/ReadOnlyCollection.java:
+	* org/cougaar/util/ReadOnlySet.java:
+	New classes wrapping Collections and Sets respectively that
+	prohibit modification of the wrapped Collection or Set. These
+	should be used by any method (particularly Service methods) that
+	wish to return a read-only copy of some internal Collection or
+	Set. This should be much more efficient in most cases while
+	protecting the integrity of the underlying Collection or Set.
+
+	* org/cougaar/util/KeyedSet.java:
+	Add functionality to optionally make the underlying Map be a
+	synchronized Map. This is necessary whenever the KeyedSet can be
+	referenced from a Thread other than the one updating the
+	subscription. Also added an accessor for the keySet() of the
+	underlying Map. This is more efficient than building the Set of
+	keys from the Set of elements. The new methods are:
+	makeSynchronized() which replaces the underlying Map with a
+	SynchronizedMap wrapper around that underlying Map. This can be
+	done at any time, but should only be done once and should be done
+	before it is used. The following code is typical:
+	   MyKeyedSet mks = new MyKeyedSet();
+	   mks.makeSynchronized();
+	   subscription = subscribe(mks);
+	keySet() returns a Set of the keys of the underlying Map.
+
 2002-03-19  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/util/log/log4j/Log4jLoggerFactory.java:
