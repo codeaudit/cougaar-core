@@ -30,8 +30,8 @@ import java.security.cert.Certificate;
  * There are currently four built-in certs:<ul>
  *   <li>{@link #NULL}</li>
  *   <li>{@link #PROXY}</li>
- *   <li>{@link #Direct}</li>
- *   <li>{@link #Indirect}</li>
+ *   <li>{@link Cert.Direct}</li>
+ *   <li>{@link Cert.Indirect}</li>
  * </ul>
  * User-defined Cert subclasses are also permitted, which
  * must be <u>immutable</u>.

@@ -73,7 +73,7 @@ import org.cougaar.util.log.LoggerFactory;
  * to the ClientTransport, since these identify white pages servers.
  * See {@link ClientTransport} for additional details.
  * 
- * @see #parse detailed parsing notes
+ * @see #parse(String) detailed parsing notes
  */
 public class ConfigReader {
 

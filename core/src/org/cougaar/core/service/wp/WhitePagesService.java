@@ -289,7 +289,7 @@ public abstract class WhitePagesService implements Service {
     return res.getNames();
   }
   /** 
-   * @see Request.Fetch
+   * @see Request.Flush
    * @param timeout non-negative values are deprecated
    */
   public final boolean flush(
