@@ -1,0 +1,10 @@
+2001-08-23  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ChangeLog:
+	This file is ChangeLog for this test package.
+
+	* SearchStringParserTest.java:
+	Regression tests for SearchStringParser. The initial tests just
+	insure that the toString of the parse result matches the parse
+	argument string.
+
