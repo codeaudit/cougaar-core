@@ -41,9 +41,6 @@ public interface MobilitySupport {
   /** id of this node. */
   MessageAddress getNodeId();
 
-  /** id of the message sender. */
-  MessageAddress getSender();
-
   Ticket getTicket();
 
   // message-sender
@@ -53,12 +50,6 @@ public interface MobilitySupport {
   void sendAck();
 
   void sendNack(Throwable throwable);
-
-  // model-registry
-
-  void setPendingModel(GenericStateModel model);
-
-  GenericStateModel takePendingModel();
 
   // agent-container
 

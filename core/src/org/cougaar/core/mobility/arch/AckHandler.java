@@ -27,8 +27,13 @@ import org.cougaar.util.GenericStateModel;
  */
 public class AckHandler extends AbstractHandler {
 
-  public AckHandler(MobilitySupport support) {
+  private GenericStateModel model;
+
+  public AckHandler(
+      MobilitySupport support,
+      GenericStateModel model) {
     super(support);
+    this.model = model;
   }
 
   public void run() {
@@ -45,15 +50,9 @@ public class AckHandler extends AbstractHandler {
     // FIXME do handshake
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" transfer ack from "+sender);
-    }
-
-    GenericStateModel model = takePendingModel();
-    if (model == null) {
-      if (log.isErrorEnabled()) {
-        log.error("Ack on transfer for non-existing agent "+id);
-      }
-      return;
+      log.info(
+          "Move of agent "+id+
+          " acknowledged, removing original agent");
     }
 
     try {
@@ -62,18 +61,21 @@ public class AckHandler extends AbstractHandler {
       model.unload();
       removeAgent();
 
-      onRemoval();
-
     } catch (Exception e) {
 
       if (log.isErrorEnabled()) {
         log.error("Agent removal after move failed", e);
       }
 
-    } finally {
-      // GC!
-      model = null;
     }
+
+    // fill in success
+    //
+    // note that this travels from the origin node 
+    // to the just-moved agent on the remote destination 
+    // node.
+
+    onArrival();
 
     // agent will be GC'ed now
 

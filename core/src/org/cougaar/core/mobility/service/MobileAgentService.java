@@ -23,15 +23,20 @@ package org.cougaar.core.mobility;
 import org.cougaar.core.component.Service;
 
 /**
- * The requestor of this service must implement the
- * "MobilityListener" API.
+ * Service client must be an <b>Agent</b>.
  * <p>
- * This is a "callback" service.
- *
- * @see BufferedMobilityListener plugins should consider
- *    using a buffer to queue their action until they 
- *    "execute()".
+ * The client may optionally have this method, which
+ * will be called via reflection:<pre>
+ *   void onDispatch(MessageAddress destinationNode);
+ * </pre>
+ * This lets the agent know that it will be moved.
  */
-public interface MobilityListenerService extends Service {
+public interface MobileAgentService extends Service {
+
+  // Nothing for now.
+  //
+  // Access to this service registers the agent for
+  // mobility, and release of the service unregisters
+  // the agent.
 
 }

@@ -99,8 +99,6 @@ public class DispatchTestHandler extends AbstractHandler {
       model.stop();
       model.unload();
       removeAgent();
-
-      onRemoval();
     } catch (Exception e) {
 
       if (log.isErrorEnabled()) {

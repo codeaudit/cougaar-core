@@ -113,7 +113,6 @@ public class DispatchRemoteHandler extends AbstractHandler {
       return;
     }
 
-    setPendingModel(model);
   }
 
   private void checkTicket() {

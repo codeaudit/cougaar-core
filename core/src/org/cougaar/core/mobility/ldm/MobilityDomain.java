@@ -29,12 +29,15 @@ import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.LogPlan;
 import org.cougaar.core.blackboard.XPlanServesBlackboard;
+import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.domain.Domain;
-import org.cougaar.core.domain.Factory;
-import org.cougaar.core.domain.LDMServesPlugin;
-
 import org.cougaar.core.domain.DomainAdapter;
 import org.cougaar.core.domain.DomainBindingSite;
+import org.cougaar.core.domain.Factory;
+import org.cougaar.core.domain.LDMServesPlugin;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.service.UIDService;
 
 /**
  * The mobility domain just has a factory, with no LPs.
@@ -59,8 +62,12 @@ public class MobilityDomain extends DomainAdapter {
                              "Unable to initialize domain Factory without a binding site.");
     } 
 
-    LDMServesPlugin ldm = bindingSite.getClusterServesLogicProvider().getLDM();
-    Factory f = new MobilityFactoryImpl(ldm);
+    UIDService uidService = getUIDService();
+    MessageAddress nodeId = getNodeId();
+    MessageAddress agentId =
+      bindingSite.getClusterServesLogicProvider().getLDM().getClusterIdentifier();
+    MobilityFactory f = new MobilityFactoryImpl(uidService, nodeId, agentId);
+
     setFactory(f);
   }
 
@@ -90,6 +97,44 @@ public class MobilityDomain extends DomainAdapter {
     }
     
     setXPlan(logPlan);
+  }
+
+  private UIDService getUIDService() {
+    ServiceBroker sb = getBindingSite().getServiceBroker();
+    UIDService uidService = 
+      (UIDService)
+      sb.getService(
+          this,
+          UIDService.class,
+          null);
+    if (uidService == null) {
+      throw new RuntimeException(
+          "Unable to obtain uid service");
+    }
+    return uidService;
+  }
+
+  private MessageAddress getNodeId() {
+    // get the nodeId
+    ServiceBroker sb = getBindingSite().getServiceBroker();
+    NodeIdentificationService nodeIdService = 
+      (NodeIdentificationService)
+      sb.getService(
+          this,
+          NodeIdentificationService.class,
+          null);
+    if (nodeIdService == null) {
+      throw new RuntimeException(
+          "Unable to obtain node-id service");
+    }
+    MessageAddress nodeId = nodeIdService.getNodeIdentifier();
+    sb.releaseService(
+        this, NodeIdentificationService.class, nodeIdService);
+    if (nodeId == null) {
+      throw new RuntimeException(
+          "Unable to obtain node id");
+    }
+    return nodeId;
   }
 
   // zero LPs

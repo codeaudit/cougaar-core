@@ -35,7 +35,6 @@ public abstract class AbstractHandler implements Runnable {
 
   protected final MessageAddress id;
   protected final MessageAddress nodeId;
-  protected final MessageAddress sender;
   protected final Ticket ticket;
   protected final LoggingService log;
 
@@ -44,7 +43,6 @@ public abstract class AbstractHandler implements Runnable {
     // save these for easy base-class access
     this.id = support.getId();
     this.nodeId = support.getNodeId();
-    this.sender = support.getSender();
     this.ticket = support.getTicket();
     this.log = support.getLog();
   }
@@ -63,16 +61,6 @@ public abstract class AbstractHandler implements Runnable {
 
   protected void sendNack(Throwable throwable) {
     support.sendNack(throwable);
-  }
-
-  // model-reg
-
-  protected void setPendingModel(GenericStateModel model) {
-    support.setPendingModel(model);
-  }
-
-  protected GenericStateModel takePendingModel() {
-    return support.takePendingModel();
   }
 
   // agent-container
@@ -97,10 +85,6 @@ public abstract class AbstractHandler implements Runnable {
 
   protected void onFailure(Throwable throwable) {
     support.onFailure(throwable);
-  }
-
-  protected void onRemoval() {
-    support.onRemoval();
   }
 
   // to-string

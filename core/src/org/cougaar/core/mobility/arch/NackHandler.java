@@ -27,12 +27,15 @@ import org.cougaar.util.GenericStateModel;
  */
 public class NackHandler extends AbstractHandler {
 
+  private GenericStateModel model;
   private Throwable throwable;
 
   public NackHandler(
       MobilitySupport support,
+      GenericStateModel model,
       Throwable throwable) {
     super(support);
+    this.model = model;
     this.throwable = throwable;
   }
 
@@ -45,16 +48,9 @@ public class NackHandler extends AbstractHandler {
     // FIXME race condition between move & agent-add!
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" transfer nack from "+sender);
-    }
-
-    GenericStateModel model = takePendingModel();
-    if (model == null) {
-      // did we lose an agent?!
-      if (log.isErrorEnabled()) {
-        log.error("Nack on transfer for non-existing agent "+id);
-      }
-      return;
+      log.info(
+          "Handling failed move of agent "+id+
+          " to node "+ticket.getDestinationNode());
     }
 
     // agent is suspended -- let's resume it.

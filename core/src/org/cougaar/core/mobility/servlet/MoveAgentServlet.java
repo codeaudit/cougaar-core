@@ -52,6 +52,7 @@ import org.cougaar.core.node.NodeIdentifier;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.servlet.BaseServletComponent;
+import org.cougaar.core.util.UID;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -62,13 +63,44 @@ import org.cougaar.util.UnaryPredicate;
  * <p>
  * The URL parameters to this servlet are:
  * <ul><p>
- *   <li>mobileAgent=STRING</li>
- *   <li>originNode=STRING</li>
- *   <li>destNode=STRING</li>
- *   <li>isForceRestart=BOOLEAN</li>
+ *   <li><tt>action=STRING</tt><br>
+ *       Option action selection, where the default is "Refresh".
+ *       <p>
+ *       "Refresh" displays the current Scripts.
+ *       <p>
+ *       "Remove" removes the Script with the UID specified by
+ *       the required "removeUID" parameter.
+ *       <p>
+ *       "Add" creates a new Script.  Most of the parameters
+ *       below are used to support "Add".
+ *       </li><p>
+ *   <li><tt>removeUID=String</tt><br>
+ *       If the action is "Remove", this is the UID of the script
+ *       to be removed.  Any running processes are killed.
+ *       </li><p>
+ *   <li><tt>mobileAgent=STRING</tt><br>
+ *       Option agent to move.  Defaults to this servlet's agent.
+ *       </li><p>
+ *   <li><tt>originNode=STRING</tt><br>
+ *       Option origin node for the mobile agent.  Defaults to 
+ *       wherever the agent happens to be at the time of the submit.
+ *       If set, the move will assert the agent starting node 
+ *       location.
+ *       </li><p>
+ *   <li><tt>destNode=STRING</tt><br>
+ *       Option destination node for the mobile agent.  Defaults 
+ *       to wherever the agent happens to be at the time of
+ *       the submit.
+ *       </li><p>
+ *   <li><tt>isForceRestart=BOOLEAN</tt><br>
+ *       Only applies when the destNode is not specified or
+ *       matches the current agent location.  If true, the agent
+ *       will undergo most of the move work, even though it's
+ *       already at the specified destination node.
+ *       </li><p>
  * </ul>
  * <p>
- * Note the <b>SECURITY</b> issues!
+ * Note the <b>SECURITY</b> issues of moving agents!
  */
 public class MoveAgentServlet
 extends BaseServletComponent
@@ -157,6 +189,31 @@ implements BlackboardClient
     return ret;
   }
 
+  protected MoveAgent queryMoveAgent(final UID uid) {
+    if (uid == null) {
+      throw new IllegalArgumentException("null uid");
+    }
+    UnaryPredicate pred = new UnaryPredicate() {
+      public boolean execute(Object o) {
+        return 
+          ((o instanceof MoveAgent) &&
+           (uid.equals(((MoveAgent) o).getUID())));
+      }
+    };
+    MoveAgent ret = null;
+    try {
+      blackboard.openTransaction();
+      Collection c = blackboard.query(pred);
+      if ((c != null) && (c.size() >= 1)) {
+        ret = (MoveAgent) c.iterator().next();
+      }
+    } finally {
+      blackboard.closeTransactionDontReset();
+    }
+    return ret;
+  }
+
+
   protected void addMoveAgent(
       String mobileAgent,
       String originNode,
@@ -196,6 +253,15 @@ implements BlackboardClient
     }
   }
 
+  protected void removeMoveAgent(MoveAgent ma) {
+    try {
+      blackboard.openTransaction();
+      blackboard.publishRemove(ma);
+    } finally {
+      blackboard.closeTransaction();
+    }
+  }
+
   /**
    * Servlet to handle requests.
    */
@@ -214,14 +280,20 @@ implements BlackboardClient
       private HttpServletRequest request;
       private HttpServletResponse response;
 
-      // from the URL-params:
-      //    (see the class-level javadocs for details)
+      // action:
 
-      public static final String REFRESH_PARAM = "Refresh";
-      public boolean isRefresh;
+      public static final String ACTION_PARAM = "action";
+      public static final String ADD_VALUE = "Add";
+      public static final String REMOVE_VALUE = "Remove";
+      public static final String REFRESH_VALUE = "Refresh";
+      public String action;
 
-      public static final String MOVE_PARAM = "Move";
-      public boolean isMove;
+      // remove uid:
+      
+      public static final String REMOVE_UID_PARAM = "removeUID";
+      public String removeUID;
+
+      // ticket options:
 
       public static final String MOBILE_AGENT_PARAM = "mobileAgent";
       public String mobileAgent;
@@ -250,57 +322,57 @@ implements BlackboardClient
       }
 
       private void parseParams() throws IOException {
-        // get "name=value" parameters
-        for (Enumeration en = request.getParameterNames();
-            en.hasMoreElements();
-            ) {
-          // extract (name, value)
-          String name = (String) en.nextElement();
-          if (name == null) {
-            continue;
-          }
-          String values[] = request.getParameterValues(name);
-          int nvalues = ((values != null) ? values.length : 0);
-          if (nvalues <= 0) {
-            continue;
-          }
-          String value = values[nvalues - 1];
-          if ((value == null) ||
-              (value.length() <= 0)) {
-            continue;
-          }
-          value = URLDecoder.decode(value, "UTF-8");
 
-          // save parameters
-          if (name.equals(MOVE_PARAM)) {
-            isMove = "true".equalsIgnoreCase(value);
-          } else if (name.equals(REFRESH_PARAM)) {
-            isRefresh = "true".equalsIgnoreCase(value);
-          } else if (name.equals(MOBILE_AGENT_PARAM)) {
-            mobileAgent = value;
-          } else if (name.equals(DEST_NODE_PARAM)) {
-            destNode = value;
-          } else if (name.equals(ORIGIN_NODE_PARAM)) {
-            originNode = value;
-          } else if (name.equals(IS_FORCE_RESTART_PARAM)) {
-            if (value.equalsIgnoreCase("true")) {
-              isForceRestart = true;
-            } else if (value.equalsIgnoreCase("false")) {
-              isForceRestart = false;
-            }
-          } else {
-          }
+        // action:
+        action = request.getParameter(ACTION_PARAM);
+
+        // remove param:
+        removeUID = request.getParameter(REMOVE_UID_PARAM);
+        if ((removeUID != null) && (removeUID.length() == 0)) {
+          removeUID = null;
         }
+
+        // ticket options:
+
+        mobileAgent = request.getParameter(MOBILE_AGENT_PARAM);
+        if ((mobileAgent != null) && (mobileAgent.length() == 0)) {
+          mobileAgent = null;
+        }
+
+        destNode = request.getParameter(DEST_NODE_PARAM);
+        if ((destNode != null) && (destNode.length() == 0)) {
+          destNode = null;
+        }
+
+        originNode = request.getParameter(ORIGIN_NODE_PARAM);
+        if ((originNode != null) && (originNode.length() == 0)) {
+          originNode = null;
+        }
+
+        isForceRestart = "true".equalsIgnoreCase(
+            request.getParameter(IS_FORCE_RESTART_PARAM));
       }
 
       private void writeResponse() throws IOException {
-        if (isMove) {
+        if (ADD_VALUE.equals(action)) {
           try {
             addMoveAgent(
                 mobileAgent,
                 originNode,
                 destNode,
                 isForceRestart);
+          } catch (Exception e) {
+            writeFailure(e);
+            return;
+          }
+          writeSuccess();
+        } else if (REMOVE_VALUE.equals(action)) {
+          try {
+            UID uid = UID.toUID(removeUID);
+            MoveAgent ma = queryMoveAgent(uid);
+            if (ma != null) {
+              removeMoveAgent(ma);
+            }
           } catch (Exception e) {
             writeFailure(e);
             return;
@@ -435,50 +507,43 @@ implements BlackboardClient
           }
           out.print("</table>\n");
         }
-        if (mobileAgent != null) {
-          out.print(
-            "<input type=\"hidden\" name=\""+
-            MOBILE_AGENT_PARAM+
-            "\" value=\"");
-          out.print(mobileAgent);
-          out.print("\">");
-        }
-        if (originNode != null) {
-          out.print(
-              "<input type=\"hidden\" name=\""+
-              ORIGIN_NODE_PARAM+
-              "\" value=\"");
-          out.print(originNode);
-          out.print("\">");
-        }
-        if (destNode != null) {
-          out.print(
-            "<input type=\"hidden\" name=\""+
-            DEST_NODE_PARAM+
-            "\" value=\"");
-          out.print(destNode);
-          out.print("\">");
-        }
         out.print(
-            "<input type=\"hidden\" name=\""+
-            IS_FORCE_RESTART_PARAM+
-            "\" value=\"");
-        out.print(isForceRestart);
-        out.print("\">\n");
-        out.print(
-            "<p><input type=\"hidden\" name=\""+
-            REFRESH_PARAM+
-            "\" value=\"true\">");
-        out.print(
-            "<p><input type=\"submit\" value=\""+
-            REFRESH_PARAM+
-            "\">"+
-            "</form>\n");
+            "<p><input type=\"submit\" name=\""+
+            ACTION_PARAM+
+            "\" value=\""+
+            REFRESH_VALUE+
+            "\">\n");
 
-        // begin form
-        out.print("<form method=\"GET\" action=\"");
-        out.print(request.getRequestURI());
-        out.print("\">\n");
+        // allow user to remove an existing MoveAgent
+        out.print(
+            "<p><hr><p>"+
+            "<h2>Remove an existing move request:</h2>\n");
+        if (n > 0) {
+          out.print(
+              "<select name=\""+
+              REMOVE_UID_PARAM+
+              "\">");
+          Iterator iter = c.iterator();
+          for (int i = 0; i < n; i++) {
+            MoveAgent ma = (MoveAgent) iter.next();
+            UID uid = ma.getUID();
+            out.print("<option value=\"");
+            out.print(uid);
+            out.print("\">");
+            out.print(uid);
+            out.print("</option>");
+          }
+          out.print(
+              "</select>"+
+              "<input type=\"submit\" name=\""+
+              ACTION_PARAM+
+              "\" value=\""+
+              REMOVE_VALUE+
+              "\">\n");
+        } else {
+          out.print("<i>none</i>");
+        }
+
         // allow user to submit a new MoveAgent request
         out.print(
             "<p>"+
@@ -548,12 +613,12 @@ implements BlackboardClient
             "</select>\n"+
             "</td></tr>\n"+
             "<tr><td colwidth=2>"+
-            "<input type=\"hidden\" name=\""+
-            MOVE_PARAM+
-            "\" value=\"true\">"+
-            "<input type=\"submit\" value=\""+
-            MOVE_PARAM+
+            "<input type=\"submit\" name=\""+
+            ACTION_PARAM+
+            "\" value=\""+
+            ADD_VALUE+
             "\">"+
+            "<input type=\"reset\">"+
             "</td></tr>\n"+
             "</table>\n"+
             "</form>\n");

@@ -30,6 +30,11 @@ import org.cougaar.core.util.UniqueObject;
 /**
  * A request that an agent be moved from its current node 
  * to a different node.
+ * <p>
+ * This has been replaced by the "AgentMove" API, but 
+ * there's no rush to switch to the new API.
+ *
+ * @see AgentMove
  */
 public interface MoveAgent extends UniqueObject {
 
@@ -44,7 +49,7 @@ public interface MoveAgent extends UniqueObject {
   MessageAddress getSource();
 
   /**
-   * Get the dispatch ticket.
+   * Get the move ticket.
    * <p>
    * If the ticket's "getMobileAgent()" is null then
    * the requesting agent will be moved (a "rover" agent).

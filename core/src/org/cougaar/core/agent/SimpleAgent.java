@@ -42,7 +42,6 @@ import org.cougaar.core.agent.service.alarm.RealTimer;
 import org.cougaar.core.agent.service.alarm.Timer;
 import org.cougaar.core.agent.service.containment.AgentContainmentServiceProvider;
 import org.cougaar.core.agent.service.democontrol.DemoControlServiceProvider;
-import org.cougaar.core.agent.service.mobility.MobilityDispatchServiceProvider;
 import org.cougaar.core.agent.service.registry.PrototypeRegistry;
 import org.cougaar.core.agent.service.registry.PrototypeRegistryServiceProvider;
 import org.cougaar.core.agent.service.scheduler.SchedulerServiceProvider;
@@ -61,10 +60,7 @@ import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.domain.RootFactory;
-import org.cougaar.core.mobility.MobilityDispatchService;
-import org.cougaar.core.mobility.MobilityListener;
-import org.cougaar.core.mobility.MobilityListenerService;
-import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.MobileAgentService;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageStatistics;
@@ -130,7 +126,7 @@ import org.cougaar.core.node.service.*;
  */
 public class SimpleAgent 
   extends Agent
-  implements Cluster, AgentIdentityClient, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, MobilityListener, StateObject
+  implements Cluster, AgentIdentityClient, LDMServesPlugin, ClusterContext, MessageTransportClient, MessageStatistics, StateObject
 {
 
   // this node's address
@@ -172,9 +168,7 @@ public class SimpleAgent
   private MessageStatisticsService statisticsService;
   private MessageWatcherService watcherService;
 
-  private MobilityDispatchServiceProvider myMDSP;
-  private MobilityDispatchService nodeMDS;
-  private MobilityListenerService myMobilityListenerService;
+  private MobileAgentService myMobileAgentService;
 
   private UIDServiceProvider myUIDServiceProvider;
   private UIDService myUIDService;
@@ -422,6 +416,36 @@ public class SimpleAgent
             null,
             null,
             ComponentDescription.PRIORITY_LOW));
+
+      /*
+      // agent-level mobility
+      ComponentDescription redirectMoveDesc = 
+        new ComponentDescription(
+            getMessageAddress()+"Mobility",
+            "Node.AgentManager.Agent.PluginManager.Plugin",
+            "org.cougaar.core.mobility.service.RedirectMovePlugin",
+            null,  //codebase
+            null,  //parameters
+            null,  //certificate
+            null,  //lease
+            null, //policy
+            ComponentDescription.PRIORITY_LOW);
+      l.add(redirectMoveDesc);
+      // node-level mobility
+      ComponentDescription rootMobilityDesc = 
+        new ComponentDescription(
+            getMessageAddress()+"Mobility",
+            "Node.AgentManager.Agent.PluginManager.Plugin",
+            "org.cougaar.core.mobility.service.RootMobilityPlugin",
+            null,  //codebase
+            null,  //parameters
+            null,  //certificate
+            null,  //lease
+            null, //policy
+            ComponentDescription.PRIORITY_LOW);
+      l.add(rootMobilityDesc);
+      */
+
       return new ComponentDescriptions(l);
     } catch (Exception e) {
       if (log.isErrorEnabled()) {
@@ -552,7 +576,17 @@ public class SimpleAgent
     }
 
     // add ourselves to our VM's cluster table
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Adding agent "+getMessageAddress()+
+          " to the cluster context table");
+    }
     ClusterContextTable.addContext(getMessageAddress(), this);
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Added agent "+getMessageAddress()+
+          " to the cluster context table");
+    }
 
     // fill in prior restart incarnation details
     if (agentState != null) {
@@ -580,16 +614,6 @@ public class SimpleAgent
     watcherService = (MessageWatcherService) 
       sb.getService(
           this, MessageWatcherService.class, null);
-
-    // get node-level listener service
-    myMobilityListenerService = (MobilityListenerService) 
-      sb.getService(this, MobilityListenerService.class, null);
-
-    // override node-level mobility service
-    nodeMDS = (MobilityDispatchService) 
-      sb.getService(this, MobilityDispatchService.class, null);
-    myMDSP = new MobilityDispatchServiceProvider(this, nodeMDS);
-    sb.addService(MobilityDispatchService.class, myMDSP);
 
     // set up the UIDServer and UIDService
     UIDServiceImpl theUIDServer = new UIDServiceImpl(this);
@@ -737,6 +761,20 @@ public class SimpleAgent
     restart();
 
     startRestartChecker();
+
+    // register for mobility
+    if (myMobileAgentService == null) {
+      myMobileAgentService = (MobileAgentService) 
+        getServiceBroker().getService(
+            this, MobileAgentService.class, null);
+      if (myMobileAgentService == null) {
+        if (log.isWarnEnabled()) {
+          log.warn(
+              "Agent "+getAgentIdentifier()+
+              " unable to register for agent mobility");
+        }
+      }
+    }
 
     // children started as part of "super.add(..)".
   }
@@ -896,6 +934,13 @@ public class SimpleAgent
 
     stopRestartChecker();
 
+    // disable mobility
+    if (myMobileAgentService != null) {
+      getServiceBroker().releaseService(
+          this, MobileAgentService.class, myMobileAgentService);
+      myMobileAgentService = null;
+    }
+
     // should be okay...
 
     // stop all children
@@ -957,14 +1002,6 @@ public class SimpleAgent
     sb.releaseService(this, UIDService.class, myUIDService);
     sb.revokeService(UIDService.class, myUIDServiceProvider);
 
-    sb.revokeService(MobilityDispatchService.class, myMDSP);
-    sb.releaseService(this, MobilityDispatchService.class, nodeMDS);
-
-    sb.releaseService(
-        this,
-        MobilityListenerService.class, 
-        myMobilityListenerService);
-
     sb.revokeService(
         AgentContainmentService.class, 
         myAgentContainmentServiceProvider);
@@ -979,7 +1016,17 @@ public class SimpleAgent
     // messenger already released in "suspend()"
 
     // remove ourselves from the VM-local context
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Removing agent "+getMessageAddress()+
+          " from the cluster context table");
+    }
     ClusterContextTable.removeContext(getMessageAddress());
+    if (log.isDebugEnabled()) {
+      log.debug(
+          "Removed agent "+getMessageAddress()+
+          " from the cluster context table");
+    }
 
     sb.releaseService(this, DomainService.class, myDomainService);
 
@@ -1135,38 +1182,15 @@ public class SimpleAgent
     return getMessageAddress();
   }
 
-  public void onDispatch(Ticket ticket) {
+  public void onDispatch(MessageAddress destinationNode) {
     if (log.isInfoEnabled()) {
       log.info(
           "Agent "+getIdentifier()+
-          " preparing for move dispatch "+
-          ticket);
+          " preparing for move from node "+localNode+
+          " to "+destinationNode);
     }
     // save target node for later "suspend()" and "getState()" use
-    moveTargetNode = ticket.getDestinationNode();
-    if (moveTargetNode == null) {
-      moveTargetNode = localNode;
-    }
-  }
-
-  public void onArrival(Ticket ticket) {
-    // this is called after the "start()", so it's not very helpful
-    if (log.isInfoEnabled()) {
-      log.info(
-          "Agent "+getIdentifier()+
-          " arrived from successful move "+
-          ticket);
-    }
-  }
-
-  public void onFailure(Ticket ticket, Throwable throwable) {
-    // this is called after the "start()", so it's not very helpful
-    if (log.isWarnEnabled()) {
-      log.warn(
-          "Agent "+getIdentifier()+
-          " restarted after failed move "+
-          ticket, throwable);
-    }
+    moveTargetNode = destinationNode;
   }
 
   ///

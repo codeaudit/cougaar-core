@@ -20,9 +20,11 @@
  */
 package org.cougaar.core.mobility.ldm;
 
+import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.domain.Factory;
-
 import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.util.UID;
 
 /**
  * Factory to create MoveAgent objects.
@@ -36,11 +38,68 @@ public interface MobilityFactory extends Factory {
   Object createTicketIdentifier();
 
   /**
-   *
+   * Create a request that an agent be moved, which is
+   * sent to the mobile agent itself.
+   * <p>
+   * This is the <i>typical usage</i>, where the request 
+   * first passes through the mobile agent before passing 
+   * to that agent's node.
+   * <p>
+   * Equivalent to calling:<pre>
+   *   MessageAddress addr = ticket.getMobileAgent();
+   *   if (addr == null) use the local agent
+   *   createAgentMove(ownerUID, addr, ticket);
+   * </pre>
+   */
+  AgentMove createAgentMove(
+      UID ownerUID,
+      Ticket ticket);
+
+  /**
+   * Create a request that an agent be moved, which
+   * is sent directly to the specified target.
+   * <p>
+   * The target is either null, the mobile agent,
+   * or the node running the mobile agent.  If the
+   * mobile agent is specified, the request first
+   * passes through the mobile agent.
+   * <p>
+   * In the future this may be used to send the request
+   * directly to the node that contains the agent.
+   */
+  AgentMove createAgentMove(
+      UID ownerUID,
+      MessageAddress target,
+      Ticket ticket);
+
+
+  // old API
+
+
+  /**
+   * Create an agent move request -- this has been
+   * replaced by the "AgentMove" APIs, but is still
+   * supported.
+   * 
    * @param ticket must have a ticket identifier that
    *    was created by the "createTicketIdentifier()"
    *    method.
+   *
+   * @see AgentMove new API
    */
   MoveAgent createMoveAgent(Ticket ticket);
+
+
+  // the rest is for the infrastructure:
+
+
+  /**
+   * Create a inter-node agent transfer request, for
+   * infrastructure use.
+   */
+  AgentTransfer createAgentTransfer(
+      UID ownerUID,
+      Ticket ticket,
+      StateTuple state);
 
 }

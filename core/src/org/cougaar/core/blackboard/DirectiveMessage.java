@@ -211,7 +211,40 @@ public class DirectiveMessage extends ClusterMessage
     ClusterIdentifier cid = getDestination();
     ClusterContext context = ClusterContextTable.findContext(cid);
     if (context == null) {
-      System.err.println("Directive Message read in "+cid+" before Context is known.");
+      //System.err.println("Directive Message read in "+cid+" before Context is known.");
+
+      // try to work around bug 1316
+      int nDirectives = in.readInt();
+      System.err.println(
+          "\n\nDirective Message read in "+cid+" before Context is known."+
+          "\nThis may be agent mobility bug 1316."+
+          "\nWill attempt to continue without the context."+
+          "\n\nDebugging details:"+
+          "\n  current time: "+System.currentTimeMillis()+
+          "\n  message type: "+this.getClass().getName()+
+          "\n  input stream: "+in+
+          "\n  input stream type: "+in.getClass().getName()+
+          "\n  message source: "+getSource()+
+          "\n  message destination (this agent): "+getDestination()+
+          "\n  #directives: "+nDirectives+
+          "\n  stacktrace (likely in RMI):");
+      Thread.dumpStack();
+      int i = 0;
+      try {
+        directives = new Directive[nDirectives];
+        for (i = 0; i < directives.length; i++) {
+          directives[i] = (Directive) in.readObject();
+        }
+        System.err.println(
+            "\n\nWork around appears to be okay, read all "+
+            nDirectives+" directives\n\n");
+      } catch (Exception e) {
+        System.err.println(
+            "\n\nFailed work around, read only "+i+
+            " of the "+nDirectives+
+            "directives, possibly lost the rest!\n\n");
+      }
+      return;
     }
     
     try {

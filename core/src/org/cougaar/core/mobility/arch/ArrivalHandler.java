@@ -49,38 +49,28 @@ public class ArrivalHandler extends AbstractHandler {
     // FIXME do handshake
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" arrival from "+sender);
+      log.info("Agent "+id+" move arrival on node "+nodeId);
     }
-
-    boolean didAdd = false;
 
     try {
 
-      checkTicket();
-
       addAgent(tuple);
-
-      didAdd = true;
-
-      onArrival();
 
     } catch (Exception e) {
 
       if (log.isErrorEnabled()) {
         log.error(
-            "Notification for \"onArrival\" of agent "+
-            id+" failed", e);
+            "Unable to add moved agent "+id+" to node "+nodeId, 
+            e);
       }
-      if (didAdd) {
-        removeAgent();
-        onRemoval();
-      }
+
       sendNack(e);
+
       return;
     }
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" added");
+      log.info("Agent "+id+" added to node "+nodeId);
     }
 
     try {
@@ -92,51 +82,17 @@ public class ArrivalHandler extends AbstractHandler {
       // too late now!
 
       if (log.isErrorEnabled()) {
-        log.error("Agent "+id+" ack failed!", e);
+        log.error(
+            "Unable to send acknowledgement for move of agent "+
+            id+" to node "+nodeId, e);
       }
 
     }
 
     if (log.isInfoEnabled()) {
-      log.info("Agent "+id+" ACK sent");
+      log.info("Agent "+id+" move acknowledgement sent");
     }
 
-  }
-
-  private void checkTicket() {
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Check arrival ticket on node "+
-          nodeId+" of ticket "+ticket);
-    }
-
-    if (sender == null) {
-      String msg =
-        "Received agent from null sender, ticket is "+
-        ticket;
-      throw new MobilityException(msg);
-    }
-
-    MessageAddress originNode = ticket.getOriginNode();
-    if ((originNode != null) &&
-        (!(originNode.equals(sender)))) {
-      String msg = 
-        "Received agent from sender "+sender+
-        " that doesn't match origin "+originNode+
-        ", ticket is "+
-        ticket;
-      throw new MobilityException(msg);
-    }
-
-    MessageAddress destNode = ticket.getDestinationNode();
-    if ((destNode != null) &&
-        (!(destNode.equals(nodeId)))) {
-      String msg =
-        "Received agent at node "+nodeId+
-        " that doesn't match the ticket destination "+
-        destNode+", ticket is "+ticket;
-      throw new MobilityException(msg);
-    }
   }
 
   public String toString() {

@@ -46,8 +46,6 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.logging.LoggingControlService;
 import org.cougaar.core.logging.LoggingServiceProvider;
-import org.cougaar.core.mobility.service.MobilityMessage;
-import org.cougaar.core.mobility.service.RootMobilityComponent;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
@@ -110,8 +108,6 @@ public class NodeAgent
 
   /** A reference to the MessageTransportService containing the Messenger **/
   private transient MessageTransportService theMessenger = null;
-
-  private RootMobilityComponent agentMobility;
 
   private String nodeName = null;
   private NodeIdentifier nodeIdentifier = null;
@@ -294,20 +290,6 @@ public class NodeAgent
           null); //policy
     add(ntcdesc);         // let a ComponentLoadFailure pass through
 
-    // node-level agent mobility service provider
-    List mobilityParams = new ArrayList(2);
-    mobilityParams.add(theMessenger);
-    mobilityParams.add(agentManager);
-    // FIXME would use desc-based "add", but we need a pointer
-    // to the component for later message-passing.
-    //
-    // for now we'll directly add the component
-    this.agentMobility = 
-      new RootMobilityComponent(
-          mobilityParams);
-    add(agentMobility);
-    agentMobility.provideServices(rootsb);
-
     String enableServlets = 
       System.getProperty("org.cougaar.core.servlet.enable");
     if ((enableServlets == null) ||
@@ -355,8 +337,8 @@ public class NodeAgent
 
   protected void loadComponentPriorityComponents() {
     super.loadComponentPriorityComponents();
-
   }
+
   protected void loadLowPriorityComponents() {
     super.loadLowPriorityComponents();
   }
@@ -577,13 +559,6 @@ public class NodeAgent
           // not implemented yet!  will be okay once Node is a Container
           throw new UnsupportedOperationException(
               "Unsupported ComponentMessage: "+m);
-        }
-      } else if (m instanceof MobilityMessage) {
-        if (agentMobility != null) {
-          agentMobility.receiveMessage(m);
-        } else {
-          throw new RuntimeException(
-              "Agent mobility disabled in node "+getIdentifier());
         }
       } else if (m.getTarget().equals(MessageAddress.SOCIETY)) {
         // we don't do anything with these. ignore it.
