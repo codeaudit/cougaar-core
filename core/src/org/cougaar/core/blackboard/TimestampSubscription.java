@@ -110,36 +110,22 @@ extends Subscription
    * @return the TimestampEntry, or null if not known.
    */
   public TimestampEntry getTimestampEntry(UID uid) {
-    boolean todd = 
-      ((uid != null) && 
-       (uid.getOwner().equals("widget")) ||
-       (uid.getOwner().equals("junk")));
-    if (todd) System.out.println("GET "+uid);
     synchronized (map) {
-      if (todd) System.out.println("  ret) "+map.get(uid));
       return (TimestampEntry) map.get(uid);
     }
   }
 
   protected void privateAdd(Object o, boolean isVisible) {
-    boolean todd = 
-      (o instanceof org.cougaar.core.TestTimestampsPlugin.Test);
-    if (todd) System.out.println("ADD "+o);
-    if (todd) System.out.println("  a) "+o+" ("+time+")");
     // always fill in the map, even if (!isVisible)
     if (o instanceof UniqueObject) {
-      if (todd) System.out.println("  b) "+o);
       UID uid = ((UniqueObject) o).getUID();
       if (uid != null) {
-        if (todd) System.out.println("  c) "+o);
         TimestampEntry entry = new TimestampEntry(time, time);
         synchronized (map) {
-          if (todd) System.out.println("  put) "+o+", "+entry);
           map.put(uid, entry);
         }
       }
     }
-    if (todd) System.out.println("  e) "+o);
   }
 
   protected void privateChange(Object o, List changes, boolean isVisible) {
