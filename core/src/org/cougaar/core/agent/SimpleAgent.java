@@ -60,6 +60,7 @@ import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.domain.Factory;
 import org.cougaar.core.domain.LDMServesPlugin;
 import org.cougaar.core.domain.RootFactory;
+import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mobility.MobileAgentService;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
@@ -468,7 +469,8 @@ public class SimpleAgent
     // Confirm that my container is indeed ClusterManagement
     if (!( getBindingSite() instanceof AgentBindingSite ) ) {
       throw new StateModelException(
-          "Container ("+getBindingSite()+") does not implement AgentBindingSite");
+          "Container ("+getBindingSite()+
+          ") does not implement AgentBindingSite");
     }
 
     // do the standard thing.
@@ -476,6 +478,10 @@ public class SimpleAgent
 
     // release load-time agent state for GC
     this.agentState = null;
+
+    if (log.isInfoEnabled()) {
+      log.info("Loaded");
+    }
   }
 
   protected void loadHighPriorityComponents() {
@@ -485,7 +491,12 @@ public class SimpleAgent
     LoggingService newLog = (LoggingService) 
       sb.getService(this, LoggingService.class, null);
     if (newLog != null) {
-      log = newLog;
+      String prefix = getAgentIdentifier()+": ";
+      log = LoggingServiceWithPrefix.add(newLog, prefix);
+    }
+
+    if (log.isInfoEnabled()) {
+      log.info("Loading");
     }
 
     // validate the state
@@ -495,8 +506,7 @@ public class SimpleAgent
       if (!(getMessageAddress().equals(agentId))) {
         if (log.isErrorEnabled()) {
           log.error(
-              "Load state for "+getMessageAddress()+
-              " contains incorrect agent address "+agentId);
+              "Load state contains incorrect agent address "+agentId);
         }
         // continue anyways
       }
@@ -523,6 +533,9 @@ public class SimpleAgent
     ServiceBroker sb = getServiceBroker();
 
     // acquire our identity
+    if (log.isInfoEnabled()) {
+      log.info("Acquiring identity");
+    }
     myAgentIdService = (AgentIdentityService) 
       sb.getService(this, AgentIdentityService.class, null);
     if (myAgentIdService == null) {
@@ -555,6 +568,9 @@ public class SimpleAgent
       sb.getService(this, TopologyWriterService.class, null);
 
     // register in the topology
+    if (log.isInfoEnabled()) {
+      log.info("Updating topology entry to \"active\"");
+    }
     int topologyType = 
       ((getMessageAddress().equals(localNode)) ?
        (TopologyEntry.NODE_AGENT_TYPE) :
@@ -584,16 +600,9 @@ public class SimpleAgent
 
     // add ourselves to our VM's cluster table
     if (log.isDebugEnabled()) {
-      log.debug(
-          "Adding agent "+getMessageAddress()+
-          " to the cluster context table");
+      log.debug("Adding to the cluster context table");
     }
     ClusterContextTable.addContext(getMessageAddress(), this);
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Added agent "+getMessageAddress()+
-          " to the cluster context table");
-    }
 
     // fill in prior restart incarnation details
     if (agentState != null) {
@@ -601,6 +610,9 @@ public class SimpleAgent
     }
 
     // get the Messenger instance from ClusterManagement
+    if (log.isInfoEnabled()) {
+      log.info("Registering with the message transport");
+    }
     messenger = (MessageTransportService) 
       sb.getService(this, MessageTransportService.class, null);
 
@@ -618,6 +630,10 @@ public class SimpleAgent
         ClusterMessage cmi = (ClusterMessage) l.get(i);
         sendMessage(cmi);
       }
+    }
+
+    if (log.isInfoEnabled()) {
+      log.info("Getting / adding all services");
     }
 
     statisticsService = (MessageStatisticsService) 
@@ -769,6 +785,10 @@ public class SimpleAgent
 
     super.start();
 
+    if (log.isInfoEnabled()) {
+      log.info("Starting");
+    }
+
     // start the message queue
     startQueueHandler();
 
@@ -787,25 +807,38 @@ public class SimpleAgent
             this, MobileAgentService.class, null);
       if (myMobileAgentService == null) {
         if (log.isInfoEnabled()) {
-          log.info(
-              "Agent "+getAgentIdentifier()+
-              " not registered for agent mobility");
+          log.info("Not registered for agent mobility");
         }
       }
     }
 
     // children started as part of "super.add(..)".
+
+    if (log.isInfoEnabled()) {
+      log.info("Started");
+    }
   }
 
 
   public void suspend() {
     super.suspend();
 
+    if (log.isInfoEnabled()) {
+      log.info("Suspending");
+    }
+
     // suspend all children
+    if (log.isInfoEnabled()) {
+      log.info("Recursively suspending all child components");
+    }
     List childBinders = listBinders();
     for (int i = childBinders.size() - 1; i >= 0; i--) {
       Binder b = (Binder) childBinders.get(i);
       b.suspend();
+    }
+
+    if (log.isInfoEnabled()) {
+      log.info("Suspending scheduler");
     }
 
     // FIXME bug 989: cancel all alarms
@@ -816,6 +849,9 @@ public class SimpleAgent
     stopRestartChecker();
 
     // notify the topology that this agent is moving
+    if (log.isInfoEnabled()) {
+      log.info("Updating topology entry to \"moving\"");
+    }
     int topologyType = 
       ((getMessageAddress().equals(localNode)) ?
        (TopologyEntry.NODE_AGENT_TYPE) :
@@ -827,6 +863,11 @@ public class SimpleAgent
         moveId,
         TopologyEntry.MOVING,
         moveId);
+
+    // shutdown the MTS
+    if (log.isInfoEnabled()) {
+      log.info("Shutting down message transport");
+    }
 
     if (messenger != null) {
       messenger.unregisterClient(this);
@@ -849,6 +890,14 @@ public class SimpleAgent
     }
 
     // suspend our identity
+    if (log.isInfoEnabled()) {
+      log.info(
+          "Preparing identity for "+
+          ((moveTargetNode != null) ? 
+           ("transfer from "+localNode+
+            " to node "+moveTargetNode) :
+           "release"));
+    }
     if (moveTargetNode != null) {
       // moving, get transferrable identity
       mobileIdentity = 
@@ -858,15 +907,30 @@ public class SimpleAgent
       // non-moving suspend?
       myAgentIdService.release();
     }
+
+    if (log.isInfoEnabled()) {
+      log.info("Suspended");
+    }
   }
 
   public void resume() {
     super.resume();
 
+    if (log.isInfoEnabled()) {
+      log.info("Resuming");
+    }
+
     boolean acquiredIdentity = false;
     try {
 
       // re-establish our identity
+      if (log.isInfoEnabled()) {
+        log.info(
+            "Acquiring agent identify from "+
+            ((moveTargetNode != null) ? 
+             "transfered identity" :
+             "scratch"));
+      }
       if (moveTargetNode != null) {
         // failed move, restart
         // take and clear the saved identity
@@ -894,6 +958,10 @@ public class SimpleAgent
 
       // FIXME for now, re-register MTS prior to topology
       if (messenger == null) {
+        if (log.isInfoEnabled()) {
+          log.info(
+              "Registering with the message transport service");
+        }
         messenger = (MessageTransportService) 
           getServiceBroker().getService(
               this, MessageTransportService.class, null);
@@ -907,6 +975,9 @@ public class SimpleAgent
       }
 
       // move failed, re-aquire the topology entry
+      if (log.isInfoEnabled()) {
+        log.info("Updating topology entry to \"active\"");
+      }
       int topologyType = 
         ((getMessageAddress().equals(localNode)) ?
          (TopologyEntry.NODE_AGENT_TYPE) :
@@ -920,6 +991,10 @@ public class SimpleAgent
           moveId,
           TopologyEntry.ACTIVE,
           priorMoveId);
+
+      if (log.isInfoEnabled()) {
+        log.info("Resuming message transport");
+      }
 
       startQueueHandler();
 
@@ -935,16 +1010,23 @@ public class SimpleAgent
       startRestartChecker();
 
       // resume child (plugin) scheduling
+      if (log.isInfoEnabled()) {
+        log.info("Resuming scheduler");
+      }
       mySchedulerServiceProvider.resume(); 
 
       // FIXME bug 989: resume alarm service
 
       // resume all children
+      if (log.isInfoEnabled()) {
+        log.info("Recursively resuming all child components");
+      }
       List childBinders = listBinders();
       for (int i = 0, n = childBinders.size(); i < n; i++) {
         Binder b = (Binder) childBinders.get(i);
         b.resume();
       }
+
     } catch (RuntimeException re) {
       if (acquiredIdentity) {
         // unable to resume, release identity
@@ -953,11 +1035,19 @@ public class SimpleAgent
       // should keep flags for other reverseable actions
       throw re;
     }
+
+    if (log.isInfoEnabled()) {
+      log.info("Resumed");
+    }
   }
 
 
   public void stop() {
     super.stop();
+
+    if (log.isInfoEnabled()) {
+      log.info("Stopping");
+    }
 
     stopRestartChecker();
 
@@ -971,6 +1061,9 @@ public class SimpleAgent
     // should be okay...
 
     // stop all children
+    if (log.isInfoEnabled()) {
+      log.info("Recursively stopping all child components");
+    }
     List childBinders = listBinders();
     for (int i = childBinders.size() - 1; i >= 0; i--) {
       Binder b = (Binder) childBinders.get(i);
@@ -978,6 +1071,10 @@ public class SimpleAgent
     }
 
     // already transfered or released identity in "suspend()"
+
+    if (log.isInfoEnabled()) {
+      log.info("Stopped");
+    }
   }
 
   public void halt() {
@@ -989,6 +1086,10 @@ public class SimpleAgent
   public void unload() {
     super.unload();
 
+    if (log.isInfoEnabled()) {
+      log.info("Unloading");
+    }
+
     // unload in reverse order of "load()"
 
     ServiceBroker sb = getServiceBroker();
@@ -997,6 +1098,9 @@ public class SimpleAgent
     sb.releaseService(this, BlackboardForAgent.class, myBlackboardService);
 
     // unload children
+    if (log.isInfoEnabled()) {
+      log.info("Recursively unloading all child components");
+    }
     List childBinders = listBinders();
     for (int i = childBinders.size() - 1; i >= 0; i--) {
       Binder b = (Binder) childBinders.get(i);
@@ -1007,6 +1111,10 @@ public class SimpleAgent
     //
     // release context-based services
     //
+
+    if (log.isInfoEnabled()) {
+      log.info("Releasing / revoking all services");
+    }
 
     sb.releaseService(this, RealTimeService.class, rTimer);
     sb.releaseService(this, NaturalTimeService.class, xTimer);
@@ -1044,16 +1152,9 @@ public class SimpleAgent
 
     // remove ourselves from the VM-local context
     if (log.isDebugEnabled()) {
-      log.debug(
-          "Removing agent "+getMessageAddress()+
-          " from the cluster context table");
+      log.debug("Removing from the cluster context table");
     }
     ClusterContextTable.removeContext(getMessageAddress());
-    if (log.isDebugEnabled()) {
-      log.debug(
-          "Removed agent "+getMessageAddress()+
-          " from the cluster context table");
-    }
 
     sb.releaseService(this, DomainService.class, myDomainService);
 
@@ -1065,6 +1166,10 @@ public class SimpleAgent
         this, TopologyWriterService.class, myTopologyWriterService);
     sb.releaseService(
         this, TopologyReaderService.class, myTopologyReaderService);
+
+    if (log.isInfoEnabled()) {
+      log.info("Unloaded");
+    }
 
     if (log != LoggingService.NULL) {
       sb.releaseService(this, LoggingService.class, log);
@@ -1195,9 +1300,7 @@ public class SimpleAgent
 
   public void identityRevoked(CrlReason reason) {
     if (log.isWarnEnabled()) {
-      log.warn(
-          "Identity for agent "+getName()+
-          " has been revoked: "+reason);
+      log.warn("Identity has been revoked: "+reason);
     }
     // ignore for now, re-acquire or die TBA
   }
@@ -1213,9 +1316,8 @@ public class SimpleAgent
   public void onDispatch(MessageAddress destinationNode) {
     if (log.isInfoEnabled()) {
       log.info(
-          "Agent "+getIdentifier()+
-          " preparing for move from node "+localNode+
-          " to "+destinationNode);
+          "Preparing for move from node "+localNode+
+          " to node "+destinationNode);
     }
     // save target node for later "suspend()" and "getState()" use
     moveTargetNode = destinationNode;
@@ -1270,14 +1372,13 @@ public class SimpleAgent
       } else {
         if (log.isErrorEnabled()) {
           log.error(
-              this+": Received unhandled Message ("+
+              "Received unhandled Message ("+
               message.getClass()+"): "+message);
         }
       }
     } catch (Exception e) {
       if (log.isErrorEnabled()) {
-        log.error(
-            this+"Unhandled Exception: ", e);
+        log.error("Unhandled Exception: ", e);
       }
     }
   }
@@ -1455,7 +1556,7 @@ public class SimpleAgent
    **/
   private void checkRestarts() {
     if (VERBOSE_RESTART && log.isDebugEnabled()) {
-      log.debug("Check restarts for "+getAgentIdentifier());
+      log.debug("Check restarts");
     }
     List restartAgentIds = new ArrayList();
     synchronized (restartIncarnationMap) {
@@ -1468,9 +1569,7 @@ public class SimpleAgent
         }
       } catch (Exception ne) {
         if (log.isInfoEnabled()) {
-          log.info(
-              "Failed restart check for agent "+
-              getAgentIdentifier(), ne);
+          log.info("Failed restart check", ne);
         }
       }
     }
@@ -1478,8 +1577,7 @@ public class SimpleAgent
       MessageAddress agentId = (MessageAddress) i.next();
       if (log.isInfoEnabled()) {
         log.info(
-            "Agent "+getAgentIdentifier()+
-            " detected (re)start of agent "+agentId+
+            "Detected (re)start of agent "+agentId+
             ", synchronizing blackboards");
       }
       // blackboard expects cluster-ids
@@ -1491,37 +1589,21 @@ public class SimpleAgent
   private void restart() {
     if (!(needsRestart)) {
       if (log.isInfoEnabled()) {
-        log.info(
-            "No restart needed for agent "+getAgentIdentifier());
+        log.info("No restart blackboard synchronization required");
       }
       return;
     }
     needsRestart = false;
     if (log.isInfoEnabled()) {
-      log.info("Restart agent "+getAgentIdentifier());
+      log.info("Restarting, synchronizing blackboards");
     }
     try {
-      Set allAgentNames = 
-        myTopologyReaderService.getAll(
-            TopologyReaderService.AGENT);
-      int n = ((allAgentNames != null) ? allAgentNames.size() : 0);
-      if (n > 0) {
-        Iterator iter = allAgentNames.iterator();
-        for (int i = 0; i < n; i++) {
-          String si = (String) iter.next();
-          // blackboard expects cluster-ids
-          // may see non-cluster addresses!
-          ClusterIdentifier cid = 
-            ClusterIdentifier.getClusterIdentifier(si);
-          myBlackboardService.restartAgent(cid);
-          synchronized (restartIncarnationMap) {
-            updateIncarnation(cid);
-          }
-        }
-      }
-    } catch (Exception ne) {
+      // restart this agent.  The "null" is shorthand for 
+      // "all agents that are not this agent".
+      myBlackboardService.restartAgent(null);
+    } catch (Exception e) {
       if (log.isInfoEnabled()) {
-        log.info("Failed restart of agent "+getAgentIdentifier(), ne);
+        log.info("Restart failed", e);
       }
     }
   }
@@ -1563,7 +1645,8 @@ public class SimpleAgent
     if (showTraffic) showProgress("+");
     try {
       if (messenger == null) {
-        throw new RuntimeException("MessageTransport unavailable. Message dropped.");
+        throw new RuntimeException(
+            "MessageTransport unavailable. Message dropped.");
       } 
       messenger.sendMessage(message);
     } catch (Exception ex) {
@@ -1622,9 +1705,7 @@ public class SimpleAgent
         isQueueHandlerStarted = true;
       } else {
         if (log.isErrorEnabled()) {
-          log.error(
-              "QueueHandler in "+getAgentIdentifier()+ 
-              " asked to restart.");
+          log.error("Illegal restart of QueueHandler");
         }
       }
     }
@@ -1638,9 +1719,7 @@ public class SimpleAgent
         queueHandler = null;
       } else {
         if (log.isErrorEnabled()) {
-          log.error(
-            "QueueHandler in "+getAgentIdentifier()+
-            " asked to stop.");
+          log.error("Illegal stop of QueueHandler");
         }
       }
     }
