@@ -107,20 +107,59 @@ public abstract class ContainerSupport
       return boundComponents.size();
     }
   }
+
   public boolean isEmpty() {
-    synchronized(boundComponents) {
-      return boundComponents.isEmpty();
-    }
+    return (size() == 0);
   }
+
   public boolean contains(Object o) {
-    synchronized(boundComponents) {
-      int l = boundComponents.size();
-      for (int i=0; i<l; i++) {
-        BoundComponent bc = (BoundComponent) boundComponents.get(i);
-        if (bc.getComponent().equals(o)) return true;
+    if (o instanceof ComponentDescription) {
+      ComponentDescription cd = (ComponentDescription) o;
+      String ip = cd.getInsertionPoint();
+      if (!(ip.startsWith(containmentPrefix))) {
+        return false;
       }
-      return false;
+      final boolean isDirectChild = 
+        (0 >= ip.indexOf('.', containmentPrefix.length()));
+      synchronized (boundComponents) {
+        for (int i = 0, n = boundComponents.size(); i < n; i++) {
+          Object oi = boundComponents.get(i);
+          if (!(oi instanceof BoundComponent)) {
+            continue;
+          }
+          BoundComponent bc = (BoundComponent) oi;
+          Object bcc = bc.getComponent();
+          if (!(bcc instanceof ComponentDescription)) {
+            continue;
+          }
+          ComponentDescription bccd = (ComponentDescription) bcc;
+          if (isDirectChild) {
+            // at this level in hierarchy
+            if (cd.equals(bccd)) {
+              return true;
+            }
+          } else {
+            // child container
+            Binder bcb = bc.getBinder();
+            if ((bcb instanceof ContainerBinder) &&
+                (ip.startsWith(bccd.getInsertionPoint())) &&
+                (((ContainerBinder) bcb).contains(cd))) {
+              return true;
+            }
+          }
+        }
+      }
+    } else if (o instanceof Component) {
+      // FIXME no good way to find the insertion point!
+      synchronized(boundComponents) {
+        int l = boundComponents.size();
+        for (int i=0; i<l; i++) {
+          BoundComponent bc = (BoundComponent) boundComponents.get(i);
+          if (bc.getComponent().equals(o)) return true;
+        }
+      }
     }
+    return false;
   }
 
   public Iterator iterator() {

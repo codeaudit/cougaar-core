@@ -39,5 +39,7 @@ public interface ContainerBinder
   boolean add(Object o);
 
   boolean remove(Object o);
+
+  boolean contains(Object o);
 }
 

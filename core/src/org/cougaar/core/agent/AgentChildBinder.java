@@ -58,6 +58,15 @@ implements AgentChildBindingSite, ContainerBinder
     }
   }
 
+  public boolean contains(Object o) {
+    Object c = getComponent();
+    if (c instanceof Container) {
+      return ((Container)c).contains(o);
+    } else {
+      return false;
+    }
+  }
+
   protected final Agent getAgent() {
     return (Agent)getContainer();
   }
