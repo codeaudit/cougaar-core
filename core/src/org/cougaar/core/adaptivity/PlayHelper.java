@@ -27,6 +27,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.StringTokenizer;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.ConditionService;
 import org.cougaar.core.service.LoggingService;
@@ -35,6 +36,7 @@ import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.agent.ClusterIdentifier;
+import org.cougaar.multicast.AttributeBasedAddress;
 
 /**
  * Helper class for computing OperatingModes from plays and
@@ -89,8 +91,16 @@ public class PlayHelper {
       if (targetName.substring(0, AGENT_PREFIX.length()).equalsIgnoreCase(AGENT_PREFIX)) {
         return new ClusterIdentifier(targetName.substring(AGENT_PREFIX.length()));
       }
-//    if (targetName.substring(0, ATTRIBUTE_PREFIX.length()).equalsIgnoreCase(ATTRIBUTE_PREFIX)) {
-//      return new AttributeAddress(targetName.substring(ATTRIBUTE_PREFIX.length()));
+      if (targetName.substring(0, ATTRIBUTE_PREFIX.length()).equalsIgnoreCase(ATTRIBUTE_PREFIX)) {
+        StringTokenizer tokens = new StringTokenizer(targetName.substring(ATTRIBUTE_PREFIX.length()));
+        try {
+          String community = tokens.nextToken();
+          String attribute = tokens.nextToken();
+          String value = tokens.nextToken();
+          return new AttributeBasedAddress(community, attribute, value);
+        } catch (Exception e) {
+        }
+      }
       return new MessageAddress(targetName);
     }
   }
