@@ -35,6 +35,7 @@ import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ServletService;
+import org.cougaar.core.service.DemoControlService;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.wp.ListAllNodes;
 
@@ -46,6 +47,11 @@ public class FreezeSocietyPlugin extends FreezeSourcePlugin {
   private ServletService servletService = null;
   private WhitePagesService wps = null;
   protected String status = "Running";
+  private DemoControlService demoControlService;
+
+  public void setDemoControlService(DemoControlService dcs) {
+    demoControlService = dcs;
+  }
 
   public void load() {
     super.load();
@@ -70,9 +76,15 @@ public class FreezeSocietyPlugin extends FreezeSourcePlugin {
     if (logger.isDebugEnabled()) logger.debug("unfrozen" + unfrozenAgents);
     if (unfrozenAgents.isEmpty()) {
       status = "Frozen";
+      demoControlService.setTimeRate(0.0);
     } else {
       status = "Freezing " + unfrozenAgents;
     }
+  }
+
+  protected synchronized void thaw() {
+    super.thaw();
+    demoControlService.setTimeRate(1.0);
   }
 
   protected Set getTargetNames() {
