@@ -49,19 +49,34 @@ public class TimeSpanSet
     if (! (o instanceof TimeSpan)) 
       throw new IllegalArgumentException();
     TimeSpan timeSpan = (TimeSpan)o;
+    if (true) {
+      int i = Collections.binarySearch(this, timeSpan, bsComparator);
+      if (i >= 0) return false; // This timespan is already in set
+      i = -(i + 1);             // The insertion point
+      for (int j = i; --j >= 0; ) {
+        if (bsComparator.compare(timeSpan, elementData[j]) != 0) break;
+        if (timeSpan.equals(elementData[j])) return false;
+      }
+      for (int j = i, e = size(); j < e; j++) {
+        if (bsComparator.compare(timeSpan, elementData[j]) != 0) break;
+        if (timeSpan.equals(elementData[j])) return false;
+      }
+      super.add(i, timeSpan);
+      return true;
+    } else {
+      int i = search(timeSpan);
+      long startTime = timeSpan.getStartTime();
+      long endTime = timeSpan.getEndTime();
 
-    int i = search(timeSpan);
-    long startTime = timeSpan.getStartTime();
-    long endTime = timeSpan.getEndTime();
+      // Make sure that it's not really equal to any existing members of the set
+      while ((i<size) &&
+             (compare(startTime, endTime, (TimeSpan)elementData[i])== 0)){
+        if (timeSpan.equals(elementData[i++])) return false;
+      }
 
-    // Make sure that it's not really equal to any existing members of the set
-    while ((i<size) &&
-           (compare(startTime, endTime, (TimeSpan)elementData[i])== 0)){
-      if (timeSpan.equals(elementData[i++])) return false;
+      super.add(i, timeSpan);
+      return true;
     }
-
-    super.add(i, timeSpan);
-    return true;
   }
 
   public void add(int i, Object o) {
@@ -187,6 +202,19 @@ public class TimeSpanSet
       }
     };
 
+  private static final Comparator bsComparator = new Comparator() {
+    public int compare(Object o1, Object o2) {
+      TimeSpan ts1 = (TimeSpan) o1;
+      TimeSpan ts2 = (TimeSpan) o2;
+      long diff = ts1.getStartTime() - ts2.getStartTime();
+      if (diff > 0L) return 1;
+      if (diff < 0L) return -1;
+      diff = ts1.getEndTime() - ts2.getEndTime();
+      if (diff > 0L) return 1;
+      if (diff < 0L) return -1;
+      return System.identityHashCode(o1) - System.identityHashCode(o2);
+    }
+  };
 
   /** @return the intersecting Element with the smallest timespan.
    * The result is undefined if there is a tie for smallest and null 

@@ -35,4 +35,34 @@ public class MoreMath {
     ser -= 0.536382e-5   / (x += 1.0);
     return tmp + Math.log(2.50662827465e0 * ser);
   }
+
+  /**
+   * Compares two doubles for near equality. Equality comparisons of
+   * doubles is instrinsically difficult because of rounding. This
+   * methods checks the relative difference between two doubles and
+   * their values.
+   * @param a one of the values to compare
+   * @param b the other value to compare
+   * @return true if the difference is less than 1 part per billion
+   **/
+  public static boolean nearlyEquals(double a, double b) {
+    if (a == b) return true;
+    return Math.abs(a - b) / (Math.abs(a) + Math.abs(b)) < .5e-9;
+  }
+
+  /**
+   * Compares two doubles for near equality. Equality comparisons of
+   * doubles is instrinsically difficult because of rounding. This
+   * methods checks the relative difference between two doubles and
+   * their values.
+   * @param a one of the values to compare
+   * @param b the other value to compare
+   * @param tolerance the allowable difference
+   * @return true if the difference divided by the sum of the absolute
+   * values of the parameters is less than the tolerance
+   **/
+  public static boolean nearlyEquals(double a, double b, double tolerance) {
+    if (a == b) return true;
+    return Math.abs(a - b) / (Math.abs(a) + Math.abs(b)) < tolerance;
+  }
 }
