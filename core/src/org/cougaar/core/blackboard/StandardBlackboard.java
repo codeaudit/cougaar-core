@@ -59,9 +59,12 @@ public class StandardBlackboard
     sb.addService(BlackboardForAgent.class,
                   new BlackboardForAgentServiceProvider(bb));
 
-    //offer Blackboard service
-    sb.addService(BlackboardService.class,
-                  new BlackboardServiceProvider(bb.getDistributor()));
+    //offer Blackboard service and Blackboard metrics service
+    // both use the same service provider
+    BlackboardServiceProvider bbSP =
+      new BlackboardServiceProvider(bb.getDistributor());
+    sb.addService(BlackboardService.class, bbSP);
+    sb.addService(BlackboardMetricsService.class, bbSP);
 
     // load the domains & lps
     try {
