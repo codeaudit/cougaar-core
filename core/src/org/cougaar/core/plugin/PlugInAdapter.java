@@ -72,6 +72,8 @@ public abstract class PlugInAdapter
   extends GenericStateModelAdapter
   implements PlugInServesCluster, BlackboardClient, PluginBase
 {
+  /** minimum time (in millis) which wake functions like to pause for **/
+  public final static long WAKE_LATENCY = 1000L;
 
   /** keep this around for compatability with old plugins **/
   protected RootFactory theLDMF = null;
@@ -530,10 +532,11 @@ public abstract class PlugInAdapter
    * @param wakeTime actual scenario time to wake in milliseconds.
    **/ 	
   public Alarm wakeAt(long wakeTime) { 
-    if (wakeTime < getAlarmService().currentTimeMillis()) {
-      System.err.println("\nwakeAt("+wakeTime+") is in the past!");
+    long cur = getAlarmService().currentTimeMillis()+WAKE_LATENCY;
+    if (wakeTime < cur) {
+      System.err.println("Warning: wakeAt("+(new Date(wakeTime))+") is less than "+WAKE_LATENCY+"ms in the future!");
       Thread.dumpStack();
-      wakeTime = getAlarmService().currentTimeMillis()+1000;
+      wakeTime = cur;
     }
       
     PluginAlarm pa = new PluginAlarm(wakeTime);
@@ -549,10 +552,10 @@ public abstract class PlugInAdapter
    * @param delayTime (Scenario) milliseconds to wait before waking.
    **/
   public Alarm wakeAfter(long delayTime) { 
-    if (delayTime<=0) {
-      System.err.println("\nwakeAfter("+delayTime+") is in the past!");
+    if (delayTime<WAKE_LATENCY) {
+      System.err.println("Warning: wakeAfter("+delayTime+"ms) is less than "+WAKE_LATENCY+"ms in the future!");
       Thread.dumpStack();
-      delayTime=1000;
+      delayTime=WAKE_LATENCY;
     }
       
     long absTime = getAlarmService().currentTimeMillis()+delayTime;
@@ -564,10 +567,11 @@ public abstract class PlugInAdapter
   /** like wakeAt() except always in real (wallclock) time.
    **/ 	
   public Alarm wakeAtRealTime(long wakeTime) { 
-    if (wakeTime < System.currentTimeMillis()) {
-      System.err.println("\nwakeAtRealTime("+wakeTime+") is in the past!");
+    long cur = System.currentTimeMillis()+WAKE_LATENCY;
+    if (wakeTime < cur) {
+      System.err.println("Warning: wakeAtRealTime("+(new Date(wakeTime))+") is less than "+WAKE_LATENCY+"ms in the future!");
       Thread.dumpStack();
-      wakeTime = System.currentTimeMillis()+1000;
+      wakeTime = cur;
     }
 
     PluginAlarm pa = new PluginAlarm(wakeTime);
@@ -578,10 +582,10 @@ public abstract class PlugInAdapter
   /** like wakeAfter() except always in real (wallclock) time.
    **/
   public Alarm wakeAfterRealTime(long delayTime) { 
-    if (delayTime<=0) {
-      System.err.println("\nwakeAfterRealTime("+delayTime+") is in the past!");
+    if (delayTime<WAKE_LATENCY) {
+      System.err.println("Warning: wakeAfterRealTime("+delayTime+"ms) is less than "+WAKE_LATENCY+"ms in the future!");
       Thread.dumpStack();
-      delayTime=1000;
+      delayTime=WAKE_LATENCY;
     }
 
     long absTime = System.currentTimeMillis()+delayTime;
