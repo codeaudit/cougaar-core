@@ -716,11 +716,17 @@ public class PersistenceServiceComponent
               if (pAssoc.isActive()) {
                 if (logger.isDetailEnabled()) logger.detail(clientId + ": addAssociation " + pAssoc);
                 getClientStuff(clientId).addAssociation(pAssoc);
+
+		// Bug 3588: Do postRehydration work here, only for objects on 
+		// BBoard, instead of for all.
+		// This is wrong if the Composition on an InActive MPTask is 
+		// wanted  and not on another MPTask but could be later. 
+		// Also if an inactive object can become active.
+                if (obj instanceof ActivePersistenceObject) {
+                  ((ActivePersistenceObject) obj).postRehydration(logger);
+                }
               } else {
                 if (logger.isDetailEnabled()) logger.detail(clientId + ": inactive " + pAssoc);
-              }
-              if (obj instanceof ActivePersistenceObject) {
-                ((ActivePersistenceObject) obj).postRehydration(logger);
               }
             }
             if (logger.isDetailEnabled()) {
