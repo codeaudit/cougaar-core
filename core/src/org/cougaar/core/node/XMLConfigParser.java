@@ -43,6 +43,7 @@ import java.util.Map;
 import org.cougaar.core.component.*;
 import org.cougaar.util.log.*;
 import org.cougaar.util.ConfigFinder;
+import org.cougaar.util.Strings;
 import org.xml.sax.*;
 import org.xml.sax.helpers.*;
 import javax.xml.parsers.*;
@@ -147,7 +148,7 @@ public final class XMLConfigParser {
       }
 
       // create content handler
-      agents = new HashMap();
+      agents = new HashMap(11);
       handler = new MyHandler(agents, nodename, logger);
 
       // create config reader
@@ -584,7 +585,7 @@ public final class XMLConfigParser {
     private final String nodename;
     private final Logger logger;
 
-    private final Map currentComponent = new HashMap();
+    private final Map currentComponent = new HashMap(11);
     private final CharArrayWriter argValueBuffer = new CharArrayWriter();
 
     private boolean thisNode;
@@ -747,7 +748,7 @@ public final class XMLConfigParser {
     private void startNode(Attributes atts)
       throws SAXException {
 
-      String name = atts.getValue("name");
+      String name = Strings.intern(atts.getValue("name"));
 
       if (!nodename.equals(name)) {
         if (logger.isDebugEnabled()) {
@@ -768,7 +769,7 @@ public final class XMLConfigParser {
       // make a new place for the node's components
       currentList = (List) agents.get(currentAgent);
       if (currentList == null) {
-        currentList = new ArrayList();
+        currentList = new ArrayList(1);
         agents.put(currentAgent, currentList);
       }
     }
@@ -791,7 +792,7 @@ public final class XMLConfigParser {
 
     private void startAgent(Attributes atts)
       throws SAXException {
-      String name = atts.getValue("name");
+      String name = Strings.intern(atts.getValue("name"));
       if (name == null) {
         throw new RuntimeException(
             "Agent lacks name attribute");
@@ -805,7 +806,7 @@ public final class XMLConfigParser {
       // make a new place for the agent's components
       currentList = (List) agents.get(currentAgent);
       if (currentList == null) {
-        currentList = new ArrayList();
+        currentList = new ArrayList(1);
         agents.put(currentAgent, currentList);
       }
     }
@@ -833,10 +834,10 @@ public final class XMLConfigParser {
             currentComponent);
       }
 
-      currentComponent.put("name", atts.getValue("name"));
-      currentComponent.put("class", atts.getValue("class"));
-      currentComponent.put("priority", atts.getValue("priority"));
-      currentComponent.put("insertionpoint", atts.getValue("insertionpoint"));
+      currentComponent.put("name", Strings.intern(atts.getValue("name")));
+      currentComponent.put("class", Strings.intern(atts.getValue("class")));
+      currentComponent.put("priority", Strings.intern(atts.getValue("priority")));
+      currentComponent.put("insertionpoint", Strings.intern(atts.getValue("insertionpoint")));
     }
 
     private void endComponent()
@@ -879,7 +880,7 @@ public final class XMLConfigParser {
       ArrayList argumentList = (ArrayList)
         currentComponent.get("arguments");
       if (argumentList == null) {
-        argumentList = new ArrayList();
+        argumentList = new ArrayList(1);
         currentComponent.put("arguments", argumentList);
       }
       argumentList.add(argument);
