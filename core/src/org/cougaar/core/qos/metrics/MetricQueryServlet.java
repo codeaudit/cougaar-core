@@ -38,13 +38,20 @@ import javax.servlet.http.HttpServletResponse;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ServletService;
 
-/*
- * Servlet to allow remote access into the metrics service.
- * Takes url arguments(paths) separated by the '|' key. 
- * Usage: 
- * http://localhost:8800/$3-69-ARBN/metrics/query?format=xml&paths=Agent($3-69-ARBN):Jips|Agent($3-69-ARBN):CPULoadJips10SecAvg
- * Optional 'format' argument, but if left out defaults to xml return of metric data to the browser
- * Run the core/examples/org/cougaar/core/examples/metrics/ExampleMetricQueryClient for java version
+/**
+ * This Servlet allows url-based access into the metrics service.
+ * Requires uri parameter <code>paths</code>, the value of which is a
+ * set of Metrics paths, separated by '|'.  Also takes an optional
+ * parameter <code>format</code>.  If omitted or provided as 'xml',
+ * the output is an xml representation of the results of the queries.
+ * If supplied as 'java', the output is a serialization of an
+ * ArrayList of the results (useful for remote java invokers, not
+ * useful for web display).
+ * 
+ * <p> Example:
+ * <p>http://localhost:8800/$3-69-ARBN/metrics/query?format=xml&amp;paths=Agent($3-69-ARBN):Jips|Agent($3-69-ARBN):CPULoadJips10SecAvg
+ *
+ * <p> See org.cougaar.core.examples.metrics.ExampleMetricQueryClient
  */
 
 public class MetricQueryServlet

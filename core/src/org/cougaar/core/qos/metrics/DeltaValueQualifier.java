@@ -28,6 +28,14 @@ package org.cougaar.core.qos.metrics;
 
 
 
+/**
+ * Instances of this class can be used to restrict callbacks from
+ * MetricsService subscriptions unless the new value differs from the
+ * previous value by a given delta. These qualifiers are stateful and
+ * therefore cannot be shared across multiple subscriptions.
+ * 
+ * @see CredibilityQualifier
+ */
 public class DeltaValueQualifier 
     implements MetricNotificationQualifier, Constants
 {

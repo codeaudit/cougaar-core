@@ -34,6 +34,15 @@ import java.util.StringTokenizer;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.LoggingService;
 
+/**
+ * This Component uses its parameters to create and register a
+ * DataFeed.  The parameters are <code>name</code> (the name of the
+ * feed), <code>class</code> (the fully qualified classname of the
+ * feed type) and <code>args</code> (the initialization parameters for
+ * the feed.
+ *
+ * @see DataFeedRegistrationService
+ */
 public class FeedLoader extends QosComponent
 {
     private static final Class[] ParamTypes =  { String[].class };

@@ -34,6 +34,8 @@ package org.cougaar.core.qos.metrics;
  * credoibility threshold.  Except for the threshold itself,
  * CredibilityQualifiers are stateless, so the same qualifier can be
  * used for multiple subscriptions.
+ * 
+ * @see DeltaValueQualifier
  */
 public class CredibilityQualifier implements MetricNotificationQualifier
 {

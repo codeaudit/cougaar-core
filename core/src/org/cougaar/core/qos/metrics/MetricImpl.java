@@ -27,6 +27,9 @@
 package org.cougaar.core.qos.metrics;
 
 
+/**
+ * This is the standard implementation of Metric.
+ */
 public class MetricImpl implements Metric, java.io.Serializable
 {
     public static MetricImpl UndefinedMetric = 
