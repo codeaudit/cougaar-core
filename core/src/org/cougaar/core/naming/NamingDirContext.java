@@ -475,7 +475,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
     Binding item;
     
     // Get context
-    Context target = (Context)lookup(name);
+    DirContext target = (DirContext)lookup(name);
     
     try {
       // List context
@@ -488,7 +488,7 @@ public class NamingDirContext extends NamingContext implements DirContext {
         if (item.getObject() instanceof DirContext) {
           attrs = ((DirContext)item.getObject()).getAttributes("");
         } else {
-          attrs = getAttributes(item.getName());
+          attrs = target.getAttributes(item.getName());
         }
         if (contains(attrs, matchingAttrs)) {
           answer.addElement(new SearchResult(item.getName(), null,
