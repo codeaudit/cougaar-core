@@ -1,0 +1,131 @@
+#!/usr/bin/perl
+# -*- Perl -*-
+
+# removes various references to alp
+
+die("Do not run this script - it should not be applied at this time");
+
+$tmp = "/tmp/unalp.$$";
+$total = 0;
+$renamed = 0;
+$change=0;
+
+while (<>) {
+  chop;
+  $file = $_;
+  if (/core\/doc\/7\.0/ || /ChangeLog/ || /CHANGES/ ) {
+    next;
+  }
+
+  $found = 0;
+  open(IN, "<$file");
+  unlink($tmp);
+  open(OUT, ">$tmp");
+  while (<IN>) {
+    print OUT &hack($_);
+  }
+  close(OUT);
+  close(IN);
+
+  if ($found) {
+    $changed++;
+    $total += $found;
+    $new = &hack($file);
+    if ($new eq $file) {
+      print "$new\n";
+    } else {
+      print "$new (renamed $file)\n";
+      $renamed++;
+    }
+
+    # copy changes back changes
+    unlink($file);
+    open(IN, "<$tmp");
+    open(OUT, ">$new");
+    while(<IN>)  {
+      print OUT "$_";
+    }
+    close(OUT);
+    close(IN);
+  }
+}
+
+print "Total lines changed = $total\n";
+print "Total files changed = $changed\n";
+print "Total files renamed = $renamed\n";
+
+unlink($tmp);
+
+
+sub hack {
+  local($_)=@_;
+  study($_);
+
+  # script fixes
+  s/ALP_INSTALL_PATH/COUGAAR_INSTALL_PATH/g && $found++;
+  s/ALP_DEV_PATH/COUGAAR_DEV_PATH/g && $found++;
+  s/ALP3RDPARTY/COUGAAR3RDPARTY/g && $found++;
+
+  s/ALPHOME/COUGAARHOME/g && $found++;
+  s/ALPCLASSES/COUGAARCLASSES/g && $found++;
+
+  # core classes
+  s/alp\.domain\.alp/org\.cougaar\.domain\.alp/g  && $found++;
+  s/ALPSocketFactory/CougaarSocketFactory/g && $found++;
+  s/ALPPort/NSPort/g && $found++;
+  s/ALPAddress/NSHost/g && $found++;
+  s/ALPRed/CougaarRed/g && $found++;
+  s/ALPYellow/CougaarYellow/g && $found++;
+  s/ALPGreen/CougaarGreen/g && $found++;
+  s/ALPPlan/Whiteboard/g && $found++;
+  
+
+  # GLM classes
+  s/ALPDomain/GLMDomain/g && $found++;
+  s/ALPFactory/GLMFactory/g && $found++;
+  s/ALPPred/GLMPred/g && $found++;
+  s/ALPRelationship/GLMRelationship/g && $found++;
+  s/GLMAsset/AssetUtil/g && $found++;	
+  s/ALPAsset/GLMAsset/g && $found++;
+
+  # MLM Classes
+  s/ALPProducer/MLMProducer/g && $found++;
+  s/ALPConsumer/MLMConsumer/g && $found++;
+
+  # Server
+  s/ALPServer/NodeServer/g && $found++;
+
+  # some documentation fixes
+  s/ ALP / COUGAAR /g && $found++;
+  s/ALP-/COUGAAR-/g && $found++;
+  s/ALP_/COUGAAR_/g && $found++;
+  s/\(ALP\)/\(COUGAAR\)/g && $found++;
+
+  # remaining properties
+  s/alp\.system\.path/org\.cougaar\.system\.path/g  && $found++;
+  s/alp\.install\.path/org\.cougaar\.install\.path/g  && $found++;
+  s/alp\.class\.path/org\.cougaar\.class\.path/g  && $found++;
+  s/alp\.persistence\./org\.cougaar\.core\.cluster\.persistence\./g  && $found++;
+  s/alp\.security\./org\.cougaar\.core\.security\./g  && $found++;
+  s/alp\.message\./org\.cougaar\.core\.message\./g  && $found++;
+  s/alp\.useBootstrapper/org\.cougaar\.core\.society\.useBootstrapper/g  && $found++;
+  s/alp\.enforceTransactions/org\.cougaar\.core\.cluster\.enforceTransactions/g  && $found++;
+  s/alp\.cluster\./org\.cougaar\.core\.cluster\./g  && $found++;
+  s/alp\.bootstrapper\./org\.cougaar\.core\.society\.bootstrapper\./g && $found++;
+  s/alp\.node\./org\.cougaar\.node\./g && $found++;
+  s/alp\.something/org\.cougaar\.something/g && $found++;
+  s/alp\.society\./org\.cougaar\.core\.society\./g && $found++;  
+  s/alp\.build/org\.cougaar\.tools\.build/g && $found++;
+
+  s/alp\.server\./org\.cougaar\.server\./g && $found++;
+
+  s/alp\.ui\.planserver/org\.cougaar\.lib\.planserver/g  && $found++;
+  s/alp\.ui\./org\.cougaar\.ui\./g  && $found++;
+  s/alp\.name\./org\.cougaar\.name\./g  && $found++;
+  s/alp\.config\./org\.cougaar\.config\./g  && $found++;
+  s/alp\.vm\./org\.cougaar\.vm\./g  && $found++;
+  s/alp\.tutorial/org\.cougaar\.tutorial\.faststart/g && $found++;
+
+  return $_;
+}
+  
