@@ -49,7 +49,7 @@ import org.cougaar.core.service.UIDService;
  **/
 
 public abstract class CompletionSourcePlugin extends CompletionPlugin {
-  private static final double TASK_COMPLETION_THRESHOLD = 0.99;
+  private static final double NORMAL_TASK_COMPLETION_THRESHOLD = 0.99;
   private static final double CPU_CONSUMPTION_THRESHOLD = 0.95;
   private static final long NORMAL_UPDATE_INTERVAL = 5000L;
   private static final long NORMAL_LONG_CHECK_TARGETS_INTERVAL = 120000L;
@@ -57,7 +57,9 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
   private static final String UPDATE_INTERVAL_KEY = "UPDATE_INTERVAL=";
   private static final String LONG_CHECK_TARGETS_INTERVAL_KEY = "LONG_CHECK_TARGETS_INTERVAL=";
   private static final String SHORT_CHECK_TARGETS_INTERVAL_KEY = "SHORT_CHECK_TARGETS_INTERVAL=";
+  private static final String TASK_COMPLETION_THRESHOLD_KEY = "TASK_COMPLETION_THRESHOLD=";
   private static final int SHORT_CHECK_TARGETS_MAX = 5;
+  private double TASK_COMPLETION_THRESHOLD = NORMAL_TASK_COMPLETION_THRESHOLD;
   private long UPDATE_INTERVAL = NORMAL_UPDATE_INTERVAL;
   private long LONG_CHECK_TARGETS_INTERVAL = NORMAL_LONG_CHECK_TARGETS_INTERVAL;
   private long SHORT_CHECK_TARGETS_INTERVAL = NORMAL_SHORT_CHECK_TARGETS_INTERVAL;
@@ -127,6 +129,14 @@ public abstract class CompletionSourcePlugin extends CompletionPlugin {
     Collection params = getParameters();
     for (Iterator i = params.iterator(); i.hasNext(); ) {
       String param = (String) i.next();
+      if (param.startsWith(TASK_COMPLETION_THRESHOLD_KEY)) {
+        TASK_COMPLETION_THRESHOLD =
+          Double.parseDouble(param.substring(TASK_COMPLETION_THRESHOLD_KEY.length()));
+        if (logger.isInfoEnabled()) logger.info("Set "
+                                                + TASK_COMPLETION_THRESHOLD_KEY
+                                                + TASK_COMPLETION_THRESHOLD);
+        continue;
+      }
       if (param.startsWith(UPDATE_INTERVAL_KEY)) {
         UPDATE_INTERVAL = Long.parseLong(param.substring(UPDATE_INTERVAL_KEY.length()));
         if (logger.isInfoEnabled()) logger.info("Set "
