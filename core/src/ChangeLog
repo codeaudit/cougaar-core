@@ -1,3 +1,20 @@
+2001-10-31  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* org/cougaar/core/component/ComponentFactory.java (Repository):
+	Merge from V8_6_0
+	Remove the test for the parameter of a component being a
+	Collection. It makes no difference what its type is; always, just
+	store the parameter, whatever it is. 
+
+	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
+	Merge from V8_6_0
+	Remove superfluous query definitions.
+
+	* org/cougaar/domain/planning/plugin/AssetDataDBReader.java (Repository):
+	Merge from V8_6_0
+	Use default start and end times for time-phased relationships if
+	either start or end is bogus (e.g. null).
+
 2001-10-19  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* org/cougaar/core/society/DBInitializerServiceProvider.java (Repository):
