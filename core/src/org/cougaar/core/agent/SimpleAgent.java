@@ -56,7 +56,6 @@ import org.cougaar.core.component.StateObject;
 import org.cougaar.core.component.StateTuple;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mobility.MobileAgentService;
-import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Attributes;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
@@ -67,6 +66,12 @@ import org.cougaar.core.node.ComponentMessage;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.node.service.NaturalTimeService;
 import org.cougaar.core.node.service.RealTimeService;
+import org.cougaar.core.persist.PersistenceIdentity;
+import org.cougaar.core.persist.PersistenceObject;
+import org.cougaar.core.persist.PersistenceServiceForAgent;
+import org.cougaar.core.persist.PersistenceClient;
+import org.cougaar.core.persist.RehydrationData;
+import org.cougaar.core.persist.PersistenceServiceComponent;
 import org.cougaar.core.service.AgentContainmentService;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DemoControlService;
@@ -129,9 +134,30 @@ public class SimpleAgent
   // agent moves.
   private long moveId;
 
-  // state for this agent if it is arriving from a move
-  // this is set in "setState(..)" and used within "load()"
-  private AgentState agentState;
+  private PersistenceServiceForAgent persistenceService;
+
+  private ComponentDescription persistenceComponentDescription;
+
+  private PersistenceIdentity persistenceIdentity =
+    new PersistenceIdentity(getClass().getName());
+
+  private PersistenceClient persistenceClient =
+    new PersistenceClient() {
+      public PersistenceIdentity getPersistenceIdentity() {
+        return persistenceIdentity;
+      }
+      public List getPersistenceData() {
+        return SimpleAgent.this.getPersistenceData();
+      }
+    };
+        
+  // state for this agent if it is arriving from a move.
+  // The PersistenceObject if doing agent transfer
+  private PersistenceObject persistenceObject;
+
+  // state for this agent as retrieved from the PersistenceService
+  // this is set and used within "load()"
+  private PersistenceData persistenceData;
 
   // state from "suspend()", used within "getState()"
   private List unsentMessages;
@@ -251,13 +277,16 @@ public class SimpleAgent
     this.myMessageAddress_ = cid;
   }
 
-  /** Get the components from the ComponentInitializerService or the state **/
+  /**
+   * Get the components from the ComponentInitializerService or the
+   * state. If persistenceData is non-null, our components are defined
+   * within that data. Otherwise, use the ComponentInitializerService.
+   **/
   protected ComponentDescriptions findExternalComponentDescriptions() {
-
-    if (agentState != null) {
+    if (persistenceData != null) {
       // get descriptions from mobile state
-      List tuples = agentState.tuples;
-      // fix tuples where the desc.getParamater is an 
+      List tuples = persistenceData.tuples;
+      // fix tuples where the desc.getParameter is an 
       // "InternalAdapter", since these are pointers into *this*
       // agent.  This is required for agent mobility to work.
       for (int i=0, n=tuples.size(); i<n; i++) {
@@ -500,11 +529,45 @@ public class SimpleAgent
       log.info("Loading");
     }
 
+    persistenceComponentDescription =
+      new ComponentDescription(getMessageAddress() + "Persist",
+                               Agent.INSERTION_POINT + ".Persist",
+                               "org.cougaar.core.persist.PersistenceServiceComponent",
+                               null,
+                               getMessageAddress(),
+                               null,
+                               null,
+                               null,
+                               ComponentDescription.PRIORITY_INTERNAL);
+    super.add(persistenceComponentDescription);
+
+    // add our address to our VM's cluster table
+    if (log.isDebugEnabled()) {
+      log.debug("Adding to the cluster context table");
+    }
+    ClusterContextTable.addContext(getMessageAddress());
+
+    persistenceService = (PersistenceServiceForAgent)
+      getServiceBroker().getService(persistenceClient, PersistenceServiceForAgent.class, null);
+    persistenceService.rehydrate(persistenceObject);
+    RehydrationData rehydrationData = persistenceService.getRehydrationData();
+    if (rehydrationData != null) {
+      persistenceData = (PersistenceData) rehydrationData.getObjects().get(0);
+      // validate the state
+      // verify state's agent id
+      if (!(getMessageAddress().equals(persistenceData.agentId))) {
+        if (log.isErrorEnabled()) {
+          log.error(
+              "Load state contains incorrect agent address " + persistenceData.agentId);
+        }
+        // continue anyways
+      }
+    } else {
+      persistenceData = null;
+    }
+
     // do the standard thing.
     super.load();
-
-    // release load-time agent state for GC
-    this.agentState = null;
 
     // get event service
     eventService = (EventService)
@@ -518,19 +581,6 @@ public class SimpleAgent
 
   protected void loadHighPriorityComponents() {
     ServiceBroker sb = getServiceBroker();
-
-    // validate the state
-    if (agentState != null) {
-      // verify state's agent id
-      MessageAddress agentId = agentState.agentId;
-      if (!(getMessageAddress().equals(agentId))) {
-        if (log.isErrorEnabled()) {
-          log.error(
-              "Load state contains incorrect agent address "+agentId);
-        }
-        // continue anyways
-      }
-    }
 
     // get the local node id
     NodeIdentificationService nodeIdService = 
@@ -562,8 +612,8 @@ public class SimpleAgent
 
     // acquire our identity
     TransferableIdentity priorIdentity = 
-      ((agentState != null) ?
-       agentState.identity :
+      ((persistenceData != null) ?
+       persistenceData.identity :
        null);
     if (priorIdentity == NULL_MOBILE_IDENTITY) {
       priorIdentity = null;
@@ -596,17 +646,11 @@ public class SimpleAgent
     }
 
     // fill in prior restart incarnation details
-    if (agentState != null) {
-      setRestartState(agentState.restartState);
+    if (persistenceData != null) {
+      setRestartState(persistenceData.restartState);
     }
 
     loadRestartChecker();
-
-    // add our address to our VM's cluster table
-    if (log.isDebugEnabled()) {
-      log.debug("Adding to the cluster context table");
-    }
-    ClusterContextTable.addContext(getMessageAddress());
 
     // get the Messenger instance from ClusterManagement
     if (log.isInfoEnabled()) {
@@ -618,19 +662,21 @@ public class SimpleAgent
     messenger = (MessageTransportService) 
       sb.getService(mtsClientAdapter, MessageTransportService.class, null);
 
-    if (agentState != null) {
-        org.cougaar.core.mts.AgentState t = agentState.mtsState;
-	messenger.getAgentState().mergeAttributes(t);
+    if (persistenceData != null) {
+        org.cougaar.core.mts.AgentState t = persistenceData.mtsState;
+        if (t != null) messenger.getAgentState().mergeAttributes(t);
     }
 
     messenger.registerClient(mtsClientAdapter);
 
-    if (agentState != null) {
+    if (persistenceData != null) {
       // send all unsent messages
-      List l = agentState.unsentMessages;
-      for (int i = 0, n = l.size(); i < n; i++) {
-        Message cmi = (Message) l.get(i);
-        sendMessage(cmi);
+      List l = persistenceData.unsentMessages;
+      if (l != null) {
+        for (int i = 0, n = l.size(); i < n; i++) {
+          Message cmi = (Message) l.get(i);
+          sendMessage(cmi);
+        }
       }
     }
 
@@ -745,8 +791,13 @@ public class SimpleAgent
       log.info("Recursively suspending all child components");
     }
     List childBinders = listBinders();
+    Binder persistenceComponentBinder = null;
     for (int i = childBinders.size() - 1; i >= 0; i--) {
       Binder b = (Binder) childBinders.get(i);
+      if (b.getComponentDescription().equals(persistenceComponentDescription)) {
+        persistenceComponentBinder = b;  // suspend later.
+        continue;
+      }
       b.suspend();
     }
 
@@ -798,6 +849,11 @@ public class SimpleAgent
 
     if (log.isInfoEnabled()) {
       log.info("Suspended");
+    }
+
+    if (persistenceComponentBinder != null) {
+      persistenceObject = myBlackboardService.getPersistenceObject();
+      persistenceComponentBinder.suspend();
     }
 
     if (moveTargetNode != null) {
@@ -1112,31 +1168,20 @@ public class SimpleAgent
 
   /**
    * Get the state of this cluster, which should be suspended.
-   */
-  public Object getState() {
-    return getState(false);
-  }
-
-  /**
-   * Kluge, for use by AgentManager's "cloneAgent(..)".
-   */
-  public Object getStateExcludingBlackboard() {
-    return getState(true);
-  }
-
-  /**
-   * Get the state of this cluster, which should be suspended.
    * <p>
    * Need to fix ContainerSupport for locking and hide
    * "boundComponents" access.
    */
-  private Object getState(final boolean excludeBlackboard) {
+  public Object getState() {
+    return persistenceObject;
+  }
 
+  private List getPersistenceData() {
+    PersistenceData persistenceData = new PersistenceData();
     // get the child components
-    List tuples;
     synchronized (boundComponents) {
       int n = boundComponents.size();
-      tuples = new ArrayList(n);
+      persistenceData.tuples = new ArrayList(n);
       for (int i = 0; i < n; i++) {
         BoundComponent bc = (BoundComponent)
           boundComponents.get(i);
@@ -1145,62 +1190,50 @@ public class SimpleAgent
           ComponentDescription cd = (ComponentDescription) comp;
           Binder b = bc.getBinder();
           Object state;
-          if (excludeBlackboard &&
-              Blackboard.INSERTION_POINT.equals(
-                cd.getInsertionPoint())) {
-            state = null;
-          } else {
+//           if (excludeBlackboard &&
+//               Blackboard.INSERTION_POINT.equals(
+//                 cd.getInsertionPoint())) {
+//             state = null;
+//           } else {
             state = b.getState();
-          }
+//           }
           StateTuple ti = new StateTuple(cd, state);
-          tuples.add(ti);
+          persistenceData.tuples.add(ti);
         } else {
           // error?
         }
       }
     }
-
-    // get unsent messages
-    List uMsgs = 
-      ((unsentMessages != null) ?
-       (unsentMessages) :
-       (Collections.EMPTY_LIST));
-
-    // get remote incarnations
-    RestartState restartState = getRestartState();
-
     if (moveTargetNode != null) {
-      // moving, get transferrable identity
+      // Moving state capture
+      // get unsent messages
+      persistenceData.unsentMessages = unsentMessages;
+
+      // get remote incarnations
+      persistenceData.restartState = getRestartState();
+
+      // get transferrable identity
       if (log.isInfoEnabled()) {
-        log.info(
-            "Transfering identity from node "+
-            localNode+" to node "+moveTargetNode);
+        log.info("Transfering identity from node "+
+                 localNode+" to node "+moveTargetNode);
       }
-      mobileIdentity = 
-        myAgentIdService.transferTo(
-            moveTargetNode);
-      if (mobileIdentity == null) {
-        mobileIdentity = NULL_MOBILE_IDENTITY;
+      persistenceData.identity = myAgentIdService.transferTo(moveTargetNode);
+      if (persistenceData.identity == null) {
+        persistenceData.identity = NULL_MOBILE_IDENTITY;
       }
     } else {
-      // non-moving state capture?
+      // non-moving state capture
+      persistenceData.identity = null;
     }
-
-    // create a state object
-    AgentState result = 
-      new AgentState(
-          getMessageAddress(),
-          mobileIdentity,
-          tuples,
-	  mtsState,
-          uMsgs,
-          restartState);
-
-    return result;
+    persistenceData.agentId = getMessageAddress();
+    persistenceData.mtsState = mtsState;
+    List d = new ArrayList(1);
+    d.add(persistenceData);
+    return d;
   }
 
   public void setState(Object loadState) {
-    this.agentState = (AgentState) loadState;
+    this.persistenceObject = (PersistenceObject) loadState;
   }
 
   public String getIdentifier() {
@@ -2085,42 +2118,28 @@ public class SimpleAgent
   // state object
   //-----------------------------------------------------------------
 
-  private static class AgentState implements java.io.Serializable {
+  private static class PersistenceData implements java.io.Serializable {
 
-    private final MessageAddress agentId;
-    private final TransferableIdentity identity;
-    private final List tuples;  // List<StateTuple>
-      private final org.cougaar.core.mts.AgentState mtsState;
-    private final List unsentMessages; // List<ClusterMessage>
-    private final RestartState restartState;
-
-    public AgentState(
-        MessageAddress agentId,
-        TransferableIdentity identity,
-        List tuples,
-	org.cougaar.core.mts.AgentState mtsState,
-        List unsentMessages,
-        RestartState restartState) {
-      this.agentId = agentId;
-      this.identity = identity;
-      this.tuples = tuples;
-      this.mtsState = mtsState;
-      this.unsentMessages = unsentMessages;
-      this.restartState = restartState;
-      if ((agentId == null) ||
-          (tuples == null) ||
-          (unsentMessages == null)) {
-        throw new IllegalArgumentException("null param");
-      }
-    }
+    private MessageAddress agentId;
+    private TransferableIdentity identity;
+    private List tuples;  // List<StateTuple>
+    private org.cougaar.core.mts.AgentState mtsState;
+    private List unsentMessages; // List<ClusterMessage>
+    private RestartState restartState;
 
     public String toString() {
       return 
-        "Agent "+agentId+" state, identity "+identity+
-        ", tuples["+tuples.size()+
-        "], mtsState "+(mtsState != null)+
-	", unsentMessages["+unsentMessages.size()+
-        "]";
+        "Agent "
+        + agentId
+        + " state, identity "
+        + identity
+        + ", tuples["
+        + tuples.size()
+        + "], mtsState "
+        + (mtsState != null)
+        + ", unsentMessages["
+        + (unsentMessages == null ? "none" : String.valueOf(unsentMessages.size()))
+        + "]";
     }
 
     private static final long serialVersionUID = 3109298128098682091L;
