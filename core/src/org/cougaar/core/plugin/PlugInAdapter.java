@@ -1173,26 +1173,11 @@ public abstract class PlugInAdapter
       }
     }
 
-<<<<<<< PlugInAdapter.java
-    // we may need to delay an RT activation if it isn't hooked up yet
-    private boolean rtDelayed = false;
-    // we could probably sync on this, but I'm more comfortable with a semephore-like
-    // pattern here...
-    private final Object rtDelayLock = new Object();
-
-    private void setRequestTrigger(Trigger rt) {
-      synchronized (rtDelayLock) {
-        requestTrigger = rt;
-        if (rtDelayed) {
-          rtDelayed = false;    // useless cleanup
-          requestTrigger.trigger();
-=======
     private void exitScheduler() {
       synchronized (schedTriggerLock) {
         if (schedTrigger != null) {
           schedTrigger = null;
           getSchedulerService().unregister(schedTrigger);
->>>>>>> 1.42
         }
       }
     }
