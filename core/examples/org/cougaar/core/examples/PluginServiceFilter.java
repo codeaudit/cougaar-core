@@ -123,6 +123,9 @@ public class PluginServiceFilter
     public Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental) {
       return bs.subscribe(isMember, realCollection, isIncremental);
     }
+    public Subscription subscribe(Subscription subscription) {
+      return bs.subscribe(subscription);
+    }
     public Collection query(UnaryPredicate isMember) {
       return bs.query(isMember);
     }
