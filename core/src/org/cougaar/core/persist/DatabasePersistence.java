@@ -28,6 +28,8 @@ import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.planning.ldm.plan.Plan;
+import org.cougaar.core.service.DataProtectionKeyEnvelope;
+import org.cougaar.core.service.DataProtectionKey;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -410,6 +412,18 @@ public class DatabasePersistence
     catch (SQLException se) {
       fatalException(se);
     }
+  }
+
+  public void storeDataProtectionKey(int deltaNumber, DataProtectionKey key)
+    throws IOException
+  {
+    throw new IOException("storeDataProtectionKey unimplemented for database persistence");
+  }
+
+  public DataProtectionKey retrieveDataProtectionKey(int deltaNumber)
+    throws IOException
+  {
+    throw new IOException("retrieveDataProtectionKey unimplemented for database persistence");
   }
 
   private void fatalException(Exception e) {

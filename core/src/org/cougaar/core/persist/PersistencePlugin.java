@@ -25,6 +25,8 @@ import java.io.ObjectOutputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import org.cougaar.core.adaptivity.OMCRangeList;
+import org.cougaar.core.service.DataProtectionKeyEnvelope;
+import org.cougaar.core.service.DataProtectionKey;
 
 /**
  * PersistencePlugin defines the API that media-specific persistence
@@ -195,4 +197,20 @@ public interface PersistencePlugin {
      * UnsupportedOperationException
      **/
     void releaseDatabaseConnection(Object locker) throws UnsupportedOperationException;
+
+    /**
+     * Store an encrypted key for a particular delta number
+     * @param keyEnvelope has the encrypted key to be stored
+     * @param deltaNumber the number of the delta for which the key is used.
+     **/
+    void storeDataProtectionKey(int deltaNumber, DataProtectionKey key)
+        throws IOException;
+
+    /**
+     * Retrieve an encrypted key for a particular delta number
+     * @param keyEnvelope where the retrieved key should should be put
+     * @param deltaNumber the number of the delta for which the key is used.
+     **/
+    DataProtectionKey retrieveDataProtectionKey(int deltaNumber)
+        throws IOException;
 }

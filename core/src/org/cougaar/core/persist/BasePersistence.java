@@ -64,6 +64,7 @@ import org.cougaar.core.blackboard.MessageManager;
 import org.cougaar.core.blackboard.MessageManagerImpl;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.PersistenceControlService;
 import org.cougaar.planning.ldm.asset.Asset;
@@ -80,6 +81,10 @@ import org.cougaar.planning.ldm.plan.Workflow;
 import org.cougaar.core.persist.PersistMetadata;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import org.cougaar.core.service.DataProtectionService;
+import org.cougaar.core.service.DataProtectionServiceClient;
+import org.cougaar.core.service.DataProtectionKey;
+import org.cougaar.core.service.DataProtectionKeyEnvelope;
 
 /**
  * This persistence class is the base for several persistence
@@ -204,11 +209,54 @@ public class BasePersistence
     }
   }
 
+  private DataProtectionServiceClient dataProtectionServiceClient =
+    new DataProtectionServiceClient() {
+      public Iterator iterator() {
+        return getDataProtectionKeyIterator();
+      }
+      public MessageAddress getAgentIdentifier() {
+        return clusterContext.getClusterIdentifier();
+      }
+    };
+
+  private static class PersistenceKeyEnvelope implements DataProtectionKeyEnvelope {
+    PersistencePlugin ppi;
+    int deltaNumber;
+
+    public PersistenceKeyEnvelope(PersistencePlugin ppi, int deltaNumber) {
+      this.deltaNumber = deltaNumber;
+      this.ppi = ppi;
+    }
+    public void setDataProtectionKey(DataProtectionKey aKey) throws IOException {
+      ppi.storeDataProtectionKey(deltaNumber, aKey);
+    }
+    public DataProtectionKey getDataProtectionKey() throws IOException {
+      return ppi.retrieveDataProtectionKey(deltaNumber);
+    }
+  }
+
+  private Iterator getDataProtectionKeyIterator() {
+    List envelopes = new ArrayList();
+    RehydrationSet[] rehydrationSets = getRehydrationSets("");
+    for (int i = 0; i < rehydrationSets.length; i++) {
+      SequenceNumbers sequenceNumbers = rehydrationSets[i].sequenceNumbers;
+      final PersistencePlugin ppi = rehydrationSets[i].ppi;
+      for (int seq = sequenceNumbers.first; seq < sequenceNumbers.current; seq++) {
+        envelopes.add(new PersistenceKeyEnvelope(ppi, seq));
+      }
+    }
+    return envelopes.iterator();
+  }
+
   private PersistencePluginInfo getPluginInfo(String pluginName) {
     PersistencePluginInfo ppio = (PersistencePluginInfo) plugins.get(pluginName);
     if (ppio != null) return ppio;
     throw new IllegalArgumentException("No such persistence medium: "
                                        + pluginName);
+  }
+
+  private String getAgentName() {
+    return clusterContext.getClusterIdentifier().toString();
   }
 
   /**
@@ -375,6 +423,7 @@ public class BasePersistence
   private Plan reality = null;
   private List objectsToPersist = new ArrayList();
   private LoggingService logger;
+  private DataProtectionService dataProtectionService;
   private boolean writeDisabled = false;
   private String sequenceNumberSuffix = "";
   private Map plugins = new HashMap();
@@ -402,6 +451,14 @@ public class BasePersistence
   {
     this.clusterContext = clusterContext;
     logger = (LoggingService) sb.getService(this, LoggingService.class, null);
+    dataProtectionService = (DataProtectionService)
+      sb.getService(dataProtectionServiceClient, DataProtectionService.class, null);
+    if (dataProtectionService == null) {
+      if (logger.isWarnEnabled()) logger.warn("No DataProtectionService Available");
+    } else {
+      if (logger.isInfoEnabled()) logger.info("DataProtectionService is "
+                                              + dataProtectionService.getClass().getName());
+    }
   }
 
   public void addPlugin(PersistencePlugin ppi) {
@@ -692,6 +749,10 @@ public class BasePersistence
     throws IOException, ClassNotFoundException
   {
     ObjectInputStream ois = ppi.openObjectInputStream(deltaNumber);
+    if (dataProtectionService != null) {
+      PersistenceKeyEnvelope keyEnvelope = new PersistenceKeyEnvelope(ppi, deltaNumber);
+      ois = new ObjectInputStream(dataProtectionService.getInputStream(keyEnvelope, ois));
+    }
     try {
       return rehydrateFromStream(ois, deltaNumber, lastDelta);
     } finally {
@@ -1212,7 +1273,15 @@ public class BasePersistence
   }
 
   private void beginTransaction(boolean full) throws IOException {
-    currentOutput = currentPersistPluginInfo.ppi.openObjectOutputStream(sequenceNumbers.current, full);
+    int deltaNumber = sequenceNumbers.current;
+    currentOutput = currentPersistPluginInfo.ppi.openObjectOutputStream(deltaNumber, full);
+    if (dataProtectionService != null) {
+      PersistenceKeyEnvelope keyEnvelope =
+        new PersistenceKeyEnvelope(currentPersistPluginInfo.ppi, deltaNumber);
+      currentOutput =
+        new ObjectOutputStream(dataProtectionService
+                               .getOutputStream(keyEnvelope, currentOutput));
+    }
   }
 
   private void rollbackTransaction() {

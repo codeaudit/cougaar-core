@@ -30,6 +30,8 @@ import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.planning.ldm.plan.Plan;
+import org.cougaar.core.service.DataProtectionKeyEnvelope;
+import org.cougaar.core.service.DataProtectionKey;
 
 /**
  * This persistence class provides implementation stubs that do
@@ -94,5 +96,15 @@ public class DummyPersistence
   }
 
   public void deleteOldPersistence() {
+  }
+
+  public void storeDataProtectionKey(int deltaNumber, DataProtectionKey key)
+    throws IOException
+  {
+  }
+
+  public DataProtectionKey retrieveDataProtectionKey(int deltaNumber)
+    throws IOException
+  {
   }
 }

@@ -1,3 +1,4 @@
+
 /*
  * <copyright>
  *  Copyright 1997-2001 BBNT Solutions, LLC
@@ -40,6 +41,8 @@ import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.DataProtectionKeyEnvelope;
+import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.planning.ldm.plan.Plan;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -277,8 +280,41 @@ public class FilePersistence
     }
   }
 
+  public void storeDataProtectionKey(int deltaNumber, DataProtectionKey key)
+    throws IOException
+  {
+    File file = getEncryptedKeyFile(deltaNumber);
+    ObjectOutputStream ois = new ObjectOutputStream(new FileOutputStream(file));
+    try {
+      ois.writeObject(key);
+    } finally {
+      ois.close();
+    }
+  }
+
+  public DataProtectionKey retrieveDataProtectionKey(int deltaNumber)
+    throws IOException
+  {
+    File file = getEncryptedKeyFile(deltaNumber);
+    ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file));
+    try {
+      return (DataProtectionKey) ois.readObject();
+    } catch (ClassNotFoundException cnfe) {
+      IOException ioe = new IOException("Read DataProtectionKey failed");
+      ioe.initCause(cnfe);
+      throw ioe;
+    } finally {
+      ois.close();
+    }
+  }
+
   private File getDeltaFile(int sequence) {
     return new File(persistenceDirectory,
                     "delta" + BasePersistence.formatDeltaNumber(sequence));
+  }
+
+  private File getEncryptedKeyFile(int sequence) {
+    return new File(persistenceDirectory,
+                    "key" + BasePersistence.formatDeltaNumber(sequence));
   }
 }

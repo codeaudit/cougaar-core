@@ -1,3 +1,26 @@
+2002-06-14  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* PersistencePlugin.java:
+	Add methods to support DataProtectionService.
+	storeDataProtectionKey stores the encrypted key and
+	retrieveDataProtectionKey retrieves it.
+
+	* FilePersistence.java: 
+	Implement additional methods to support DataProtectionService.
+	The keys are stored in files named key_<delta number>.
+	
+	* DummyPersistence.java:
+	Implement additional methods to support DataProtectionService.
+
+	* DatabasePersistence.java:
+	Define methods for using DataProtectionService, but implementation
+	just throws an exception -- that is, DataProtectionService cannot
+	presently be used with a Database persistence medium.
+
+	* BasePersistence.java:
+	Add DataProtectionService. Implement DataProtectionServiceClient.
+	Use DataProtection Service to wrap input and output streams.
+
 2002-05-09  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* BasePersistence.java:
