@@ -15,6 +15,8 @@ public class ALPPlan extends Subscriber
   protected CollectionSubscription alpPlanObjects;
   protected ClusterServesLogicProvider myCluster;
   protected Distributor myDistributor;
+  public static final boolean isSavePriorPublisher =
+    System.getProperty("org.cougaar.core.cluster.savePriorPublisher", "false").equals("true");
 
   /** The list of XPlans **/
   private Collection xPlans = new ArrayList();
@@ -30,7 +32,7 @@ public class ALPPlan extends Subscriber
   /** Marked Envelope class so that we can detect envelopes which we've
    * emitted.
    **/
-  private static final class PlanEnvelope extends Envelope {
+  public static final class PlanEnvelope extends Envelope {
   }
 
   /** override to immediately publish deltas rather than delay until transaction close **/
@@ -88,9 +90,45 @@ public class ALPPlan extends Subscriber
     return xPlans;
   }
 
+  private static class AllObjectsSet extends HashSet {
+    Map stacks = createStackMap();
+    protected Map createStackMap() {
+      if (isSavePriorPublisher) {
+        return new HashMap();
+      } else {
+        return null;              // Don't keep prior publishing info
+      }
+    }
+
+    public AllObjectsSet(int size) {
+      super(size);
+    }
+    public boolean add(Object o) {
+      boolean result = super.add(o);
+      if (!result) {
+        PublishStack priorStack = null;
+        if (stacks != null) {
+          priorStack = (PublishStack) stacks.get(o);
+        }
+        throw new PublishException("ALPPlan.alpPlanObjects.add object already published: " + o.toString(),
+                                   priorStack);
+      } else if (stacks != null) {
+        stacks.put(o, new PublishStack("Prior publisher: "));
+      }
+      return result;
+    }
+    public boolean remove(Object o) {
+      boolean result = super.remove(o);
+      if (!result) {
+        System.err.println("Warning!!!!!!!!!! alpPlanObjects.remove object not published: " + o.toString());
+      }
+      return result;
+    }
+  }
+
   public final void init() {
     try {
-      alpPlanObjects = new CollectionSubscription(anythingP, new HashSet(111));
+      alpPlanObjects = new CollectionSubscription(anythingP, new AllObjectsSet(111));
       subscribe(alpPlanObjects);
 
       for (Iterator plans = xPlans.iterator(); plans.hasNext(); ) {
