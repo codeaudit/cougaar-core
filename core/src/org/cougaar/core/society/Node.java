@@ -12,6 +12,8 @@ package org.cougaar.core.society;
 
 import org.cougaar.core.cluster.ClusterServesClusterManagement;
 import org.cougaar.core.society.ClusterManagementServesCluster;
+import org.cougaar.core.nameservice.NameServiceProvider;
+import org.cougaar.core.nameservice.NameService;
 
 import org.cougaar.core.component.*;
 
@@ -29,6 +31,7 @@ import java.util.zip.*;
 import java.util.jar.*;
 import java.security.*;
 import java.security.cert.*;
+import javax.naming.NamingException;
 
 import org.cougaar.core.agent.AgentManager;
 import org.cougaar.core.plugin.AddPlugInMessage;
@@ -499,7 +502,7 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
    *    <p>
    *    @exception UnknownHostException IF the host can not be determined
    **/  
-  protected void initNode() throws UnknownHostException {
+  protected void initNode() throws UnknownHostException, NamingException {
     // Command-line script uses "-n MyNode" and lets the filename default
     //   to "MyNode.ini".
     //
@@ -536,10 +539,15 @@ implements ArgTableIfc, MessageTransportClient, ClusterManagementServesCluster, 
       }
     }
 
-    if (getArgs().containsKey(REGISTRY_KEY) || 
-        getArgs().containsKey(LOCAL_KEY)) {
-      Communications.getInstance().startNameServer();
-    }
+    ServiceBroker sb = getServiceBroker();
+
+//      if (getArgs().containsKey(REGISTRY_KEY) || 
+//          getArgs().containsKey(LOCAL_KEY)) {
+//        Communications.getInstance().startNameServer();
+//      }
+
+    sb.addService(NameService.class,
+                  new NameServiceProvider(System.getProperties()));
 
     // set up the message handler and register this Node
     initTransport();  
