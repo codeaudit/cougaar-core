@@ -213,7 +213,7 @@ implements Component
     private QueueClient client;
     private final List queue = new ArrayList();
     private final List msgs = new ArrayList();
-    private boolean running = false;
+    private boolean ready = false;
     private boolean active = false;
     private Schedulable sched;
     public QueueHandlerBody(QueueClient client,
@@ -224,12 +224,14 @@ implements Component
           client.getMessageAddress()+"/RQ");
     }
     void start() {
-      sched.start();
-      running = true;
+      synchronized (queue) {
+        ready = true;
+        sched.start();
+      }
     }
     public void halt() {
       synchronized (queue) {
-        running = false;
+        ready = false;
         sched.cancel();
         while (active) {
           try {
@@ -242,7 +244,7 @@ implements Component
     }
     public void run() {
       synchronized (queue) {
-        if (!running) {
+        if (!ready) {
           return;
         }
         if (queue.isEmpty()) {
@@ -265,7 +267,7 @@ implements Component
     public void addMessage(ClusterMessage m) {
       synchronized (queue) {
         queue.add(m);
-        if (running) sched.start(); // restart 
+        if (ready) sched.start(); // restart 
       }
     }
   }
