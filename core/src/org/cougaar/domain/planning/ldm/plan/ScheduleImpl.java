@@ -345,6 +345,11 @@ public class ScheduleImpl
     return super.iterator();
   }
 
+  // Accessor for AbstractList.modCount - used by ListItr class
+  protected int getModCount() {
+    return modCount;
+  }
+
   // ScheduleImpl specific. Code from java.util.AbstractList but
   // does not support add/set - don't want to mess up the sort order.
   private class ListItr implements ListIterator {
@@ -366,7 +371,7 @@ public class ScheduleImpl
      * List should have.  If this expectation is violated, the iterator
      * has detected concurrent modification.
      */
-    int expectedModCount = ScheduleImpl.this.modCount;
+    int expectedModCount = getModCount();
     
     ListItr(int index) {
       cursor = index;
@@ -431,7 +436,7 @@ public class ScheduleImpl
           cursor--;
         lastRet = -1;
         
-        int newModCount = ScheduleImpl.this.modCount;
+        int newModCount = getModCount();
         if (newModCount - expectedModCount > 1)
           throw new ConcurrentModificationException();
         expectedModCount = newModCount;
@@ -441,7 +446,7 @@ public class ScheduleImpl
     }
     
     final void checkForComodification() {
-      if (ScheduleImpl.this.modCount != expectedModCount)
+      if (getModCount() != expectedModCount)
         throw new ConcurrentModificationException();
     }
 
