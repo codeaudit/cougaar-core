@@ -69,7 +69,7 @@ import org.cougaar.core.service.PersistenceMetricsService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.LinkedByteOutputStream;
-import org.cougaar.util.StringUtility;
+import org.cougaar.util.CSVUtility;
 import org.cougaar.util.log.Logger;
 
 /**
@@ -375,23 +375,20 @@ public class BasePersistence
           persistenceClasses = FilePersistence.class.getName() + PARAM_SEP + FILE_MEDIA_NAME;
         }
       }
-      Vector pluginTokens =
-        StringUtility.parseCSV(persistenceClasses, 0, persistenceClasses.length(), ',');
-      for (Iterator i = pluginTokens.iterator(); i.hasNext(); ) {
-        String pluginSpec = (String) i.next();
-        Vector paramTokens = StringUtility.parseCSV(pluginSpec, 0, pluginSpec.length(), PARAM_SEP);
-        if (paramTokens.size() < 1) {
+      String[] pluginTokens = CSVUtility.parse(persistenceClasses);
+      for (int i = 0; i < pluginTokens.length; i++) {
+        String pluginSpec = pluginTokens[i];
+        String[] paramTokens = CSVUtility.parse(pluginSpec, PARAM_SEP);
+        if (paramTokens.length < 1) {
           throw new PersistenceException("No plugin class specified: " + pluginSpec);
         }
-        if (paramTokens.size() < 2) {
+        if (paramTokens.length < 2) {
           throw new PersistenceException("No plugin name: " + pluginSpec);
         }
-        Class pluginClass = Class.forName((String) paramTokens.get(0));
-        String pluginName = (String) paramTokens.get(1);
-        String[] pluginParams = new String[paramTokens.size() - 2];
-        for (int j = 0; j < pluginParams.length; j++) {
-          pluginParams[j] = (String) paramTokens.get(j + 2);
-        }
+        Class pluginClass = Class.forName((String) paramTokens[0]);
+        String pluginName = (String) paramTokens[1];
+        String[] pluginParams = new String[paramTokens.length - 2];
+        System.arraycopy(paramTokens, 2, pluginParams, 0, pluginParams.length);
         PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
         result.addPlugin(ppi, pluginName, pluginParams);
       }
