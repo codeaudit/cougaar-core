@@ -174,5 +174,10 @@ public class AssignedRelationshipElementImpl extends ScheduleElementImpl
             getStartTime() == other.getStartTime() &&
             getEndTime() == other.getEndTime());
   }
-  
+
+  public String toString() {
+    return super.toString() + "::"
+      + getItemIDA() + "/" + getRoleA() + "::"
+      + getItemIDB() + "/" + getRoleB();
+  }
 }

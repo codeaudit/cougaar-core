@@ -133,7 +133,7 @@ public class AssetVerificationImpl extends DirectiveImpl
 
   public String toString() {
     return "<AssetVerification for asset " + myAsset + 
-      " assigned to " + myAssignee + ">";
+      " assigned to " + myAssignee + ">" + mySchedule.toString();
   }
 }
 
