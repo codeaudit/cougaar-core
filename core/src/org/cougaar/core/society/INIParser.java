@@ -102,11 +102,36 @@ public final class INIParser {
       String containerInsertionPoint) {
     List descs = new ArrayList();
     try {
+
+readDescriptions:
       while (true) {
-        String s = in.readLine();
-        if (s == null) {
+
+        // read an entry
+        String s = null;
+        while (true) {
+          // read the current line
+          String tmp = in.readLine();
+          if (tmp == null) {
+            // end of file
+            if (s != null) {
+              System.err.println(
+                  "Warning: INI file ends in ignored \""+s+"\"");
+            }
+            break readDescriptions;
+          }
+          if (tmp.endsWith("\\")) {
+            tmp = tmp.substring(0, tmp.length()-1);
+            if (!(tmp.endsWith("\\"))) {
+              // line continuation
+              s = ((s != null) ? (s + tmp) : tmp);
+              continue;
+            }
+          }
+          // finished line
+          s = ((s != null) ? (s + tmp) : tmp);
           break;
         }
+
         s = s.trim();
         int eqIndex;
         if ((s.length() == 0) ||
@@ -115,6 +140,7 @@ public final class INIParser {
           // ignore empty lines, "#comments", and non-"name=value" lines
           continue;
         }
+
         String name = s.substring(0, eqIndex).trim(); 
         String value = s.substring(eqIndex+1).trim(); 
 
