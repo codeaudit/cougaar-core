@@ -37,8 +37,8 @@ public class AspectScorePoint implements Serializable, Cloneable {
     this.score = score;
   }
 
-  public AspectScorePoint(double value, double score) {
-    this.value = new AspectValue(0,value);
+  public AspectScorePoint(double value, double score, int type) {
+    this.value = new AspectValue(type,value);
     this.score = score;
   }
 
@@ -58,9 +58,11 @@ public class AspectScorePoint implements Serializable, Cloneable {
   public double getValue() { return value.getValue(); }
   public int getAspectType() { return value.getAspectType(); }
 
-  public static final AspectScorePoint NEGATIVE_INFINITY = 
-    new AspectScorePoint(0, Double.NEGATIVE_INFINITY);
-  public static final AspectScorePoint POSITIVE_INFINITY = 
-    new AspectScorePoint(0, Double.POSITIVE_INFINITY);
+  public static final AspectScorePoint getNEGATIVE_INFINITY(int type) {
+    return new AspectScorePoint(0.0, Double.NEGATIVE_INFINITY, type);
+  }
+  public static final AspectScorePoint getPOSITIVE_INFINITY(int type) {
+    return new AspectScorePoint(0, Double.POSITIVE_INFINITY, type);
+  }
 
 }

@@ -53,7 +53,11 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
   /** Typical "Satisfactory" value **/
   public final static double OK = 0.5;
 
-  protected ScoringFunction() {}
+  protected int aspectType;
+
+  protected ScoringFunction(int type) {
+    this.aspectType = type;
+  }
 
   public abstract Object clone();
 
@@ -108,8 +112,8 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
    * within this range.
    **/
   public AspectScoreRange getDefinedRange() {
-    return new AspectScoreRange(AspectScorePoint.NEGATIVE_INFINITY, 
-                                AspectScorePoint.POSITIVE_INFINITY);
+    return new AspectScoreRange(AspectScorePoint.getNEGATIVE_INFINITY(aspectType), 
+                                AspectScorePoint.getPOSITIVE_INFINITY(aspectType));
   }
 
   /** Find the Score at a point.  1.0 is worst, 0.0 is best.
@@ -265,10 +269,10 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
    * ((x1,y1) (x2, y2)) in the range of minx-maxx.
    * @return WORST if out of range.
    **/
-  final static AspectScorePoint _minY(double minx, double maxx,
-                                      double x1, double y1, double x2, double y2) {
+  final AspectScorePoint _minY(double minx, double maxx,
+                               double x1, double y1, double x2, double y2) {
     if (x1 > maxx || x2 < minx) 
-      return new AspectScorePoint(minx, WORST);
+      return new AspectScorePoint(minx, WORST, aspectType);
     
     if (x1 < minx) {
       y1 = _interpY(minx, x1, y1, x2, y2);
@@ -285,17 +289,17 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       x1 = x2;
     }
 
-    return new AspectScorePoint(x1, y1);
+    return new AspectScorePoint(x1, y1, aspectType);
   }
 
   /** return an AspectScorePoint for the maximum y of the segment 
    * ((x1,y1) (x2, y2)) in the range of minx-maxx.
    * @return BEST if out of range.
    **/
-  final static AspectScorePoint _maxY(double minx, double maxx,
-                                      double x1, double y1, double x2, double y2) {
+  final AspectScorePoint _maxY(double minx, double maxx,
+                               double x1, double y1, double x2, double y2) {
     if (x1 > maxx || x2 < minx) 
-      return new AspectScorePoint(minx, BEST);
+      return new AspectScorePoint(minx, BEST, aspectType);
     
     if (x1 < minx) {
       y1 = _interpY(minx, x1, y1, x2, y2);
@@ -313,7 +317,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
       x1 = x2;
     }
 
-    return new AspectScorePoint(x1, y1);
+    return new AspectScorePoint(x1, y1, aspectType);
   }
 
   //
@@ -324,14 +328,16 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     protected AspectScorePoint curve[];
   
     public PiecewiseLinearScoringFunction(Enumeration points) {
-      Vector v = new Vector();
-      if (points == null || ! points.hasMoreElements())
+      super(0);
+      if (points == null || ! points.hasMoreElements()) {
         throw new IllegalArgumentException("Enumeration of points must be non-empty");
-
+      }
+      Vector v = new Vector();
       while (points.hasMoreElements()) {
         v.addElement(points.nextElement());
       }
       curve = (AspectScorePoint[]) v.toArray(new AspectScorePoint[v.size()]);
+      aspectType = curve[0].getAspectType();
     }
 
     public Object clone() {
@@ -564,8 +570,8 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
           }
 
           // add a valid range to clipped vector
-          clipped.addElement(new AspectScoreRange(new AspectScorePoint(x0, y0),
-                                                  new AspectScorePoint(x1, y1)));
+          clipped.addElement(new AspectScoreRange(new AspectScorePoint(x0, y0, aspectType),
+                                                  new AspectScorePoint(x1, y1, aspectType)));
         }
       }
       return clipped.elements();
@@ -600,6 +606,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
     protected AspectValue point;
 
     protected SinglePointScoringFunction(AspectValue value) {
+      super(value.getAspectType());
       point = value;
     }
 
@@ -765,6 +772,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
   public static abstract class TwoPointScoringFunction extends ScoringFunction {
     protected AspectValue point1, point2;
     protected TwoPointScoringFunction(AspectValue point1, AspectValue point2) {
+      super(point1.getAspectType());
       this.point1=point1;
       this.point2=point2;
     }
@@ -1440,6 +1448,7 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
      * Constructor for EnumeratedScoringFunction
      **/
     public EnumeratedScoringFunction(AspectScorePoint []points) {
+      super(points[0].getAspectType());
       my_points = points;  
     }
 
@@ -1517,28 +1526,31 @@ public abstract class ScoringFunction implements Serializable, Cloneable {
   public static class ConstantScoringFunction extends ScoringFunction {
     double score=BEST;
 
-    public ConstantScoringFunction(double score) {
+    public ConstantScoringFunction(double score, int aspectType) {
+      super(aspectType);
       this.score = score;
     }
 
-    public ConstantScoringFunction() {}
+    public ConstantScoringFunction(int aspectType) {
+      super(aspectType);
+    }
 
     public Object clone() {
-      return new ConstantScoringFunction(score);
+      return new ConstantScoringFunction(score, aspectType);
     }
 
     public AspectScorePoint getBest(){
-      return new AspectScorePoint(0,score);
+      return new AspectScorePoint(0, score, aspectType);
     }
 
     public AspectScorePoint getMinInRange(AspectValue lowerbound, 
 					  AspectValue upperbound){
-      return new AspectScorePoint(lowerbound.getValue(),score);
+      return new AspectScorePoint(lowerbound.getValue(),score, aspectType);
     }      
 
     public AspectScorePoint getMaxInRange(AspectValue lowerbound, 
 					  AspectValue upperbound){
-      return new AspectScorePoint(upperbound.getValue(),score);
+      return new AspectScorePoint(upperbound.getValue(),score, aspectType);
     }
 
     public Enumeration getValidRanges(AspectValue lowerbound,

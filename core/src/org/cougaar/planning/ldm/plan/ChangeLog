@@ -1,3 +1,23 @@
+2002-07-10  Ray Tomlinson  <RTomlinson@bbn.com>
+
+	* ScoringFunction.java:
+	Bug #1568 -- Universal Allocator result aspects don't match
+	Supply aspect type when constructing AspectScorePoints. The
+	ConstantScoringFunction constructor provided no way to specify the
+	aspect type, so the constructors now have an additional aspect
+	type argument. ScoringFunctions with multiple AspectValue or
+	AspectScorePoint parameters do not check for homogeneity of aspect
+	types across all such parameters. Only the first such parameter is
+	used as the source for all constructed AspectValues and
+	AspectScorePoints. This is _not_ a feature; it's for the sake of
+	efficiency. Don't abuse it.
+
+	* AspectScorePoint.java:
+	Bug #1568 -- Universal Allocator result aspects don't match
+	Change constructor to require aspectType instead of setting to 0.
+	This is the source of the incorrect aspect types. All uses of the
+	bad constructor I found were in ScoringFunction.java.
+
 2002-02-25  Ray Tomlinson  <RTomlinson@bbn.com>
 
 	* ScoringFunction.java:
