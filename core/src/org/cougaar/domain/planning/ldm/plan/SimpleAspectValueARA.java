@@ -43,7 +43,7 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
   * returns null when there are no subtasks or any task has no result.
   *
   * @author  ALPINE <alpine-software@bbn.com>
-  * @version $Id: SimpleAspectValueARA.java,v 1.1 2000-12-15 20:16:44 mthome Exp $
+  * @version $Id: SimpleAspectValueARA.java,v 1.2 2001-04-03 14:02:23 tomlinso Exp $
   **/
   public class SimpleAspectValueARA implements AllocationResultAggregator {
     public AllocationResult calculate(Workflow wf, TaskScoreTable tst, AllocationResult currentar) {
@@ -96,33 +96,26 @@ import org.cougaar.domain.planning.ldm.asset.Asset;
           }
           // if we still don't have a matching sum AspectValue, make a new one for this aspect
           if (sumav == null) {
-            if (thisat != TYPED_QUANTITY) {
-              sumav = new AspectValue(thisat, 0.0);
-            } else {
-              sumav = new TypedQuantityAspectValue( ((TypedQuantityAspectValue)srav).getAsset(), 0.0 );
-            }
+            sumav = (AspectValue) srav.clone(); // First time, just clone the value
             aggregAR.add(sumav);
-          }
-            
-          // accumulate the values for the defined aspects
-          if (thisat == START_TIME) {
-            // if we just initialized this, use the new value
-            if ( sumav.getValue() != 0.0 ) {
+          } else {
+            switch (thisat) {
+            case START_TIME:
               double nst = Math.min(sumav.getValue(), srav.getValue());
               sumav.setValue(nst);
-            } else {
-              sumav.setValue(srav.getValue());
+              break;
+            case END_TIME:
+            case DANGER:
+            case RISK:
+              double newmaxv = Math.max(sumav.getValue(), srav.getValue());
+              sumav.setValue(newmaxv);
+              break;
+            default:
+              // if its anything else its a simple summation, even for TYPED_QUANTITY
+              double newsumv = sumav.getValue() + srav.getValue();
+              sumav.setValue(newsumv);
             }
-          } else if ( (thisat == END_TIME) || (thisat == DANGER) || (thisat == RISK) ) {
-            double newmaxv = Math.max(sumav.getValue(), srav.getValue());
-            sumav.setValue(newmaxv);
-          } else {
-            // if its anything else its a simple summation, even for TYPED_QUANTITY
-            double newsumv = sumav.getValue() + srav.getValue();
-            sumav.setValue(newsumv);
           }
-            
-          
         } // end of for loop for allocationresult aspecttypes
           
         // Sum up the auxiliaryquery data.  If there are conflicting data
