@@ -43,7 +43,8 @@ public class NSLS {
         NamingEnumeration enum = ctx.list("");
         while (enum.hasMoreElements()) {
             NameClassPair ncp = (NameClassPair) enum.nextElement();
-            System.out.println(indent + ncp.getName() + ": " + ncp.getClassName());
+            System.out.println(indent + ncp.getName() + ": " + ncp.getClassName()
+                               + "(" + ncp.getClassName() + ")");
             Attributes attributes = ctx.getAttributes(ncp.getName());
             if (attributes != null) {
                 for (NamingEnumeration attrs = attributes.getAll(); attrs.hasMore(); ) {
@@ -68,7 +69,7 @@ public class NSLS {
         while (enum.hasMoreElements()) {
             Binding binding = (Binding) enum.nextElement();
             Object object = binding.getObject();
-            System.out.println(indent + binding.getName() + ": " + object);
+            System.out.println(indent + binding.getName() + "(" + binding.getClassName() + ")" + ": " + object);
             Attributes attributes = ctx.getAttributes(binding.getName());
             if (attributes != null) {
                 for (NamingEnumeration attrs = attributes.getAll(); attrs.hasMore(); ) {
