@@ -19,6 +19,7 @@ import org.apache.log4j.WriterAppender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.SimpleLayout;
 import org.apache.log4j.Priority;
+import org.apache.log4j.BasicConfigurator;
 
 import java.util.Enumeration;
 import java.util.Hashtable;
@@ -32,6 +33,7 @@ public class LoggingServiceProvider implements ServiceProvider {
   private ClusterServesPlugIn cluster;
 
   public LoggingServiceProvider(Hashtable env) {
+    BasicConfigurator.configure();
   }
 
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
