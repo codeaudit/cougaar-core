@@ -296,10 +296,10 @@ public class ExecutionTimer extends Timer {
       getNow();                   // Bring parameters up-to-now
       if (parameters.compareTo(theParameters[theParameterCount - 1]) > 0) {
         if (theParameterCount < theParameters.length) {
-          System.out.println("Setting parameters " + theParameterCount + " to " + parameters);
+          logger.warn("Setting parameters " + theParameterCount + " to " + parameters);
           theParameters[theParameterCount++] = parameters;
         } else {
-          System.out.println("Setting parameters " + (theParameterCount-1) + " to " + parameters);
+          logger.warn("Setting parameters " + (theParameterCount-1) + " to " + parameters);
           theParameters[theParameterCount - 1] = parameters;
         }
       }
