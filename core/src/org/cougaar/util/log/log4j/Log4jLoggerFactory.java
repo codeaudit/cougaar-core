@@ -34,7 +34,7 @@ public class Log4jLoggerFactory extends LoggerFactory {
   }
 
   public Logger createLogger(Object requestor) {
-    return createLogger(requestor.getClass().toString());
+    return createLogger(requestor.getClass().getName());
   }
 
   public Logger createLogger(String name) {
