@@ -104,25 +104,29 @@ final class TreeNode
 	return children;
     }
 
-    void listRunningThreads(List records) 
+
+   int iterateOverRunningThreads(ThreadStatusService.Body body)
     {
-	// All pools
+	int count = 0;
 	for (int i=0; i<pools.length; i++)
-	    pools[i].listRunningThreads(records);
+	    count += pools[i].iterateOverRunningThreads(body);
+	return count;
     }
 
-    void listQueuedThreads(List records) 
+    int iterateOverQueuedThreads(ThreadStatusService.Body body)
     {
+	int count = 0;
 	for (int i=0; i<schedulers.length; i++)
-	    schedulers[i].listQueuedThreads(records);
+	    count += schedulers[i].iterateOverQueuedThreads(body);
 	if (children != null) {
 	    synchronized (children) {
 		for (int i = 0, n = children.size(); i < n; i++) {
 		    TreeNode child = (TreeNode) children.get(i);
-		    child.listQueuedThreads(records);
+		    count += child.iterateOverQueuedThreads(body);
 		}
 	    }
 	}
+	return count;
     }
 
 

@@ -31,7 +31,6 @@ import java.util.Timer;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
-import org.cougaar.core.service.ThreadControlService;
 
 /**
  * This class creates a servlet which displays the state of COUGAAR
@@ -92,14 +91,8 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	    timer.schedule(rtd, 0, sample_period);
 	}
 	if(test.equalsIgnoreCase("true")) {
-	    ThreadControlService tcs = (ThreadControlService)
-		sb.getService(this, ThreadControlService.class, null);
-	    if (tcs != null) {
-		int default_lane = tcs.getDefaultLane();
-		sb.releaseService(this, ThreadControlService.class, tcs);
-		long lane = getParameter("lane", default_lane);
-		runTest((int) lane);
-	    }
+	    long lane = getParameter("lane", ThreadService.BEST_EFFORT_LANE);
+	    runTest((int) lane);
 	}
     }
 

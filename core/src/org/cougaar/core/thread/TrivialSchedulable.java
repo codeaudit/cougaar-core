@@ -38,6 +38,9 @@ class TrivialSchedulable implements Schedulable
     private int start_count;
     private boolean cancelled;
     private TimerTask task;
+    private long start_time;
+    private int state;
+    private String toString;
 
     TrivialSchedulable(Runnable runnable, 
 		       String name,
@@ -48,10 +51,18 @@ class TrivialSchedulable implements Schedulable
             this.name =  TrivialThreadPool.pool().generateName();
         else
             this.name = name;
+	toString = "<Schedulable " 
+	    +(name == null ? "anonymous" : name)+
+	    /* " for " +consumer+ */">";
         this.consumer = consumer;
 	this.start_count = 0;
     }
 
+    // should only be used by the SerialThreadRunner/Queue
+    void setState(int state)
+    {
+	this.state = state;
+    }
 
     Runnable getRunnable()
     {
@@ -60,19 +71,32 @@ class TrivialSchedulable implements Schedulable
 
     public int getLane() 
     {
-	return -1;
+	return org.cougaar.core.service.ThreadService.BEST_EFFORT_LANE;
     }
 
-    String getName() 
+    public String getName() 
     {
 	return name;
     }
 
+    public int getBlockingType()
+    {
+	return SchedulableStatus.NOT_BLOCKING;
+    }
+
+    public String getBlockingExcuse()
+    {
+	return "";
+    }
+
+    public long getTimestamp()
+    {
+	return start_time;
+    }
+
     public String toString() 
     {
-        return "<TrivialSchedulable " 
-	    +(name == null ? "anonymous" : name)+ 
-	    " for " +consumer+ ">";
+        return toString;
     }
 
     public Object getConsumer() 
@@ -84,6 +108,8 @@ class TrivialSchedulable implements Schedulable
     private void thread_start() 
     {
 	start_count = 1; // forget any extra intervening start() calls
+	start_time = System.currentTimeMillis();
+	state = CougaarThread.THREAD_RUNNING;
 	thread = runThread();
     }
 
@@ -94,6 +120,7 @@ class TrivialSchedulable implements Schedulable
 
     void thread_stop() 
     {
+	state = CougaarThread.THREAD_DORMANT;
 	// If start_count > 1, start() was called while the
 	// Schedulable was running.  Now that it's finished,  start it
 	// again. 
@@ -153,10 +180,7 @@ class TrivialSchedulable implements Schedulable
 
     public synchronized int getState() 
     {
-        if (thread != null)
-            return CougaarThread.THREAD_RUNNING;
-        else
-            return CougaarThread.THREAD_DORMANT;
+	return state;
     }
 
     public boolean cancel() 

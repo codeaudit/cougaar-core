@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 2002-2004 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -24,27 +24,21 @@
  * </copyright>
  */
 
-package org.cougaar.core.thread;
+package org.cougaar.core.mts;
 
-import java.util.List;
-
-import org.cougaar.core.component.Service;
+import org.cougaar.util.log.Logger;
 
 /**
- * This service is designed to provide a low-fidelity snapshot of the
- * current state of the ThreadServices.  It returns a list of Record
- * instances, one for each active or queued 'thread' (Schedulable).
- * The Record contains the name of the 'thread', the name of the
- * consumer for whom it was made, the name of the scheduler that made
- * it, the state (implicitly) and how long the schedulable has been in
- * that state, in ms).  These results are mostly useful as deugging
- * aids, for example in the Top servlet.
+ * This service and its implementation in the mtsstd module have a
+ * very specialized role.  They exist solely to allow one non-mtsstd
+ * class, the StateDumpService implementation, to dump the current
+ * message queues.  No other clients can use it.  The StateDumpService
+ * impl itself can't easily live in mtsstd for security reasons.
  */
-public interface ThreadStatusService extends Service
+public interface MessageQueueDumpService
 {
-    public interface Body {
-	void run(String scheduler, Schedulable schedulable);
-    }
-
-    public int iterateOverStatus(Body body);
+    /**
+     * Log queues and return a count.  Use the caller's logger.
+     */
+    public int dumpQueues(Logger logger);
 }

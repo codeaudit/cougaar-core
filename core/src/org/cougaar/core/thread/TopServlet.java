@@ -30,6 +30,7 @@ import java.io.PrintWriter;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ArrayList;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -40,18 +41,36 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.servlet.ServletFrameset;
 
 
-class TopServlet extends ServletFrameset
+final class TopServlet extends ServletFrameset
 {
 
     private static final long THRESHOLD = 1000;
     private ThreadStatusService statusService;
     private ThreadControlService controlService;
 
+    private static class Record {
+	Record(String scheduler, Schedulable schedulable, boolean queued)
+	{
+	    this.scheduler = scheduler;
+	    this.schedulable = schedulable;
+	    this.queued = queued;
+	    elapsed = System.currentTimeMillis() - schedulable.getTimestamp();
+
+	}
+
+	String scheduler;
+	Schedulable schedulable;
+	long elapsed;
+	boolean queued;
+    }
+
+
+
     // Higher times appear earlier in the list
     private Comparator comparator = new Comparator() {
 	    public int compare(Object x, Object y) {
-		ThreadStatusService.Record r = (ThreadStatusService.Record) x;
-		ThreadStatusService.Record s = (ThreadStatusService.Record) y;
+		Record r = (Record) x;
+		Record s = (Record) y;
 		if (r.elapsed == s.elapsed)
 		    return 0;
 		else if (r.elapsed < s.elapsed)
@@ -123,28 +142,28 @@ class TopServlet extends ServletFrameset
     }
 
 
-    private void printRecord(ThreadStatusService.Record record,
+    private void printRecord(Record record,
 			     PrintWriter out) 
     {
-	boolean is_queued = record.getState() == ThreadStatusService.QUEUED;
+
 	if (record.elapsed > THRESHOLD) {
 	    out.print("<tr bgcolor=\"#ffeeee\">"); // pale-pink background
 	} else {
 	    out.print("<tr>");
 	}
-	printCell(record.getState(), is_queued, out);
+	printCell(record.queued ? "queued" : "running", record.queued, out);
 
 	String b_string = 
-	    SchedulableStatus.statusString(record.blocking_type,
-					   record.blocking_excuse);
+	    SchedulableStatus.statusString(record.schedulable.getBlockingType(),
+					   record.schedulable.getBlockingExcuse());
 
-	printCell(b_string, is_queued, out);
+	printCell(b_string, record.queued, out);
 
-	printCell(record.elapsed, is_queued, out);
-	printCell(record.scheduler, is_queued, out);
-	printCell(record.lane, is_queued, out);
-	printCell(record.schedulable, is_queued, out);
-	printCell(record.consumer, is_queued, out);
+	printCell(record.elapsed, record.queued, out);
+	printCell(record.scheduler, record.queued, out);
+	printCell(record.schedulable.getLane(), record.queued, out);
+	printCell(record.schedulable.getName(), record.queued, out);
+	printCell(record.schedulable.getConsumer().toString(), record.queued, out);
 	out.print("</tr>");
     }
 
@@ -166,13 +185,12 @@ class TopServlet extends ServletFrameset
 
 	Iterator itr = status.iterator();
 	while (itr.hasNext()) {
-	    ThreadStatusService.Record record = (ThreadStatusService.Record)
-		itr.next();
-	    if (record.getState() == ThreadStatusService.QUEUED) {
+	    Record record = (Record) itr.next();
+	    if (record.queued) {
 		++queued;
 	    } else {
 		++running;
-		++run_counts[record.lane];
+		++run_counts[record.schedulable.getLane()];
 	    }
 	}
 
@@ -213,11 +231,25 @@ class TopServlet extends ServletFrameset
 
     public void printPage(HttpServletRequest request, PrintWriter out) 
     {
-	List status = statusService.getStatus();
-	if (status == null) {
-	    // print some error message
-	    return;
-	}
+	final List status = new ArrayList();
+	ThreadStatusService.Body body = new ThreadStatusService.Body () {
+		public void run(String scheduler, Schedulable schedulable)
+		{
+		    Record record = null;
+		    int state = schedulable.getState();
+		    if (state == CougaarThread.THREAD_PENDING) {
+			record = new Record(scheduler, schedulable, true);
+		    } else if (state == CougaarThread.THREAD_RUNNING) {
+			record = new Record(scheduler, schedulable, false);
+		    } else {
+			return; // ignore this one
+		    }
+
+		    status.add(record);
+		}
+	    };
+	
+	statusService.iterateOverStatus(body);
 
 	printSummary(status, out);
 
@@ -235,8 +267,7 @@ class TopServlet extends ServletFrameset
 
 	Iterator itr = status.iterator();
 	while (itr.hasNext()) {
-	    ThreadStatusService.Record record = (ThreadStatusService.Record)
-		itr.next();
+	    Record record = (Record) itr.next();
 	    printRecord(record, out);
 	}
 	

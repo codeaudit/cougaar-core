@@ -60,7 +60,6 @@ class ThreadPool
 	 **/
 	private Object runLock = new Object();
 
-	private long start_time; // per schedulable run
 
 
 	SchedulableObject getSchedulable() {
@@ -86,7 +85,6 @@ class ThreadPool
 		    long continuation_start = System.currentTimeMillis();
 		    int continuation_count = 0;
 		    while (schedulable != null) {
-			start_time = System.currentTimeMillis();
 			continuation_count++;
 			if (pool.logger.isInfoEnabled() &&
 			    continuation_count % 50 == 0)
@@ -290,31 +288,26 @@ class ThreadPool
 	    return null;
     }
 
-    void listRunningThreads(List records) {
+    int iterateOverRunningThreads(ThreadStatusService.Body body) {
 	PooledThread thread = null;
+	int count = 0;
 	for (int i=0; i<pool.length; i++) {
 	    thread = pool[i];
 	    if (thread != null && thread.isRunning) {
-		ThreadStatusService.Record record = 
-		    new ThreadStatusService.RunningRecord();
 		try {
 		    SchedulableObject sched = thread.schedulable;
-		    Object consumer = sched.getConsumer();
-		    if (consumer != null)
-			record.consumer = consumer.toString();
 		    Scheduler scheduler = sched.getScheduler();
+		    String scheduler_name = null;
 		    if (scheduler != null)
-			record.scheduler = scheduler.getName();
-		    record.schedulable = sched.getName();
-		    long startTime=thread.start_time;
-		    record.elapsed = System.currentTimeMillis()-startTime;
-		    record.blocking_excuse = sched.getBlockingExcuse();
-		    record.blocking_type = sched.getBlockingType();
-		    record.lane = sched.getLane();
-		    records.add(record);
+			scheduler_name = scheduler.getName();
+		    body.run(scheduler_name, sched);
+		    count++;
 		} catch (Throwable t) {
+		    logger.error("ThreadStatusService error in body", t);
 		}
 	    }
 	}
+	return count;
     }
+
 }

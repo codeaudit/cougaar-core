@@ -76,6 +76,19 @@ public interface Schedulable
      */
     int getLane();
 
+
+    /**
+     * Other status methods, for the ThreadStatusService
+     */
+
+    long getTimestamp(); // start time
+
+    String getName();
+
+    int getBlockingType();
+
+    String getBlockingExcuse();
+
     /**
      * The following methods behave more or less as they on
      * TimerTasks, except that the schedule methods can be called more

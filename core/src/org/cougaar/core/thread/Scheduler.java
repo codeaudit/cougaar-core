@@ -104,38 +104,24 @@ public class Scheduler
         }
     }
 
-    // NB: By design this method is NOT synchronized!  
-    void listQueuedThreads(final List records) {
-	DynamicSortedQueue.Processor processor = 
-	    new DynamicSortedQueue.Processor() {
-		public void process(Object thing) {
-		    try {
-			ThreadStatusService.Record record = 
-			    new ThreadStatusService.QueuedRecord();
-			SchedulableObject sched = (SchedulableObject) thing;
-			if (sched == null) return;
-			Object consumer = sched.getConsumer();
-			if (consumer != null)
-			    record.consumer = consumer.toString();
-			record.scheduler = getName();
-			record.schedulable = sched.getName();
-			long timestamp = sched.getTimestamp();
-			record.blocking_excuse = sched.getBlockingExcuse();
-			record.blocking_type = sched.getBlockingType();
-			record.elapsed = System.currentTimeMillis()-timestamp;
-			record.lane = getLane();
-			records.add(record);
-		    } catch (Throwable t) {
-                      _logger.error("SchedulableObject "+thing+" threw an uncaught exception", t);
-		    }
-		}};
+    // NB: By design this method is NOT synchronized! It should only
+    // be used by the ThreadStatusService and is intended to provide
+    // a best-effort snapshot.  Failures are normal. 
+    int iterateOverQueuedThreads(ThreadStatusService.Body body)
+    {
+	// could copy the queue in a synchronized block, on the off
+	// chance that read-access is unsafe otherwise.  But there are
+	// no indications this is really an issue.
 	try {
-	    pendingThreads.processEach(processor);
+	    return pendingThreads.processEach(body, getName(), _logger);
 	} catch (Throwable r) {
-          // probably cannot get here
-          _logger.error("SortedQueue.Processor "+processor+" threw an uncaught exception", r);
+	    // processEach should be catching all errors but leave
+	    // this here just in case.
+	    _logger.error(null, r);
+	    return 0;
 	}
     }
+
 
     private synchronized Logger getLogger() {
 	if (logger == null) logger = Logging.getLogger(getClass().getName());

@@ -35,32 +35,24 @@ final class SerialThreadQueue
 	lock = new Object();
     }
 
-    void listThreads(java.util.ArrayList records)
+    int iterateOverThreads(ThreadStatusService.Body body)
     {
+	int count = 0;
 	Object[] objects;
 	TrivialSchedulable sched;
-	ThreadStatusService.Record record;
 	synchronized (lock) {
 	    objects = schedulables.toArray();
 	}
 	for (int i=0; i<objects.length; i++) {
 	    sched = (TrivialSchedulable) objects[i];
-	    record = new ThreadStatusService.QueuedRecord();
 	    try {
-		Object consumer = sched.getConsumer();
-		record.scheduler = "root";
-		if (consumer != null) record.consumer = consumer.toString();
-		record.schedulable = sched.getName();
-		record.blocking_type = SchedulableStatus.NOT_BLOCKING;
-		record.blocking_excuse = "none";
-		// long startTime = thread.start_time;
-		// record.elapsed = System.currentTimeMillis()-startTime;
-		record.lane = sched.getLane();
-		records.add(record);
+		body.run("root", sched);
+		count++;
 	    } catch (Throwable t) {
-		// ignore errors
+		// ignore
 	    }
 	}
+	return count;
     }
 
     Object getLock()
@@ -70,6 +62,7 @@ final class SerialThreadQueue
 
     void enqueue(TrivialSchedulable sched) 
     {
+	sched.setState(CougaarThread.THREAD_PENDING);
 	synchronized (lock) {
 	    if (!schedulables.contains(sched)) {
 		schedulables.add(sched);

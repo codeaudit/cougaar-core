@@ -45,8 +45,9 @@ import org.cougaar.core.service.ThreadControlService;
  *
  *  This is designed to be a Node-level plugin.
  */
-class RogueThreadDetector
+final class RogueThreadDetector
     extends TimerTask
+    implements ThreadStatusService.Body
 {
     private ThreadStatusService statusService;
     private ThreadControlService controlService;
@@ -117,43 +118,59 @@ class RogueThreadDetector
     }
 
 
-    private String warningMessage(ThreadStatusService.Record record) 
+    private String warningMessage(String scheduler,
+				  Schedulable schedulable,
+				  long elapsed) 
     {
+	int blocking_type = schedulable.getBlockingType();
+	String blocking_excuse = schedulable.getBlockingExcuse();
 	String b_string = 
-	    SchedulableStatus.statusString(record.blocking_type,
-					   record.blocking_excuse);
-	return "Schedulable running for too long: Millisec=" +record.elapsed+
-	    " Level=" +record.scheduler+
-	    " Schedulable=" +record.schedulable+
-	    " Client=" +record.consumer+
+	    SchedulableStatus.statusString(blocking_type,
+					   blocking_excuse);
+	return "Schedulable running for too long: Millisec=" +elapsed+
+	    " Level=" +scheduler+
+	    " Schedulable=" +schedulable.getName()+
+	    " Client=" +schedulable.getConsumer()+
 	    " Blocking=" +b_string;
 
     }
 
-    private void detectRogue(List status) 
+
+    int running = 0;
+    int queued = 0;
+
+    public void run(String scheduler, Schedulable schedulable) 
     {
-	int running = 0;
-	int queued = 0;
-	
-	boolean useItr = (status instanceof RandomAccess);
-	Iterator itr = (useItr ? status.iterator() : null);
-	for (int i = 0, n = status.size(); i < n; i++) {
-	    ThreadStatusService.Record record = (ThreadStatusService.Record)
-                (useItr ? itr.next() : status.get(i));
-	    if (record.getState() == ThreadStatusService.RUNNING){
-		running++;
-		if (loggingService.isWarnEnabled() && 
-		    timeToLog(record.elapsed)) {
-		    if (record.elapsed >= warnTime) 
-			loggingService.warn(warningMessage(record));
-		    else if (loggingService.isInfoEnabled() &&
-			     record.elapsed >= infoTime) 
-			loggingService.info(warningMessage(record));
-		}
-	    } else {
-		queued++;
+	int state = schedulable.getState();
+	if (state == CougaarThread.THREAD_RUNNING){
+	    running++;
+	    long elapsed = 
+		System.currentTimeMillis() - schedulable.getTimestamp();
+	    if (loggingService.isWarnEnabled() && 
+		timeToLog(elapsed)) {
+		if (elapsed >= warnTime) 
+		    loggingService.warn(warningMessage(scheduler,
+						       schedulable,
+						       elapsed));
+		else if (loggingService.isInfoEnabled() &&
+			 elapsed >= infoTime) 
+		    loggingService.info(warningMessage(scheduler,
+						       schedulable,
+						       elapsed));
 	    }
+	} else if (state == CougaarThread.THREAD_PENDING) {
+	    queued++;
 	}
+	
+    }
+
+    public void run() 
+    {
+	running = 0;
+	queued = 0;
+	statusService.iterateOverStatus(this);
+
+
 	if (controlService != null && loggingService.isInfoEnabled()) {
 	    int max = controlService.maxRunningThreadCount();
 	    if (running >= max || queued >= 1) {
@@ -163,17 +180,6 @@ class RogueThreadDetector
 				    +running+ " queued=" +queued);
 	    }
 	}
-    }
 
-    public void run() 
-    {
-	List status = statusService.getStatus();
-	if (status == null) {
-	    // print some error message
-	    loggingService.error("Thread Status Service returned null");
-	    return;
-	}
-
-	if (status.size() > 0) 	detectRogue(status);
     }
 }

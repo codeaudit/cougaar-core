@@ -39,10 +39,8 @@ public class SingleThreadServiceProvider
     ThreadStatusService makeThreadStatusService()
     {
 	return new ThreadStatusService() {
-		public List getStatus() {
-		    ArrayList result = new ArrayList();
-		    proxy.listThreads(result);
-		    return result;
+		public int iterateOverStatus(ThreadStatusService.Body body) {
+		    return proxy.iterateOverThreads(body);
 		}
 	    };
     }

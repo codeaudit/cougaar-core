@@ -72,10 +72,8 @@ public class TrivialThreadServiceProvider
     ThreadStatusService makeThreadStatusService()
     {
 	return new ThreadStatusService() {
-		public List getStatus() {
-		    List result = new ArrayList();
-		    TrivialThreadPool.pool().listRunningThreads(result);
-		    return result;
+		public int iterateOverStatus(ThreadStatusService.Body body) {
+		    return TrivialThreadPool.pool().iterateOverRunningThreads(body);
 		}
 	    };
     }
@@ -110,7 +108,10 @@ public class TrivialThreadServiceProvider
 	if (serviceClass == ThreadService.class) {
 	    return proxy;
 	} else if (serviceClass == ThreadStatusService.class) {
-	    return statusProxy;
+	    if (ThreadServiceProvider.validateThreadStatusServiceClient(requestor))
+		return statusProxy;
+	    else
+		return null;
 	} else {
 	    return null;
 	}

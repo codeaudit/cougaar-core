@@ -49,6 +49,7 @@ final class SchedulableObject implements Schedulable
     private int blocking_type = SchedulableStatus.NOT_BLOCKING;
     private String blocking_excuse;
     private int lane;
+    private String toString;
 
     SchedulableObject(TreeNode treeNode, 
                       Runnable runnable, 
@@ -69,6 +70,9 @@ final class SchedulableObject implements Schedulable
             this.name =  pool.generateName();
         else
             this.name = name;
+	toString = "<Schedulable " 
+	    +(name == null ? "anonymous" : name)+
+	    /* " for " +consumer+ */">";
         this.consumer = consumer;
 	this.start_count = 0;
     }
@@ -84,11 +88,11 @@ final class SchedulableObject implements Schedulable
 	return lane;
     }
 
-    String getBlockingExcuse () {
+    public String getBlockingExcuse () {
 	return blocking_excuse;
     }
 
-    int getBlockingType() {
+    public int getBlockingType() {
 	return blocking_type;
     }
 
@@ -103,7 +107,7 @@ final class SchedulableObject implements Schedulable
 	blocking_type = SchedulableStatus.NOT_BLOCKING;
     }
 
-    String getName() {
+    public String getName() {
         return name;
     }
 
@@ -112,12 +116,10 @@ final class SchedulableObject implements Schedulable
     }
 
     public String toString() {
-        return "<Schedulable " 
-	    +(name == null ? "anonymous" : name)+ 
-	    " for " +consumer+ ">";
+        return toString;
     }
 
-    long getTimestamp() {
+    public long getTimestamp() {
         return timestamp;
     }
 
@@ -200,6 +202,7 @@ final class SchedulableObject implements Schedulable
             start_count = 1; // forget any extra intervening start() calls
             queued = false;
             thread = pool.getThread(this, name);
+	    timestamp = System.currentTimeMillis();
             thread.start_running();
         }
     }

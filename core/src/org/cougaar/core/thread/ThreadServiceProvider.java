@@ -69,6 +69,16 @@ public final class ThreadServiceProvider
 				      "Pool-"+i);
     }
 
+    static final boolean validateThreadStatusServiceClient(Object client)
+    {
+	return
+	    (client instanceof TopServlet) ||
+	    (client instanceof RogueThreadDetector) ||
+	    (client instanceof org.cougaar.core.node.StateDumpServiceComponent);
+    }
+
+
+
     private ServiceBroker sb;
     private boolean isRoot;
     private ThreadListenerProxy listenerProxy;
@@ -146,11 +156,11 @@ public final class ThreadServiceProvider
 	provideServices(the_sb);
 	if (isRoot) {
 	    statusProxy = new ThreadStatusService() {
-		    public List getStatus() {
-			List result = new ArrayList();
-			node.listQueuedThreads(result);	
-			node.listRunningThreads(result);
-			return result;
+		    public int iterateOverStatus(ThreadStatusService.Body body) 
+		    {
+			return 
+			    node.iterateOverQueuedThreads(body) +
+			    node.iterateOverRunningThreads(body);
 		    }
 		};
 	    the_sb.addService(ThreadStatusService.class, this);
@@ -251,7 +261,10 @@ public final class ThreadServiceProvider
 	} else if (serviceClass == ThreadListenerService.class) {
 	    return listenerProxy;
 	} else if (serviceClass == ThreadStatusService.class) {
-	    return statusProxy;
+	    if (validateThreadStatusServiceClient(requestor))
+		return statusProxy;
+	    else
+		return null;
 	} else {
 	    return null;
 	}

@@ -55,10 +55,13 @@ final class SingleThreadServiceProxy
 	return new SerialSchedulable(runnable, name, consumer, queue);
     }
 
-    void listThreads(ArrayList list)
+    int iterateOverThreads(ThreadStatusService.Body body)
     {
-	for (int i=0; i<runners.length; i++) runners[i].listThreads(list);
-	queue.listThreads(list);
+	int count = 0;
+	for (int i=0; i<runners.length; i++) 
+	    count += runners[i].iterateOverThreads(body);
+	count += queue.iterateOverThreads(body);
+	return count;
     }
 
 }

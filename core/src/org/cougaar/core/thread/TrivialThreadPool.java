@@ -28,6 +28,9 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 
 class TrivialThreadPool
 {
@@ -40,6 +43,7 @@ class TrivialThreadPool
     int anon_count = 0;
     ThreadRunner[] pool = new ThreadRunner[100];
     ArrayList list_pool = new ArrayList();
+    Logger logger = Logging.getLogger(getClass().getName());
 
     synchronized String generateName() {
 	return "TrivialThread-" + anon_count++;
@@ -142,42 +146,48 @@ class TrivialThreadPool
     }
 
 
-    void listRunningThreads(List records) 
+    // Unsynchronized read access to list_pool.  This is by design
+    // (this operation cannot block the entire service) and should be
+    // ok.  If it isn't, the list could be copied.
+    int iterateOverRunningThreads(ThreadStatusService.Body body) 
     {
 	ThreadRunner thread = null;
+	int count = 0;
 	for (int i=0; i<pool.length; i++) {
 	    thread = pool[i];
-	    addRecord(thread, records);
+	    count += runBody(thread, body);
 	}
 	if (list_pool != null) {
-	    for (int i=0; i<list_pool.size(); i++) {
-		thread = (ThreadRunner) list_pool.get(i);
-		addRecord(thread, records);
+	    for (int i=0, size=list_pool.size(); i<size; i++) {
+		try {
+		    thread = (ThreadRunner) list_pool.get(i);
+		} catch (Exception ex) {
+		    // list_pool size has changed - doesn't matter
+		    if (logger.isDebugEnabled())
+			logger.debug("list_pool size changed");
+		}
+		count += runBody(thread, body);
 	    }
 	}
+	return count;
     }
 
-    void addRecord(ThreadRunner thread, List records) 
+    int runBody(ThreadRunner thread, ThreadStatusService.Body body) 
     {
 	if (thread != null && thread.in_use) {
-	    ThreadStatusService.Record record = 
-		new ThreadStatusService.RunningRecord();
 	    try {
 		TrivialSchedulable sched = thread.schedulable;
-		Object consumer = sched.getConsumer();
-		record.scheduler = "root";
-		if (consumer != null) record.consumer = consumer.toString();
-		record.schedulable = sched.getName();
-		record.blocking_type = SchedulableStatus.NOT_BLOCKING;
-		record.blocking_excuse = "none";
-		long startTime = thread.start_time;
-		record.elapsed = System.currentTimeMillis()-startTime;
-		record.lane = sched.getLane();
-		records.add(record);
+		if (sched != null) {
+		    body.run("root", sched);
+		    return 1; // one  Schedulable processed
+		}
 	    } catch (Throwable t) {
-		// ignore errors
+		logger.error("ThreadStatusService error in body", t);
 	    }
 	}
+
+	// No Schedulable processed
+	return 0;
     }
 
 }

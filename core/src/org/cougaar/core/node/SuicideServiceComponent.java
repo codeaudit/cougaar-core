@@ -45,7 +45,7 @@ import org.cougaar.util.log.Logging;
 /**
  * This component advertises the {@link SuicideService}.
  */
-public class SuicideServiceComponent
+public final class SuicideServiceComponent
 extends GenericStateModelAdapter implements Component {
 
   private static final Logger log = Logging.getLogger(SuicideService.class);

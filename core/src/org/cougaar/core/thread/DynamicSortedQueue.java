@@ -29,6 +29,7 @@ package org.cougaar.core.thread;
 import java.util.ArrayList;
 import java.util.Comparator;
 
+import org.cougaar.util.log.Logger;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -43,23 +44,49 @@ public class DynamicSortedQueue
     private Comparator comparator;
     private ArrayList store;
     
-
+    // Only used for the Scheduler's iterateOverQueuedThreads method,
+    // so that it can read the elements without locking the thread
+    // service or risking damage to the real queue.  DO NOT USE THIS
+    // FOR ANY OTHER PURPOSE.
+    DynamicSortedQueue(DynamicSortedQueue queue)
+    {
+	this.store = new ArrayList(queue.store);
+    }
 
     public DynamicSortedQueue(Comparator comparator) {
 	store = new ArrayList();
 	this.comparator = comparator;
     }
 
-    interface Processor {
-	void process(Object thing);
-    }
-
-    // Utter and total hack.
-    void processEach(Processor processor) {
+    // This should ONLY be called by the ThreadStatusService.  It's
+    // unsafe otherwise.
+    int processEach(ThreadStatusService.Body body, 
+		    String schedulerName,
+		    Logger logger) 
+    {
+	int count = 0;
+	Object thing;
 	for (int i = 0, n = store.size(); i < n; i++) {
-	    Object thing = store.get(i);
-	    processor.process(thing);
+	    try {
+		thing = store.get(i);
+	    } catch (Exception ex) {
+		// This is an expected condition to end the loop
+		if (logger.isDebugEnabled())
+		    logger.debug("queue size decreased during list operation");
+		break;
+	    }
+	    if (thing != null) {
+		try {
+		    SchedulableObject sched = (SchedulableObject) thing;
+		    long startTime = sched.getTimestamp();
+		    body.run(schedulerName, sched);
+		    count++;
+		} catch (Throwable t) {
+		    logger.error("ThreadStatusService error in body", t);
+		}
+	    }
 	}
+	return count;
     }
 
     public ArrayList filter(UnaryPredicate predicate) {

@@ -23,11 +23,15 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 final class SerialThreadRunner
 {
     private Thread thread;
     private TrivialSchedulable current;
     private SerialThreadQueue queue;
+    private Logger logger = Logging.getLogger(getClass().getName());
 
     SerialThreadRunner(SerialThreadQueue queue) 
     {
@@ -43,29 +47,18 @@ final class SerialThreadRunner
 	return thread;
     }
 
-    void listThreads(ArrayList records)
+    int iterateOverThreads(ThreadStatusService.Body body)
     {
-	Object[] objects;
-	TrivialSchedulable sched;
-	ThreadStatusService.Record record;
-	sched = current;
+	TrivialSchedulable sched  = current;
 	if (sched != null) {
-	    record = new ThreadStatusService.RunningRecord();
 	    try {
-		Object consumer = sched.getConsumer();
-		record.scheduler = "root";
-		if (consumer != null) record.consumer = consumer.toString();
-		record.schedulable = sched.getName();
-		record.blocking_type = SchedulableStatus.NOT_BLOCKING;
-		record.blocking_excuse = "none";
-		// long startTime = thread.start_time;
-		// record.elapsed = System.currentTimeMillis()-startTime;
-		record.lane = sched.getLane();
-		records.add(record);
+		body.run("root", sched);
 	    } catch (Throwable t) {
-		// ignore errors
+		logger.error("ThreadStatusService error in body", t);
+		return 0;
 	    }
 	}
+	return 1;
     }
 
 
@@ -77,8 +70,9 @@ final class SerialThreadRunner
 	    }
 	    if (current == null) return;
 	    
+	    current.setState(CougaarThread.THREAD_RUNNING);
 	    current.getRunnable().run();
-	    current.thread_stop();
+	    current.thread_stop(); // sets the state to DORMANT
 	    current = null;
 	}
     }
