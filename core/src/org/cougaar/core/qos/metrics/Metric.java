@@ -38,4 +38,6 @@ public interface Metric
     double getCredibility();
     String getUnits();
     String getProvenance();
+    long getTimestamp();
+    long getHalflife();
 }

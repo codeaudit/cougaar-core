@@ -33,15 +33,22 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.ServletService;
+import org.cougaar.core.service.wp.WhitePagesService;
+
+// temporary
 import org.cougaar.core.service.TopologyReaderService;
+
 
 public abstract class MetricsServlet extends HttpServlet implements Constants
 {
 
-    protected TopologyReaderService topologyService;
+    protected WhitePagesService wpService;
     protected MetricsService metricsService;
     protected String nodeID;
     protected DecimalFormat f4_2,f6_3,f3_0,f7_0;
+
+    // temporary
+    TopologyReaderService topologyService;
 
     public MetricsServlet(ServiceBroker sb) {
 	ServletService servletService = (ServletService)
@@ -50,11 +57,16 @@ public abstract class MetricsServlet extends HttpServlet implements Constants
 	    throw new RuntimeException("Unable to obtain ServletService");
 	}
 
+	wpService = (WhitePagesService)
+	    sb.getService(this, WhitePagesService.class, null);
+	if (servletService == null) {
+	    throw new RuntimeException("Unable to obtain WhitePages service");
+	}
+
+	// temporary
 	topologyService = (TopologyReaderService)
 	    sb.getService(this, TopologyReaderService.class, null);
-	if (servletService == null) {
-	    throw new RuntimeException("Unable to obtain Topology service");
-	}
+
 
 	metricsService = (MetricsService)
 	    sb.getService(this, MetricsService.class, null);

@@ -31,6 +31,8 @@ public class MetricImpl implements Metric, java.io.Serializable
     private double credibility;
     private String units;
     private String provenance;
+    private long timestamp;
+    private long halflife;
 
     public MetricImpl(double raw, 
 		      double credibility, 
@@ -45,10 +47,24 @@ public class MetricImpl implements Metric, java.io.Serializable
 		      String units, 
 		      String provenance) 
     {
+	this(raw, credibility, units, provenance, System.currentTimeMillis(),
+	     0);
+    }
+
+
+    public MetricImpl(Object raw, 
+		      double credibility, 
+		      String units, 
+		      String provenance,
+		      long timestamp,
+		      long halflife) 
+    {
 	this.rawValue = raw;
 	this.credibility = credibility;
 	this.units = units;
 	this.provenance = provenance;
+	this.timestamp = timestamp;
+	this.halflife = halflife;
     }
 
     public String toString() {
@@ -137,6 +153,14 @@ public class MetricImpl implements Metric, java.io.Serializable
 
     public String getProvenance() {
 	return provenance;
+    }
+
+    public long getTimestamp() {
+	return timestamp;
+    }
+
+    public long getHalflife() {
+	return halflife;
     }
 
 }

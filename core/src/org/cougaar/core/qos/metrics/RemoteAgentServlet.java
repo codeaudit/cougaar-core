@@ -31,13 +31,17 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.TopologyReaderService;
+import org.cougaar.core.service.wp.AddressEntry;
+import org.cougaar.core.service.wp.Application;
 
 public class RemoteAgentServlet
     extends MetricsServlet
     implements Constants
 {
 
+    private static final Application TOPOLOGY = 
+	Application.getApplication("topology");
+    private static final String SCHEME = "node";
     private static String localHost;
 
     static {
@@ -115,10 +119,12 @@ public class RemoteAgentServlet
 		agentStatusService.getRemoteAgentState(agent);
 	    String agentHost = null;
 	    try {
-		agentHost =
-		    topologyService.getParentForChild(TopologyReaderService.HOST, 
-						      TopologyReaderService.AGENT, 
-						      name);
+		AddressEntry entry = wpService.get(name, TOPOLOGY, SCHEME);
+		if (entry == null) {
+		    agentHost = localHost;
+		} else {
+		    agentHost = entry.getAddress().getPath().substring(1);
+		}
 		agentHost = canonicalizeAddress(agentHost);
 	    } catch (Exception ex1) {
 	    }
