@@ -1,5 +1,9 @@
 2001-03-26  Michael Thome  <mthome@bbn.com>
 
+	* rmi
+	generate only 1.2 and later stubs rather than the old 1.1 RMI
+	protocol, too.
+
 	* version.def
 	Bump version 8.0, even though we are still officially only at
 	7.3. 

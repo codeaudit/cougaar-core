@@ -1,7 +1,7 @@
-*** /usr/java/jdk/src/java/io/ObjectInputStream.java	Thu Oct 19 16:36:27 2000
---- ObjectInputStream.java	Fri Oct 27 12:46:57 2000
+*** ObjectInputStream.orig	Mon Mar 26 11:40:43 2001
+--- ObjectInputStream.java	Mon Mar 26 11:43:04 2001
 ***************
-*** 991,997 ****
+*** 1199,1205 ****
   	if (currentClassDesc.isExternalizable()) {
   	    try {
   		currentObject = (currentClass == null) ?
@@ -9,7 +9,7 @@
   		handle = assignWireOffset(currentObject);
   		boolean prevmode = blockDataMode;
   		try {
---- 991,997 ----
+--- 1199,1205 ----
   	if (currentClassDesc.isExternalizable()) {
   	    try {
   		currentObject = (currentClass == null) ?
@@ -18,24 +18,24 @@
   		boolean prevmode = blockDataMode;
   		try {
 ***************
-*** 1118,1124 ****
+*** 1345,1351 ****
   	     */
   	    try {
   		currentObject = (currentClass == null) ?
-! 		                 null : allocateNewObject(currentClass, currclass);
+! 			     null : allocateNewObject(currentClass, currclass);
   	    } catch (NoSuchMethodError e) {
-  		throw new InvalidClassException(currclass.getName(),
-  						e.getMessage());
---- 1118,1124 ----
+  		throw new InvalidClassException(currclass.getName() +
+  			"Missing no-arg constructor for class"); 
+--- 1345,1351 ----
   	     */
   	    try {
   		currentObject = (currentClass == null) ?
-! 		                 null : allocateNewObjectOverride(currentClass, currclass);
+! 			     null : allocateNewObjectOverride(currentClass, currclass);
   	    } catch (NoSuchMethodError e) {
-  		throw new InvalidClassException(currclass.getName(),
-  						e.getMessage());
+  		throw new InvalidClassException(currclass.getName() +
+  			"Missing no-arg constructor for class"); 
 ***************
-*** 1660,1666 ****
+*** 2092,2098 ****
        * see DataInputStream for the details and alternatives.
        */
       public String readLine() throws IOException {
@@ -43,7 +43,7 @@
       }
   
       /**
---- 1660,1669 ----
+--- 2092,2101 ----
        * see DataInputStream for the details and alternatives.
        */
       public String readLine() throws IOException {
@@ -55,7 +55,7 @@
   
       /**
 ***************
-*** 2181,2190 ****
+*** 2827,2836 ****
       private IOException abortIOException = null;
       private ClassNotFoundException abortClassNotFoundException = null;
   
@@ -66,7 +66,7 @@
   	throws InstantiationException, IllegalAccessException;
       
       /* Allocate a new array for the specified class
---- 2184,2198 ----
+--- 2830,2844 ----
       private IOException abortIOException = null;
       private ClassNotFoundException abortClassNotFoundException = null;
   

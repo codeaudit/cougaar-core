@@ -7,40 +7,22 @@ public final class MTImpl_Stub
     extends java.rmi.server.RemoteStub
     implements org.cougaar.core.society.rmi.MT, java.rmi.Remote
 {
-    private static final java.rmi.server.Operation[] operations = {
-	new java.rmi.server.Operation("org.cougaar.core.society.MessageAddress getMessageAddress()"),
-	new java.rmi.server.Operation("void receiveMessage(org.cougaar.core.society.Message)")
-    };
-    
-    private static final long interfaceHash = 5489283831838389334L;
-    
     private static final long serialVersionUID = 2;
     
-    private static boolean useNewInvoke;
     private static java.lang.reflect.Method $method_getMessageAddress_0;
     private static java.lang.reflect.Method $method_receiveMessage_1;
     
     static {
 	try {
-	    java.rmi.server.RemoteRef.class.getMethod("invoke",
-		new java.lang.Class[] {
-		    java.rmi.Remote.class,
-		    java.lang.reflect.Method.class,
-		    java.lang.Object[].class,
-		    long.class
-		});
-	    useNewInvoke = true;
 	    $method_getMessageAddress_0 = org.cougaar.core.society.rmi.MT.class.getMethod("getMessageAddress", new java.lang.Class[] {});
 	    $method_receiveMessage_1 = org.cougaar.core.society.rmi.MT.class.getMethod("receiveMessage", new java.lang.Class[] {org.cougaar.core.society.Message.class});
 	} catch (java.lang.NoSuchMethodException e) {
-	    useNewInvoke = false;
+	    throw new java.lang.NoSuchMethodError(
+		"stub class initialization failed");
 	}
     }
     
     // constructors
-    public MTImpl_Stub() {
-	super();
-    }
     public MTImpl_Stub(java.rmi.server.RemoteRef ref) {
 	super(ref);
     }
@@ -52,25 +34,8 @@ public final class MTImpl_Stub
 	throws java.rmi.RemoteException
     {
 	try {
-	    if (useNewInvoke) {
-		Object $result = ref.invoke(this, $method_getMessageAddress_0, null, -3927034548767378042L);
-		return ((org.cougaar.core.society.MessageAddress) $result);
-	    } else {
-		java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 0, interfaceHash);
-		ref.invoke(call);
-		org.cougaar.core.society.MessageAddress $result;
-		try {
-		    java.io.ObjectInput in = call.getInputStream();
-		    $result = (org.cougaar.core.society.MessageAddress) in.readObject();
-		} catch (java.io.IOException e) {
-		    throw new java.rmi.UnmarshalException("error unmarshalling return", e);
-		} catch (java.lang.ClassNotFoundException e) {
-		    throw new java.rmi.UnmarshalException("error unmarshalling return", e);
-		} finally {
-		    ref.done(call);
-		}
-		return $result;
-	    }
+	    Object $result = ref.invoke(this, $method_getMessageAddress_0, null, -3927034548767378042L);
+	    return ((org.cougaar.core.society.MessageAddress) $result);
 	} catch (java.lang.RuntimeException e) {
 	    throw e;
 	} catch (java.rmi.RemoteException e) {
@@ -85,19 +50,7 @@ public final class MTImpl_Stub
 	throws java.rmi.RemoteException
     {
 	try {
-	    if (useNewInvoke) {
-		ref.invoke(this, $method_receiveMessage_1, new java.lang.Object[] {$param_Message_1}, -2674303520185462339L);
-	    } else {
-		java.rmi.server.RemoteCall call = ref.newCall((java.rmi.server.RemoteObject) this, operations, 1, interfaceHash);
-		try {
-		    java.io.ObjectOutput out = call.getOutputStream();
-		    out.writeObject($param_Message_1);
-		} catch (java.io.IOException e) {
-		    throw new java.rmi.MarshalException("error marshalling arguments", e);
-		}
-		ref.invoke(call);
-		ref.done(call);
-	    }
+	    ref.invoke(this, $method_receiveMessage_1, new java.lang.Object[] {$param_Message_1}, -2674303520185462339L);
 	} catch (java.lang.RuntimeException e) {
 	    throw e;
 	} catch (java.rmi.RemoteException e) {
