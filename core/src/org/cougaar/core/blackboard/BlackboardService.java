@@ -14,6 +14,7 @@ import org.cougaar.core.cluster.Subscriber;
 import org.cougaar.core.cluster.Subscription;
 import org.cougaar.core.cluster.SubscriberException;
 import org.cougaar.core.cluster.SubscriptionWatcher;
+import org.cougaar.core.cluster.persist.PersistenceNotEnabledException;
 import org.cougaar.util.UnaryPredicate;
 
 
@@ -162,11 +163,24 @@ public interface BlackboardService extends Service {
   void setShouldBePersisted(boolean value);
   /** @return the current value of the persistence setting **/
   boolean shouldBePersisted();
-  /** indicate that the blackboard view is ready to persist **/
-  void setReadyToPersist();
+
+//    /** indicate that the blackboard view is ready to persist **/
+//    void setReadyToPersist();
+
   /** is this BlackboardService the result of a rehydration of a persistence 
    * snapshot? 
    **/
   boolean didRehydrate();
 
+  /**
+   * Take a persistence snapshot now. If called from inside a
+   * transaction (the usual case for a plugin), the transaction will
+   * be closed and reopened. This means that a plugin must first
+   * process all of its existing envelopes before calling
+   * <code>persistNow()</code> and then process a potential new set of
+   * envelopes after re-opening the transaction. Otherwise, the
+   * changes will be lost.
+   * @exception PersistenceNotEnabledException
+   **/
+  void persistNow() throws PersistenceNotEnabledException;
 }
