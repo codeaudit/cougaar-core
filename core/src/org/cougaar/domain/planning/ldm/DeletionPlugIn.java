@@ -18,12 +18,15 @@ import org.cougaar.domain.planning.ldm.policy.LongRuleParameter;
 import org.cougaar.domain.planning.ldm.policy.RuleParameterIllegalValueException;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.text.SimpleDateFormat;
+import java.util.TimeZone;
 import org.cougaar.core.cluster.Alarm;
 import org.cougaar.core.cluster.PlanElementSet;
 import org.cougaar.core.cluster.Subscription;
@@ -62,6 +65,11 @@ import org.cougaar.core.society.UID;
  **/
 
 public class DeletionPlugIn extends SimplePlugIn {
+    private static final SimpleDateFormat deletionTimeFormat;
+    static {
+        deletionTimeFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
+        deletionTimeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+    }
     /**
      * Inner class specifies the policy for when deletions should
      * occur. This consists of a periodic element plus ad hoc
@@ -70,36 +78,64 @@ public class DeletionPlugIn extends SimplePlugIn {
      * to publishChange the policy after making modifications.
      **/
     public static class DeletionSchedulePolicy extends Policy {
-        private long deletionPeriod = DEFAULT_DELETION_PERIOD;
-        private long deletionPhase = DEFAULT_DELETION_PHASE;
+        public static final String DELETION_PERIOD_KEY = "deletionPeriod";
+        public static final String DELETION_PHASE_KEY = "deletionPhase";
+        public static final String DELETION_TIME_KEY_PREFIX = "deletionTime_";
+
         private SortedSet deletionTimes = new TreeSet();
 
-        public synchronized void setPeriodicSchedule(long period, long phase) {
-            deletionPeriod = period;
-            deletionPhase = phase;
+        public synchronized void setPeriodicSchedule(long period, long phase)
+            throws RuleParameterIllegalValueException
+        {
+            Add(new LongRuleParameter(DELETION_PERIOD_KEY, 0L, Long.MAX_VALUE,
+                                      period));
+            Add(new LongRuleParameter(DELETION_PHASE_KEY, 0L, Long.MAX_VALUE,
+                                      phase));
+        }
+
+        public void Add(RuleParameter param) {
+            String key = param.getName();
+            if (key.startsWith(DELETION_TIME_KEY_PREFIX)) {
+                deletionTimes.add(new Long(((LongRuleParameter) param).longValue()));
+            }
+            super.Add(param);
+        }
+
+        public void Remove(String key) {
+            if (key.startsWith(DELETION_TIME_KEY_PREFIX)) {
+                Long value = new Long(((LongRuleParameter) Lookup(key)).longValue());
+                deletionTimes.remove((Long) value);
+            }
+            super.Remove(key);
         }
 
         public long getDeletionPhase() {
-            return deletionPhase;
+            return ((LongRuleParameter) Lookup(DELETION_PHASE_KEY)).longValue();
         }
 
         public long getDeletionPeriod() {
-            return deletionPeriod;
+            return ((LongRuleParameter) Lookup(DELETION_PERIOD_KEY)).longValue();
         }
 
-        public synchronized void addDeletionTime(long time) {
-            deletionTimes.add(new Long(time));
+        private String getKey(long time) {
+            return DELETION_TIME_KEY_PREFIX + deletionTimeFormat.format(new Date(time));
+        }
+
+        public synchronized void addDeletionTime(long time)
+            throws RuleParameterIllegalValueException
+        {
+            String key = getKey(time);
+            Add(new LongRuleParameter(key, 0L, Long.MAX_VALUE, time));
         }
 
         public synchronized void removeDeletionTime(long time) {
-            deletionTimes.remove(new Long(time));
-        }
-
-        public Collection getDeletionTimes() {
-            return new ArrayList(deletionTimes);
+            String key = getKey(time);
+            Remove(key);
         }
 
         synchronized long getNextDeletionTime(long now) {
+            long deletionPhase = getDeletionPhase();
+            long deletionPeriod = getDeletionPeriod();
             long ivn = (now - deletionPhase) / deletionPeriod;
             long nextAlarm = (ivn + 1) * deletionPeriod + deletionPhase;
             SortedSet oldTimes = deletionTimes.headSet(new Long(now));
@@ -132,9 +168,9 @@ public class DeletionPlugIn extends SimplePlugIn {
         private UnaryPredicate thePredicate;
         private long theDeletionDelay;
         private int thePriority;
-        public static final String PREDICATE_PARAM = "predicate";
-        public static final String DELETION_DELAY_PARAM = "deletionDelay";
-        public static final String PRIORITY_PARAM = "priority";
+        public static final String PREDICATE_KEY = "predicate";
+        public static final String DELETION_DELAY_KEY = "deletionDelay";
+        public static final String PRIORITY_KEY = "priority";
 
         protected static final long NO_DELETION_DELAY = Long.MIN_VALUE;
         protected static final int NO_PRIORITY = Integer.MIN_VALUE;
@@ -167,10 +203,10 @@ public class DeletionPlugIn extends SimplePlugIn {
         {
             setName(aName);
             try {
-                Add(new PredicateRuleParameter(PREDICATE_PARAM, aPredicate));
-                Add(new IntegerRuleParameter(PRIORITY_PARAM,
+                Add(new PredicateRuleParameter(PREDICATE_KEY, aPredicate));
+                Add(new IntegerRuleParameter(PRIORITY_KEY,
                                              MIN_PRIORITY, MAX_PRIORITY, priority));
-                Add(new LongRuleParameter(DELETION_DELAY_PARAM,
+                Add(new LongRuleParameter(DELETION_DELAY_KEY,
                                           0L, Long.MAX_VALUE, deletionDelay));
             } catch (RuleParameterIllegalValueException e) {
                 // No way this should happen because x <= x <= x is never false;
@@ -188,7 +224,7 @@ public class DeletionPlugIn extends SimplePlugIn {
         }
         public UnaryPredicate getPredicate() {
             if (thePredicate == null) {
-                PredicateRuleParameter prp = (PredicateRuleParameter) Lookup(PREDICATE_PARAM);
+                PredicateRuleParameter prp = (PredicateRuleParameter) Lookup(PREDICATE_KEY);
                 thePredicate = prp.getPredicate();
             }
             return thePredicate;
@@ -196,7 +232,7 @@ public class DeletionPlugIn extends SimplePlugIn {
         public void setDeletionDelay(long deletionDelay) {
             try {
                 theDeletionDelay = deletionDelay;
-                Replace(new LongRuleParameter(DELETION_DELAY_PARAM,
+                Replace(new LongRuleParameter(DELETION_DELAY_KEY,
                                               deletionDelay, deletionDelay, deletionDelay));
             } catch (RuleParameterIllegalValueException e) {
                 // No way this should happen because x <= x <= x is never false;
@@ -205,13 +241,13 @@ public class DeletionPlugIn extends SimplePlugIn {
         }
         public long getDeletionDelay() {
             if (theDeletionDelay == NO_DELETION_DELAY) {
-                theDeletionDelay = ((LongRuleParameter) Lookup(DELETION_DELAY_PARAM)).longValue();
+                theDeletionDelay = ((LongRuleParameter) Lookup(DELETION_DELAY_KEY)).longValue();
             }
             return theDeletionDelay;
         }
         public int getPriority() {
             if (thePriority == NO_PRIORITY) {
-                thePriority = ((IntegerRuleParameter) Lookup(PRIORITY_PARAM)).intValue();
+                thePriority = ((IntegerRuleParameter) Lookup(PRIORITY_KEY)).intValue();
             }
             return thePriority;
         }
@@ -492,7 +528,11 @@ public class DeletionPlugIn extends SimplePlugIn {
         for (Iterator i = deletionSchedulePolicies.iterator(); i.hasNext(); ) {
             DeletionSchedulePolicy policy = (DeletionSchedulePolicy) i.next();
             if (theDeletionSchedulePolicy == null) {
-                policy.setPeriodicSchedule(deletionPeriod, deletionPhase);
+                try {
+                    policy.setPeriodicSchedule(deletionPeriod, deletionPhase);
+                } catch (RuleParameterIllegalValueException e) {
+                    e.printStackTrace();
+                }
                 theDeletionSchedulePolicy = policy;
             } else {
                 publishRemove(policy);
@@ -501,7 +541,11 @@ public class DeletionPlugIn extends SimplePlugIn {
         if (theDeletionSchedulePolicy == null) {
             DeletionSchedulePolicy policy = (DeletionSchedulePolicy)
                 theLDMF.newPolicy(DeletionSchedulePolicy.class.getName());
-            policy.setPeriodicSchedule(deletionPeriod, deletionPhase);
+            try {
+                policy.setPeriodicSchedule(deletionPeriod, deletionPhase);
+            } catch (RuleParameterIllegalValueException e) {
+                e.printStackTrace();
+            }
             publishAdd(policy);
         }
     }
