@@ -281,13 +281,71 @@ public class ObjectOutputStream
 	    if (depth == 0) {
 		writeFatalException(ex);
 	    }
+            //just rethrow
 	    throw ex;
 	}
       } catch (NotSerializableException nse) {
-        System.out.println("NSE: "+obj.getClass().getName());
-        throw nse;
+        throw new BrokenSerializationException("("+obj.getClass().getName()+")", nse);
       }
     }
+
+  public static class BrokenSerializationException extends NotSerializableException {
+    private String cname;
+    private BrokenSerializationException next;     // root cause (innermost exception) null if unknown
+    private Throwable root;
+    /** 
+     * @param obj is the object causing the exception
+     * @param nested is the next throwable down
+     */
+    public BrokenSerializationException(String cname, Throwable nested) {
+      super(computeName(cname, nested));
+      this.cname = cname;
+      if (nested instanceof BrokenSerializationException) {
+        next = (BrokenSerializationException) nested;
+        root = ((BrokenSerializationException) nested).getRoot();
+      } else {
+        initCause(nested);
+        root = nested;
+      }
+    }
+
+    private static String computeName(String cn, Throwable nested) {
+      String s = cn;
+      if (nested instanceof BrokenSerializationException) {
+        s = s+"-"+((BrokenSerializationException)nested).getChainString();
+      } 
+      return s;
+    }
+
+    BrokenSerializationException getNext() { return next; }
+
+    public Throwable getRoot() {
+      return root;
+    }
+
+    String getChainString() { 
+      String chain = cname;
+
+      BrokenSerializationException n = getNext();
+      if (n != null) {
+        chain = chain+"-"+n.getChainString();
+      }
+      return chain;
+    }
+
+    // print the root cause, not the top level
+    // I suppose we could call setStackTrace instead, but I really only want to do it once
+    public void printStackTrace(java.io.PrintStream s) {
+      s.print(this);
+      s.print(" caused by ");
+      root.printStackTrace(s);
+    }
+    public void printStackTrace(java.io.PrintWriter s) { 
+      s.print(this);
+      s.print(" caused by ");
+      root.printStackTrace(s);
+    }
+  }
 
     /**
      * Method used by subclasses to override the default writeObject method.
@@ -1058,6 +1116,8 @@ public class ObjectOutputStream
 	    } else {
 		throw new NotSerializableException(cl.getName());
 	    }
+        } catch (NotSerializableException nse) {
+          throw new BrokenSerializationException(obj.getClass().getName(), nse);
 	} finally {
 	    depth--;
 	    bout.setBlockDataMode(oldMode);
