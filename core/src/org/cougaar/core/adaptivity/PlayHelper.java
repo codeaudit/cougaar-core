@@ -136,7 +136,7 @@ public class PlayHelper {
    * <p>Some operating modes may be remote (in different agents). Such
    * remote OperatingModes are designated with a naming convention
    * wherein the remote location is designated with square brackets,
-   * e.g. [agent:3ID]<remotename>. This notation may also be used with
+   * e.g. [agent.3ID]<remotename>. This notation may also be used with
    * attribute-based addresses using the notation:
    * [attribute.<community>.<attribute_name>.<attribute_value>]. The
    * caller supplies a Map of such remote modes and we use or update

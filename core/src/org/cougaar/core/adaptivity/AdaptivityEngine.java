@@ -40,6 +40,10 @@ import org.cougaar.core.service.OperatingModeService;
 import org.cougaar.core.service.PlaybookReadService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.core.qos.metrics.Metric;
+import org.cougaar.core.qos.metrics.MetricsService;
+import org.cougaar.core.qos.metrics.VariableEvaluator;
+import org.cougaar.core.qos.metrics.StandardVariableEvaluator;
 
 /**
  * Sets OperatingModes for components based on plays in the playbook
@@ -73,12 +77,15 @@ public class AdaptivityEngine extends ServiceUserPlugin {
   private OperatingModeService operatingModeService;
   private ConditionService conditionService;
   private UIDService uidService;
+  private MetricsService metricsService;
+  private VariableEvaluator variableEvaluator;
 
   private static Class[] requiredServices = {
     PlaybookReadService.class,
     OperatingModeService.class,
     ConditionService.class,
-    UIDService.class
+    UIDService.class,
+    MetricsService.class
   };
 
   private Subscription conditionListenerSubscription;
@@ -134,14 +141,18 @@ public class AdaptivityEngine extends ServiceUserPlugin {
   protected boolean haveServices() {
     if (playbookService != null) return true;
     if (acquireServices()) {
+      ServiceBroker sb = getServiceBroker();
       playbookService = (PlaybookReadService)
-        getServiceBroker().getService(this, PlaybookReadService.class, null);
+        sb.getService(this, PlaybookReadService.class, null);
       operatingModeService = (OperatingModeService)
-        getServiceBroker().getService(this, OperatingModeService.class, null);
+        sb.getService(this, OperatingModeService.class, null);
       conditionService = (ConditionService)
-        getServiceBroker().getService(this, ConditionService.class, null);
+        sb.getService(this, ConditionService.class, null);
       uidService = (UIDService)
-        getServiceBroker().getService(this, UIDService.class, null);
+        sb.getService(this, UIDService.class, null);
+      metricsService = (MetricsService)
+        sb.getService(this, MetricsService.class, null);
+      variableEvaluator = new StandardVariableEvaluator(sb);
 
       conditionService.addListener(conditionListener);
       operatingModeService.addListener(operatingModeListener);
@@ -255,8 +266,19 @@ public class AdaptivityEngine extends ServiceUserPlugin {
   }
 
   /**
-   * Scan the current plays for required conditions and stash
-   * them in smMap for use in running the plays.
+   * Scan the current plays for required conditions and stash them in
+   * smMap for use in running the plays. Non-existent conditions that
+   * look like measurements available from the MetricsService are
+   * converted to a MetricsCondition. The name of such a condition is:
+   * Metrics:{<type>:}{<scope>:}<metrics formula name>. Allowed types
+   * are: double, long, integer, string, and boolean. If the type is
+   * omitted, "double" is assumed. The type should match the context
+   * in which the condition is being used. If the scope is omitted, it
+   * is assumed to be this agent. Otherwise, scopes conform to the
+   * Metrics path specification with the following enhancement: The
+   * arglist of a scope can itself be a scope. This is interpreted to
+   * mean the scope containing the inner scope. E.g.: Node(Agent(foo))
+   * is the scope in the node of the agent named foo.
    **/
   private void getConditions() {
     smMap.clear();
@@ -268,6 +290,17 @@ public class AdaptivityEngine extends ServiceUserPlugin {
           String name = (String) o;
           if (!smMap.containsKey(name)) {
             Condition sm = conditionService.getConditionByName(name);
+            if (sm == null) {
+              if (name.startsWith(MetricsCondition.METRICS_PREFIX)) {
+                try {
+                  sm = MetricsCondition.create(name, metricsService, variableEvaluator);
+                } catch (Exception e) {
+                  if (logger.isWarnEnabled()) logger.warn(e.getMessage(), e);
+                }
+              } else {
+                if (logger.isInfoEnabled()) logger.info("No condition named " + name);
+              }
+            }
             if (sm != null) {
               smMap.put(name, sm);
             }

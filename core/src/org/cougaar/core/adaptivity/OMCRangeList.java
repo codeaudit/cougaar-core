@@ -27,6 +27,18 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OMCRangeList implements Serializable {
+  public static final OMCRangeList ALL_DOUBLE_RANGE_LIST =
+    new OMCRangeList(Double.MIN_VALUE, Double.MAX_VALUE);
+
+  public static final OMCRangeList ALL_INTEGER_RANGE_LIST =
+    new OMCRangeList(Integer.MIN_VALUE, Integer.MAX_VALUE);
+
+  public static final OMCRangeList ALL_LONG_RANGE_LIST =
+    new OMCRangeList(Long.MIN_VALUE, Long.MAX_VALUE);
+
+  public static final OMCRangeList ALL_STRING_RANGE_LIST =
+    new OMCRangeList("", "\ffff");
+
   OMCRange[] allowedValues;
 
   public OMCRangeList(OMCRange[] av) {
@@ -59,6 +71,18 @@ public class OMCRangeList implements Serializable {
 
   public OMCRangeList(Comparable[] vs) {
     this(createRange(vs));
+  }
+
+  public OMCRangeList(double min, double max) {
+    this(createRange(new Double(min), new Double(max)));
+  }
+
+  public OMCRangeList(int min, int max) {
+    this(createRange(new Integer(min), new Integer(max)));
+  }
+
+  public OMCRangeList(long min, long max) {
+    this(createRange(new Long(min), new Long(max)));
   }
 
   public OMCRangeList(Comparable min, Comparable max) {

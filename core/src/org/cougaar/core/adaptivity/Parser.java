@@ -246,6 +246,8 @@ public class Parser {
     st.ordinaryChars('/', '/');
     st.slashStarComments(true);
     st.slashSlashComments(true);
+    st.quoteChar('"');
+    st.quoteChar('\'');
   }
 
   /**
@@ -332,7 +334,7 @@ public class Parser {
   public OperatingModePolicy parseOperatingModePolicy() throws IOException {
     // pull the first token, assume it is the policy name
     String policyName = null;
-    if (nextToken() == StreamTokenizer.TT_WORD) {
+    if (isWord(nextToken())) {
       policyName = st.sval;
     } else {
       pushBack();
@@ -357,7 +359,7 @@ public class Parser {
     }
     return (OperatingModePolicy[]) policies.toArray(new OperatingModePolicy[policies.size()]);
   }
-      
+
   /**
    * Parse an if clause and push it onto the ConstrainingClause.
    * @param lp left left precedence of operator calling this method.
@@ -385,6 +387,8 @@ public class Parser {
         token = nextToken();
         if (token != ')') throw unexpectedTokenException("Missing close paren");
         break;
+      case '"':
+      case '\'':
       case StreamTokenizer.TT_WORD:
         if (st.sval.equalsIgnoreCase(BooleanOperator.TRUE.toString())) {
           cc.push(BooleanOperator.TRUE);
@@ -409,6 +413,8 @@ public class Parser {
         Operator op;
         switch (token) {
         default: pushBack(); return;
+        case '"':
+        case '\'':
         case StreamTokenizer.TT_WORD:
           if (!st.sval.equalsIgnoreCase("in") && !st.sval.equalsIgnoreCase("not")) {
             pushBack();
@@ -450,7 +456,7 @@ public class Parser {
   }
 
   private ConstraintPhrase parseConstraintPhrase() throws IOException {
-    if (nextToken() != StreamTokenizer.TT_WORD) throw unexpectedTokenException("Expected OperatingMode name");
+    if (!isWord(nextToken())) throw unexpectedTokenException("Expected OperatingMode name");
     ConstraintPhrase cp = new ConstraintPhrase(st.sval);
     parseConstraintOpValue(cp);
     return cp;
@@ -499,6 +505,8 @@ public class Parser {
         token1 = token2;
       }
       break; // end of punctuation chars case
+    case '"':
+    case '\'':
     case StreamTokenizer.TT_WORD:
       if (st.sval.equalsIgnoreCase(ConstraintOperator.IN.toString())) {
         cov.setOperator(ConstraintOperator.IN);
@@ -506,7 +514,7 @@ public class Parser {
         break;
       }
       if (st.sval.equalsIgnoreCase("NOT")) {
-        if (nextToken() == StreamTokenizer.TT_WORD && st.sval.equalsIgnoreCase("IN")) {
+        if (isWord(nextToken()) && st.sval.equalsIgnoreCase("IN")) {
           cov.setOperator(ConstraintOperator.NOTIN);
           token1 = nextToken();
           break;
@@ -515,7 +523,7 @@ public class Parser {
     default: 
       throw unexpectedTokenException("Missing ConstraintOperator");
     }
-    if (token1 == StreamTokenizer.TT_WORD) {
+    if (isWord(token1)) {
       cov.setAllowedValues(new OMCRangeList(parseRange(st.sval)));
     } else if (token1 == StreamTokenizer.TT_NUMBER) {
       cov.setAllowedValues(new OMCRangeList(parseRange(new Double(st.nval))));
@@ -530,13 +538,13 @@ public class Parser {
   private OMCRange parseRange(Comparable first) throws IOException {
     Class elementClass = first.getClass();
     int token = nextToken();
-    if (token == StreamTokenizer.TT_WORD) {
+    if (isWord(token)) {
       boolean isTo = st.sval.equalsIgnoreCase("to");
       boolean isThru = st.sval.equalsIgnoreCase("thru");
       if (isTo || isThru) {
         Comparable last;
         token = nextToken();
-        if (token == StreamTokenizer.TT_WORD) {
+        if (isWord(token)) {
           if (elementClass == Double.class) {
             throw unexpectedTokenException("Number expected");
           }
@@ -566,7 +574,7 @@ public class Parser {
 
     while (true) {
       int token1 = nextToken();
-      if (token1 == StreamTokenizer.TT_WORD) {
+      if (isWord(token1)) {
         if (elementClass == Double.class) {
           throw unexpectedTokenException("Number expected");
         } else if (elementClass == null) {
@@ -595,6 +603,10 @@ public class Parser {
     pushedBack = true;
   }
 
+  private boolean isWord(int token) {
+    return token == StreamTokenizer.TT_WORD || token == '"' || token == '\'';
+  }
+
   private int nextToken() throws IOException {
     int token;
     String caller = null;
@@ -612,6 +624,8 @@ public class Parser {
 
   private String tokenAsString() {
     switch (st.ttype) {
+    case '"':
+    case '\'':
     case StreamTokenizer.TT_WORD:
       return st.sval;
     case StreamTokenizer.TT_NUMBER:
@@ -627,7 +641,7 @@ public class Parser {
     String line = "line " + st.lineno();
     String mesg = tokenAsString();
     IllegalArgumentException result =
-      new IllegalArgumentException(mm + " on line " + line + " found " + mesg);
+      new IllegalArgumentException(mm + " on " + line + " found " + mesg);
     StackTraceElement[] trace = result.getStackTrace();
     StackTraceElement[] callerTrace = new StackTraceElement[trace.length - 1];
     System.arraycopy(trace, 1, callerTrace, 0, callerTrace.length);
