@@ -128,7 +128,7 @@ public class SimpleRelayExample extends ComponentPlugin {
       }
       UID uid = uids.nextUID();
       Object query = "ping";
-      SimpleRelay sr = new SimpleRelayImpl(
+      SimpleRelay sr = new SimpleRelaySource(
           uid, agentId, target, query);
       if (log.isShoutEnabled()) {
         log.shout("Sending "+sr);

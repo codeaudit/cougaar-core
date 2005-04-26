@@ -36,7 +36,7 @@ import org.cougaar.core.util.UniqueObject;
  * <p>
  * Multiple rounds of query/reply are supported.
  *
- * @see SimpleRelayImpl relay-based implementation 
+ * @see SimpleRelaySource source-side relay implementation 
  */
 public interface SimpleRelay extends UniqueObject {
 
