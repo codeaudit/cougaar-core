@@ -238,7 +238,13 @@ public class CollectionSubscription
         // as only adding an element if it isn't already there.
         // In any case, it is critical that only the *FIRST* of a 
         // match be included in the set.
-        set.addAll(changes);
+	int size = changes.size();
+	for (int i=0; i<size; i++) {
+	    Object change = changes.get(i);
+	    if (change instanceof OverrideChangeReport) set.remove(change);
+	    set.add(change);
+	}
+        // set.addAll(changes);
       }
     }
   }
