@@ -20,9 +20,9 @@
  **/
 
 /*
- * @(#)ObjectInputStream.java	1.144 03/01/23
+ * @(#)ObjectInputStream.java	1.155 04/05/28
  *
- * Copyright 2003 Sun Microsystems, Inc. All rights reserved.
+ * Copyright 2004 Sun Microsystems, Inc. All rights reserved.
  * SUN PROPRIETARY/CONFIDENTIAL. Use is subject to license terms.
  */
 
@@ -175,9 +175,24 @@ import sun.misc.SoftCache;
  * the methods of ObjectOutput and ObjectInput.  It is the responsibility of
  * the objects to handle any versioning that occurs.
  *
+ * <p>Enum constants are deserialized differently than ordinary serializable or
+ * externalizable objects.  The serialized form of an enum constant consists
+ * solely of its name; field values of the constant are not transmitted.  To
+ * deserialize an enum constant, ObjectInputStream reads the constant name from
+ * the stream; the deserialized constant is then obtained by calling the static
+ * method <code>Enum.valueOf(Class, String)</code> with the enum constant's
+ * base type and the received constant name as arguments.  Like other
+ * serializable or externalizable objects, enum constants can function as the
+ * targets of back references appearing subsequently in the serialization
+ * stream.  The process by which enum constants are deserialized cannot be
+ * customized: any class-specific readObject, readObjectNoData, and readResolve
+ * methods defined by enum types are ignored during deserialization.
+ * Similarly, any serialPersistentFields or serialVersionUID field declarations
+ * are also ignored--all enum types have a fixed serialVersionUID of 0L.
+ *
  * @author	Mike Warres
  * @author	Roger Riggs
- * @version 1.144, 03/01/23
+ * @version 1.155, 04/05/28
  * @see java.io.DataInput
  * @see java.io.ObjectOutputStream
  * @see java.io.Serializable
@@ -311,7 +326,7 @@ public class ObjectInputStream
      * transitively so that a complete equivalent graph of objects is
      * reconstructed by readObject.
      *
-     * <p>The root object is completly restored when all of its fields and the
+     * <p>The root object is completely restored when all of its fields and the
      * objects it references are completely restored.  At this point the object
      * validation callbacks are executed in order based on their registered
      * priorities. The callbacks are registered by objects (in the readObject
@@ -403,15 +418,16 @@ public class ObjectInputStream
      * always guarantee that the reference returned by readUnshared is unique;
      * the deserialized object may define a readResolve method which returns an
      * object visible to other parties, or readUnshared may return a Class
-     * object obtainable elsewhere in the stream or through external means.
+     * object or enum constant obtainable elsewhere in the stream or through
+     * external means.
      *
-     * <p>However, for objects which are not instances of java.lang.Class and
-     * do not define readResolve methods, readUnshared guarantees that the
-     * returned object reference is unique and cannot be obtained a second time
-     * from the ObjectInputStream that created it, even if the underlying data
-     * stream has been manipulated.  This guarantee applies only to the
-     * base-level object returned by readUnshared, and not to any transitively
-     * referenced sub-objects in the returned object graph.
+     * <p>However, for objects which are not enum constants or instances of
+     * java.lang.Class and do not define readResolve methods, readUnshared
+     * guarantees that the returned object reference is unique and cannot be
+     * obtained a second time from the ObjectInputStream that created it, even
+     * if the underlying data stream has been manipulated.  This guarantee
+     * applies only to the base-level object returned by readUnshared, and not
+     * to any transitively referenced sub-objects in the returned object graph.
      *
      * <p>ObjectInputStream subclasses which override this method can only be
      * constructed in security contexts possessing the
@@ -571,7 +587,7 @@ public class ObjectInputStream
      * @throws	ClassNotFoundException if class of a serialized object cannot
      * 		be found
      */
-    protected Class resolveClass(ObjectStreamClass desc)
+    protected Class<?> resolveClass(ObjectStreamClass desc)
 	throws IOException, ClassNotFoundException
     {
 	String name = desc.getName();
@@ -638,7 +654,7 @@ public class ObjectInputStream
      * @see ObjectOutputStream#annotateProxyClass(Class)
      * @since	1.3
      */
-    protected Class resolveProxyClass(String[] interfaces)
+    protected Class<?> resolveProxyClass(String[] interfaces)
 	throws IOException, ClassNotFoundException
     {
 	ClassLoader latestLoader = latestUserDefinedLoader();
@@ -808,6 +824,9 @@ public class ObjectInputStream
      * @see java.io.DataInputStream#readFully(byte[],int,int)
      */
     public int read(byte[] buf, int off, int len) throws IOException {
+	if (buf == null) {
+	    throw new NullPointerException();
+	}
 	int endoff = off + len;
 	if (off < 0 || len < 0 || endoff > buf.length || endoff < 0) {
 	    throw new IndexOutOfBoundsException();
@@ -1003,18 +1022,21 @@ public class ObjectInputStream
      * @deprecated This method does not properly convert bytes to characters.
      * 		see DataInputStream for the details and alternatives.
      */
+    @Deprecated
     public String readLine() throws IOException {
 	return bin.readLine();
     }
 
     /**
-     * Reads a UTF format String.
+     * Reads a String in
+     * <a href="DataInput.html#modified-utf-8">modified UTF-8</a>
+     * format.
      *
      * @return	the String.
      * @throws	IOException if there are I/O errors while reading from the
      * 		underlying <code>InputStream</code>
      * @throws	UTFDataFormatException if read bytes do not represent a valid
-     * 		UTF-8 encoding of a string
+     * 		modified UTF-8 encoding of a string
      */
     public String readUTF() throws IOException {
 	return bin.readUTF();
@@ -1291,6 +1313,9 @@ public class ObjectInputStream
 		case TC_ARRAY:
 		    return checkResolve(readArray(unshared));
 
+		case TC_ENUM:
+		    return checkResolve(readEnum(unshared));
+
 		case TC_OBJECT:
 		    return checkResolve(readOrdinaryObject(unshared));
 
@@ -1523,8 +1548,8 @@ public class ObjectInputStream
 	try {
 	    readDesc = readClassDescriptor();
 	} catch (ClassNotFoundException ex) {
-	    // REMIND: do something less drastic here?
-	    throw new StreamCorruptedException();
+	    throw (IOException) new InvalidClassException(
+		"failed to read class descriptor").initCause(ex);
 	}
 	
 	Class cl = null;
@@ -1630,12 +1655,54 @@ public class ObjectInputStream
 	passHandle = arrayHandle;
 	return array;
     }
+
+    /**
+     * Reads in and returns enum constant, or null if enum type is
+     * unresolvable.  Sets passHandle to enum constant's assigned handle.
+     */
+    private Enum readEnum(boolean unshared) throws IOException {
+	if (bin.readByte() != TC_ENUM) {
+	    throw new StreamCorruptedException();
+	}
+
+	ObjectStreamClass desc = readClassDesc(false);
+	if (!desc.isEnum()) {
+	    throw new InvalidClassException("non-enum class: " + desc);
+	}
+
+	int enumHandle = handles.assign(unshared ? unsharedMarker : null);
+	ClassNotFoundException resolveEx = desc.getResolveException();
+	if (resolveEx != null) {
+	    handles.markException(enumHandle, resolveEx);
+	}
+
+	String name = readString(false);
+	Enum en = null;
+	Class cl = desc.forClass();
+	if (cl != null) {
+	    try {
+		en = Enum.valueOf(cl, name);
+	    } catch (IllegalArgumentException ex) {
+		throw (IOException) new InvalidObjectException(
+		    "enum constant " + name + " does not exist in " +
+		    cl).initCause(ex);
+	    }
+	    if (!unshared) {
+		handles.setObject(enumHandle, en);
+	    }
+	}
+
+	handles.finish(enumHandle);
+	passHandle = enumHandle;
+	return en;
+    }
     
     /**
      * Reads and returns "ordinary" (i.e., not a String, Class,
-     * ObjectStreamClass or array) object, or null if object's class is
-     * unresolvable (in which case a ClassNotFoundException will be associated
-     * with object's handle).  Sets passHandle to object's assigned handle.
+     * ObjectStreamClass, array, or enum constant) object, or null if object's
+     * class is unresolvable (in which case a ClassNotFoundException will be
+     * associated with object's handle).  Sets passHandle to object's assigned
+     * handle.
      */
     private Object readOrdinaryObject(boolean unshared) 
 	throws IOException 
