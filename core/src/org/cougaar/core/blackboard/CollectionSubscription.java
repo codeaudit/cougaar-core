@@ -69,6 +69,11 @@ public class CollectionSubscription
   }
 
   /**
+   * Retrieve the underlying Collection backing this Subscription. 
+   * When an object is publishAdded and matches the predicate, it 
+   * will be added to the Collection. If it is later publishRemoved 
+   * (and the predicate still matches), then the object will be 
+   * removed from the Collection.
    * @return the subscription's collection -- use <code>this</code>
    * instead.
    */
