@@ -35,6 +35,7 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.StateModelException;
 
 /**
  * The ServiceProvider for the simple {@link ThreadService}s. The
@@ -46,6 +47,8 @@ public class TrivialThreadServiceProvider
     implements ServiceProvider, Component
 {
     private ServiceBroker sb;
+    // ServiceBroker used to register thread service.
+    private ServiceBroker mysb;
     private ThreadService proxy;
     private ThreadStatusService statusProxy;
 
@@ -63,7 +66,25 @@ public class TrivialThreadServiceProvider
 	super.load();
 	/* if (!sb.hasService(ThreadService.class)) */ makeServices(sb);
     }
+    
+    /**
+     * @see org.cougaar.util.GenericStateModelAdapter#unload()
+     */
+    public synchronized void unload() throws StateModelException {
+      super.unload();
+      TrivialThreadServiceProxy theProxy = (TrivialThreadServiceProxy)proxy;
+      theProxy.unload();
+      proxy = null;
+      statusProxy = null;
+      
+      // Release services.
+      if (mysb != null) {
+        mysb.revokeService(ThreadService.class, this);
+        mysb.revokeService(ThreadStatusService.class, this);
+        mysb = null;
+      }
 
+    }
 
     ThreadService makeThreadServiceProxy()
     {
@@ -86,19 +107,17 @@ public class TrivialThreadServiceProvider
 
 	NodeControlService ncs = (NodeControlService)
 	    the_sb.getService(this, NodeControlService.class, null);
-	ServiceBroker rootsb = null;
 	if (ncs != null) {
-	    rootsb = ncs.getRootServiceBroker();
+	    mysb = ncs.getRootServiceBroker();
 	    the_sb.releaseService(this, NodeControlService.class, ncs);
 	}
 
-	if (rootsb != null) {
-	    rootsb.addService(ThreadService.class, this);
-	    rootsb.addService(ThreadStatusService.class, this);
-	} else {
-	    the_sb.addService(ThreadService.class, this);
-	    the_sb.addService(ThreadStatusService.class, this);
-	}
+	if (mysb == null) {
+      mysb = the_sb;
+    }
+    mysb.addService(ThreadService.class, this);
+    mysb.addService(ThreadStatusService.class, this);
+
     }
 
 
@@ -124,6 +143,7 @@ public class TrivialThreadServiceProvider
 			       Object service)
     {
     }
+
 
 }
 

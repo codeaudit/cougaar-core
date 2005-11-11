@@ -26,8 +26,6 @@
 
 package org.cougaar.core.thread;
 
-import java.lang.reflect.Constructor;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,6 +40,7 @@ import org.cougaar.core.service.ThreadControlService;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.StateModelException;
 
 /**
  * This component is the {@link ServiceProvider} for the {@link
@@ -89,7 +88,8 @@ public final class ThreadServiceProvider
     private ThreadStatusService statusProxy;
     private String name;
     private int laneCount = ThreadService.LANE_COUNT;
-
+    private TrivialThreadServiceProvider threadServiceProvider;
+    
     public ThreadServiceProvider() 
     {
     }
@@ -110,12 +110,22 @@ public final class ThreadServiceProvider
 	String type = System.getProperty(SERVICE_TYPE_PROPERTY, 
 					 "hierarchical");
 	if (type.equals("trivial")) {
-	    if (isRoot)	
-		new TrivialThreadServiceProvider().makeServices(the_sb);
+	    if (isRoot)	{
+          threadServiceProvider = new TrivialThreadServiceProvider();
+          threadServiceProvider.setServiceBroker(the_sb);
+          threadServiceProvider.initialize();
+          threadServiceProvider.load();
+          threadServiceProvider.start();
+        }
 	    return;
 	} else if (type.equals("single")) {
-	    if (isRoot)
-		new SingleThreadServiceProvider().makeServices(the_sb);
+	    if (isRoot) {
+          threadServiceProvider = new SingleThreadServiceProvider();
+          threadServiceProvider.setServiceBroker(the_sb);
+          threadServiceProvider.initialize();
+          threadServiceProvider.load();
+          threadServiceProvider.start();
+        }
 	    return;
 	}
 
@@ -167,6 +177,25 @@ public final class ThreadServiceProvider
 		};
 	    the_sb.addService(ThreadStatusService.class, this);
 	}
+    }
+
+    /**
+     * Gracefully unload this component.
+     * <p>
+     * @see org.cougaar.util.GenericStateModelAdapter#unload()
+     */
+    public synchronized void unload() throws StateModelException {
+      
+      if (threadServiceProvider != null) {
+        // Unload singleton ThreadServiceProvider
+        // and release associated timer.
+        threadServiceProvider.halt();
+        threadServiceProvider.unload();
+        threadServiceProvider = null;
+        
+        TreeNode.releaseTimer();
+      }
+      super.unload();
     }
 
     private void setParameterFromString(String property) 

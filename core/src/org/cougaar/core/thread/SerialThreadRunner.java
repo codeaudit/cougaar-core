@@ -21,8 +21,6 @@
 
 package org.cougaar.core.thread;
 
-import java.util.ArrayList;
-
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -35,73 +33,95 @@ import org.cougaar.util.log.Logging;
  */
 final class SerialThreadRunner
 {
-    private Thread thread;
-    private TrivialSchedulable current;
-    private SerialThreadQueue queue;
-    private Logger logger = Logging.getLogger(getClass().getName());
+  private Thread thread;
+
+  private TrivialSchedulable current;
+
+  private SerialThreadQueue queue;
+
+  /** Boolean value used to notify the Body thread when
+    * the SerialThreadRunner is unloaded. */
+  private boolean isRunning;
+  
+  private Logger logger = Logging.getLogger(getClass().getName());
 
     SerialThreadRunner(SerialThreadQueue queue) 
     {
-	this.queue = queue;
-	thread = new Thread(new Body(), "Serial Thread Runner");
-	thread.setDaemon(true);
-	thread.start();
-    }
+    this.queue = queue;
+    thread = new Thread(new Body(), "Serial Thread Runner");
+    thread.setDaemon(true);
+    isRunning = true;
+    thread.start();
+  }
 
 
     Thread getThread()
     {
-	return thread;
-    }
+    return thread;
+  }
 
     int iterateOverThreads(ThreadStatusService.Body body)
     {
-	TrivialSchedulable sched  = current;
-	if (sched != null) {
-	    try {
-		body.run("root", sched);
-	    } catch (Throwable t) {
-		logger.error("ThreadStatusService error in body", t);
-		return 0;
-	    }
-	}
-	return 1;
+    TrivialSchedulable sched = current;
+    if (sched != null) {
+      try {
+        body.run("root", sched);
+      } catch (Throwable t) {
+        logger.error("ThreadStatusService error in body", t);
+        return 0;
+      }
     }
+    return 1;
+  }
 
 
     private void dequeue() 
     {
-	while (true) {
-	    synchronized (queue.getLock()) {
-		current = queue.next();
-	    }
+    while (true) {
+      synchronized (queue.getLock()) {
+        current = queue.next();
+      }
 	    if (current == null) return;
-	    
-	    current.setState(CougaarThread.THREAD_RUNNING);
-	    current.getRunnable().run();
-	    current.thread_stop(); // sets the state to DORMANT
-	    current = null;
-	}
+
+      current.setState(CougaarThread.THREAD_RUNNING);
+      current.getRunnable().run();
+      current.thread_stop(); // sets the state to DORMANT
+      current = null;
     }
+  }
 
     private class Body implements Runnable 
     {
 	public void run() 
 	{
-	    Object lock = queue.getLock();
-	    while (true) {
-		dequeue();
-		synchronized (lock) {
-		    while (queue.isEmpty()) {
-			try { 
-			    lock.wait();
-			    break;
-			} catch (InterruptedException ex) {
-			}
-		    }
-		}
-	    }
-	}
+      Object lock = queue.getLock();
+      // Loop until the SerialThreadRunner is unloaded.
+      while (isRunning) {
+        dequeue();
+        synchronized (lock) {
+          while (queue.isEmpty()) {
+            try {
+              lock.wait();
+              break;
+            } catch (InterruptedException ex) {
+            }
+          }
+        }
+      }
     }
+  }
+
+  /**
+   * Gracefully shuts down this thread.
+   */
+  protected void stop() {
+    isRunning = false;
+    Object lock = queue.getLock();
+    synchronized(lock) {
+      lock.notify();
+    }
+    thread = null;
+    queue = null;
+  }
 
 }

@@ -39,7 +39,8 @@ import org.cougaar.core.service.ThreadService;
 final class TreeNode
 {
     private static Timer timer;
-
+    private static boolean isActive = true;
+    
     private TreeNode parent;
     private ArrayList children;
     private Scheduler[] schedulers;
@@ -79,7 +80,9 @@ final class TreeNode
 
     static synchronized Timer timer() 
     {
-	if (timer == null) timer = new Timer(true);
+	if (timer == null && isActive) {
+      timer = new Timer(true);
+    }
 	return timer;
     }
 
@@ -147,6 +150,12 @@ final class TreeNode
     ThreadPool getPool(int lane) 
     {
 	return pools[lane];
+    }
+
+    static void releaseTimer() {
+      isActive = false;
+      timer.cancel();
+      timer = null;
     }
 
 }

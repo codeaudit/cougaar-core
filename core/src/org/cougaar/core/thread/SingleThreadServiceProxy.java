@@ -21,9 +21,6 @@
 
 package org.cougaar.core.thread;
 
-
-import java.util.ArrayList;
-
 /**
  * The serializing trivial implementation of Thread Service.  It
  * consists of a single {@link SerialThreadRunner} and {@link
@@ -32,38 +29,54 @@ import java.util.ArrayList;
 final class SingleThreadServiceProxy
     extends TrivialThreadServiceProxy
 {
-    private static final int NUMBER_OF_RUNNERS = 1;
+  private static final int NUMBER_OF_RUNNERS = 1;
 
-    private static SerialThreadQueue queue;
-    private static SerialThreadRunner[] runners;
-    
-    static {
-	queue = new SerialThreadQueue();
-	runners = new SerialThreadRunner[NUMBER_OF_RUNNERS];
-	for (int i=0; i<runners.length; i++)
-	    runners[i] = new SerialThreadRunner(queue);
-    }
-	
+  private SerialThreadQueue queue;
 
-    SingleThreadServiceProxy()
-    {
-	super();
+  private SerialThreadRunner[] runners;
+
+  /**
+   * Initialize the data structures used to store thread runners.
+   */
+  private void initialize() {
+    queue = new SerialThreadQueue();
+    runners = new SerialThreadRunner[NUMBER_OF_RUNNERS];
+    for (int i = 0; i < runners.length; i++)
+      runners[i] = new SerialThreadRunner(queue);
+  }
+
+  /**
+   * Clean up the data structures so they can be reclaimed by the GC.
+   */
+  protected void unload() {
+    queue = null;
+    for (int i = 0; i < runners.length; i++) {
+      runners[i].stop();
+      // Aggressively nullify for GC.
+      runners[i] = null;
     }
+    runners = null;
+  }
+  
+  SingleThreadServiceProxy()
+  {
+    initialize();
+  }
 
     public Schedulable getThread(Object consumer, 
 				 Runnable runnable, 
 				 String name) 
     {
-	return new SerialSchedulable(runnable, name, consumer, queue);
-    }
+    return new SerialSchedulable(runnable, name, consumer, queue);
+  }
 
     int iterateOverThreads(ThreadStatusService.Body body)
     {
-	int count = 0;
-	for (int i=0; i<runners.length; i++) 
-	    count += runners[i].iterateOverThreads(body);
-	count += queue.iterateOverThreads(body);
-	return count;
-    }
+    int count = 0;
+    for (int i = 0; i < runners.length; i++)
+      count += runners[i].iterateOverThreads(body);
+    count += queue.iterateOverThreads(body);
+    return count;
+  }
 
 }

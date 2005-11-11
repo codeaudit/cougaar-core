@@ -62,6 +62,6 @@ class TrivialThreadServiceProxy
 	return getThread(consumer, runnable, name);
     }
 
-
+    protected void unload() {}
     
 }
