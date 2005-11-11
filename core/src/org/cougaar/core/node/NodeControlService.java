@@ -42,4 +42,5 @@ public interface NodeControlService
 {
   ServiceBroker getRootServiceBroker();
   AgentContainer getRootContainer();
+  void shutdown();
 }
