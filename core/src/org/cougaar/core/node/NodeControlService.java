@@ -40,7 +40,16 @@ import org.cougaar.core.component.ServiceBroker;
 public interface NodeControlService 
   extends Service 
 {
+  /**
+   * Returns the root service broker.
+   * <p>
+   * 
+   */
   ServiceBroker getRootServiceBroker();
+  
+  /** Returns the AgentContainer. */
   AgentContainer getRootContainer();
+  
+  /** Shuts down the node. This method shuts down all agents, including the node agent. */
   void shutdown();
 }
