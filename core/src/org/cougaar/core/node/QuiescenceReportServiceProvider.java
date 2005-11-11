@@ -136,6 +136,10 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     // Nothing to do to release the aqsService
   }
 
+  protected void revokeService() {
+    quiescenceAnnouncer.stopQuiescenceAnnouncer();
+  }
+  
   private static void setMessageMap(MessageAddress me, Map messageNumbers, Map newMap) {
     Map existingMap = (Map) messageNumbers.get(me);
     if (existingMap == null) {
@@ -384,9 +388,22 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     private EventService eventService;
     private Object eventServiceLock = new Object();
     private Schedulable schedulable;
-
+    private boolean isRunning;
+    
     public QuiescenceAnnouncer() {
       super();
+      isRunning = true;
+    }
+
+    /**
+     * Stops the quiescence announcer.
+     * <p>
+     * 
+     * This method should be invoked when the quiescence report service is revoked.
+     */
+    protected synchronized void stopQuiescenceAnnouncer() {
+      isRunning = false;
+      interrupt();
     }
 
     public synchronized void interrupt() {
@@ -394,27 +411,31 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     }
 
     public synchronized void announceNonquiescence(String announcement) {
-      // Cancel pending announcment if any
-      pendingAnnouncement = null;
-      if (lastAnnouncedQuiescence) {
-        event(announcement);
-        lastAnnouncedQuiescence = false;
+      if (isRunning) {
+        // Cancel pending announcment if any
+        pendingAnnouncement = null;
+        if (lastAnnouncedQuiescence) {
+          event(announcement);
+          lastAnnouncedQuiescence = false;
+        }
       }
     }
 
     public synchronized void announceQuiescence(String announcement) {
-      if (schedulable == null) {
-        // first time
+      if (isRunning) {
+        if (schedulable == null) {
+          // first time
         ThreadService tsvc = (ThreadService)
           sb.getService(this, ThreadService.class, null);
-        schedulable = tsvc.getThread(this, this, "Quiescence Announcer");
-        sb.releaseService(this, ThreadService.class, tsvc);
+          schedulable = tsvc.getThread(this, this, "Quiescence Announcer");
+          sb.releaseService(this, ThreadService.class, tsvc);
+        }
+        // Replace the pending announcement
+        pendingAnnouncement = announcement;
+        // and restart the timeout
+        announcementTime = System.currentTimeMillis() + ANNOUNCEMENT_DELAY;
+        schedulable.start();
       }
-      // Replace the pending announcement
-      pendingAnnouncement = announcement;
-      // and restart the timeout
-      announcementTime = System.currentTimeMillis() + ANNOUNCEMENT_DELAY;
-      schedulable.start();
     }
 
     private long getDelay() {
@@ -439,6 +460,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     public synchronized void run() {
       long delay;
 
+      if (isRunning) {
         try {
           if (pendingAnnouncement == null) {
             // Nothing to announce. No-op.
@@ -453,6 +475,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
         } catch (Exception e) {
           logger.error("QuiescenceAnnouncer", e);
         }
+      }
     }
   }
 

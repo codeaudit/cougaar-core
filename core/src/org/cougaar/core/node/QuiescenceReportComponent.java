@@ -121,6 +121,8 @@ implements Component
     super.unload();
 
     rootsb.revokeService(QuiescenceReportService.class, qrsp);
+    // Need to cleanup tasks performed in separate thread.
+    qrsp.revokeService();
     qrsp = null;
   }
 }
