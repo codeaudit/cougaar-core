@@ -120,6 +120,25 @@ public abstract class Timer implements Runnable {
     } 
   }
 
+  public void stop() {
+    if (log.isDebugEnabled()) {
+      log.debug("Stop timer");
+    }
+    synchronized (sem) {
+      Iterator it = alarms.iterator();
+      while (it.hasNext()) {
+        Alarm alarm = (Alarm) it.next();
+        if (alarm == null) {
+          continue;
+        }
+        it.remove();
+      }
+    }
+    //schedulable.cancel();
+    //schedulable = null;
+    //threadService = null;
+  }
+
   public long currentTimeMillis() {
     return System.currentTimeMillis();
   }

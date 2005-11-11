@@ -112,8 +112,7 @@ implements Component
     }
 
     protected void stop() {
-      Logging.getLogger(NaturalTimeComponent.class).warn(
-          "Timer \"stop()\" not implemented yet");
+      xTimer.stop();
     }
 
     // implement ServiceProvider
