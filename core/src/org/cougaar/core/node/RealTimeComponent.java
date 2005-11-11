@@ -112,8 +112,7 @@ implements Component
     }
 
     protected void stop() {
-      Logging.getLogger(RealTimeComponent.class).warn(
-          "Timer \"stop()\" not implemented yet");
+      rTimer.stop();
     }
 
     // implement ServiceProvider
