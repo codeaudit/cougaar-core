@@ -122,7 +122,7 @@ implements Component
   }
 
   public void unload() {
-    super.unload();
+    removeAllAdvertisers(); 
 
     if (advertiseService != null) {
       sb.releaseService(
@@ -140,6 +140,8 @@ implements Component
           this, LoggingService.class, log);
       log = null;
     }
+
+    super.unload();
   }
 
   /**
@@ -223,6 +225,28 @@ implements Component
       advertisers.put(key, a);
     }
     a.startLater();
+  }
+
+  protected void removeAllAdvertisers() {
+    List l;
+    synchronized (lock) {
+      if (advertisers.isEmpty()) {
+        return;
+      }
+      l = new ArrayList(advertisers.keySet());
+      advertisers.clear();
+      if (log.isInfoEnabled()) {
+        for (int i = 0; i < l.size(); i++) {
+          log.info("Removing "+l.get(i));
+        }
+      }
+    }
+    for (int i = 0; i < l.size(); i++) {
+      Advertiser a = (Advertiser) l.get(i);
+      if (a != null) {
+        a.stopLater();
+      }
+    }
   }
 
   // this is called by the subclass

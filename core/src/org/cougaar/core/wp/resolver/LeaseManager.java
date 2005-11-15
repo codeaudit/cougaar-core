@@ -166,6 +166,10 @@ implements Component
   }
 
   public void unload() {
+    // cancel existing scheduled threads
+    renewLeasesThread.cancel();
+
+    // release services
     if (bundleSP != null) {
       ServiceBroker bundleSB = (rootsb == null ? sb : rootsb);
       bundleSB.revokeService(BundleService.class, bundleSP);

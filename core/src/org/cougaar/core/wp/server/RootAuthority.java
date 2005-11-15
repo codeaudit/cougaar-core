@@ -197,6 +197,8 @@ implements Component
   }
 
   public void unload() {
+    expireThread.cancel();
+
     // release services
     if (forwardService != null) {
       sb.releaseService(
