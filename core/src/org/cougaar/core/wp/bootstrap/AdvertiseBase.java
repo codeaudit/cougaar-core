@@ -135,10 +135,10 @@ implements Component
       sb.releaseService(this, ThreadService.class, threadService);
       threadService = null;
     }
-    if (log != null) {
+    if (log != null && log != LoggingService.NULL) {
       sb.releaseService(
           this, LoggingService.class, log);
-      log = null;
+      log = LoggingService.NULL;
     }
 
     super.unload();
@@ -233,7 +233,7 @@ implements Component
       if (advertisers.isEmpty()) {
         return;
       }
-      l = new ArrayList(advertisers.keySet());
+      l = new ArrayList(advertisers.values());
       advertisers.clear();
       if (log.isInfoEnabled()) {
         for (int i = 0; i < l.size(); i++) {
