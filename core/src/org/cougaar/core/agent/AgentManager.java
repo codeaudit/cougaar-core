@@ -173,7 +173,6 @@ public class AgentManager
             return localNode;
           }
         };
-    add_service(clazz, service);
     nodeIdentificationSP = add_service(clazz, service);
   }
 
@@ -239,7 +238,6 @@ public class AgentManager
             shutdownNode(localNode);
           }
         };
-    add_service(clazz, service);
     nodeControlSP = add_service(clazz, service);
   }
 
