@@ -869,8 +869,8 @@ implements Component
           dir = null;
           break;
         }
-        UID uid = uidService.nextUID();
-        subdir = new DirEntry(uid);
+        dir.setUID(uidService.nextUID()); // bump dir uid
+        subdir = new DirEntry(uidService.nextUID());
         entries.put(s, subdir);
       }
       // recurse down
