@@ -146,12 +146,7 @@ implements Component
     }
     o = null;
 
-    try {
-      bindRestart();
-    } catch (Exception e) {
-      throw new RuntimeException(
-          "Unable to load restart checker", e);
-    }
+    updateNaming(true);
 
     tsp = new TopologyServiceProvider();
     sb.addService(TopologyService.class, tsp);
@@ -185,6 +180,8 @@ implements Component
     }
 
     unregister_persistence();
+
+    updateNaming(false);
 
     if (wps != null) {
       sb.releaseService(
@@ -356,7 +353,7 @@ implements Component
     bb = null;
   }
 
-  private void bindRestart() throws Exception {
+  private void updateNaming(boolean bind) {
     String localHost;
     try {
       InetAddress localAddr = InetAddress.getLocalHost();
@@ -367,6 +364,7 @@ implements Component
 
     String identifier = localAgent.getAddress();
 
+    // dummy callback, probably should pay more attention to errors
     final LoggingService ls = log;
     Callback callback = new Callback() {
       public void execute(Response res) {
@@ -384,11 +382,15 @@ implements Component
     if (log.isInfoEnabled()) {
       log.info("Updating white pages");
     }
-    if (incarnation == 0) {
-      incarnation = System.currentTimeMillis();
+    if (bind) {
+      if (incarnation == 0) {
+        incarnation = System.currentTimeMillis();
+      }
+      // ignore prior moveId
+      moveId = System.currentTimeMillis();
     }
-    moveId = System.currentTimeMillis();
-    // ignore prior moveId
+
+    // incarnation number
     URI versionURI = 
       URI.create("version:///"+incarnation+"/"+moveId);
     AddressEntry versionEntry = 
@@ -396,9 +398,8 @@ implements Component
           identifier,
           "version",
           versionURI);
-    wps.rebind(versionEntry, callback); // should really pay attention
 
-    // register WP node location
+    // node location
     URI nodeURI = 
       URI.create("node://"+localHost+"/"+localNode.getAddress());
     AddressEntry nodeEntry = 
@@ -406,7 +407,23 @@ implements Component
           identifier,
           "topology",
           nodeURI);
-    wps.rebind(nodeEntry, callback); // really should pay attention
+
+    try {
+      if (bind) {
+        wps.rebind(versionEntry, callback);
+        wps.rebind(nodeEntry, callback);
+      } else {
+        wps.unbind(nodeEntry, callback);
+        wps.unbind(versionEntry, callback);
+      }
+    } catch (Exception e) {
+      String msg = "Unable to "+(bind ? "" : "un")+"bind in naming service";
+      if (bind) {
+        throw new RuntimeException(msg, e);
+      } else {
+        ls.error(msg, e);
+      }
+    }
   }
 
   private final class TopologyServiceProvider
