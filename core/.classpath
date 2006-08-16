@@ -9,6 +9,5 @@
 	<classpathentry kind="lib" path="/jars/lib/servlet.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/log4j.jar"/>
 	<classpathentry kind="lib" path="/jars/lib/junit.jar"/>
-	<classpathentry kind="lib" path="/jars/lib/concurrent.jar"/>
 	<classpathentry kind="output" path="tmp/classes"/>
 </classpath>
