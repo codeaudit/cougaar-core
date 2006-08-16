@@ -40,6 +40,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.TreeSet;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.ClusterMessage;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.mts.MessageAddress;
@@ -55,7 +56,7 @@ class MessageManagerImpl implements MessageManager, Serializable {
   public static final long serialVersionUID = -8662117243114391926L;
 
   private static final boolean debug =
-    Boolean.getBoolean("org.cougaar.core.blackboard.MessageManager.debug");
+    SystemProperties.getBoolean("org.cougaar.core.blackboard.MessageManager.debug");
 
   private static final long KEEP_ALIVE_INTERVAL = 55000L;
 

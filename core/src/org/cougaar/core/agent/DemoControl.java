@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.ExecutionTimer;
@@ -75,9 +76,9 @@ implements Component
 {
 
   private static final long NAMING_LOOKUP_TIMEOUT =
-    Long.getLong(
+    SystemProperties.getLong(
         "org.cougaar.core.agent.demoControl.namingTimeout",
-         30000).longValue();
+         30000);
 
   private static final Long PENDING = new Long(-1);
 

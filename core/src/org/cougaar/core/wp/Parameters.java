@@ -26,6 +26,7 @@
 
 package org.cougaar.core.wp;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.Arguments;
 
 /**
@@ -48,7 +49,7 @@ public class Parameters extends Arguments {
   public String getString(String key, String deflt) {
     String value = super.getString(key, null);
     if (value == null && prefix != null) {
-      value = System.getProperty(prefix+key);
+      value = SystemProperties.getProperty(prefix+key);
     }
     return (value == null ? deflt : value);
   }

@@ -26,6 +26,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.RegisterContext;
 import org.cougaar.core.agent.service.uid.UIDServiceComponent;
 import org.cougaar.core.blackboard.EnvelopeTuple;
@@ -77,7 +78,7 @@ public class RehydrateTest {
     "org.cougaar.core.persist.rehydrateTest.agent";
 
   private static final String DEFAULT_AGENT =
-    System.getProperty(DEFAULT_AGENT_PROP);
+    SystemProperties.getProperty(DEFAULT_AGENT_PROP);
 
   public static void main(String[] args) throws Exception {
     (new RehydrateTest(args)).run();

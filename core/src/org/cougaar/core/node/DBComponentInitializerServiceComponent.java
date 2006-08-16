@@ -26,6 +26,7 @@
 
 package org.cougaar.core.node;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -69,7 +70,7 @@ implements Component
     // This allows someone to provide their own component to provide
     // the asset initializer service in their configuration
     DBInitializerService dbInit;
-    String experimentId = System.getProperty(EXPTID_PROP);
+    String experimentId = SystemProperties.getProperty(EXPTID_PROP);
     if (sb.hasService(DBInitializerService.class)) {
       // already have DBInitializer service!
       //

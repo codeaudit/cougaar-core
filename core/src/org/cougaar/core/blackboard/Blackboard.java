@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Vector;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.Agent;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.ServiceBroker;
@@ -59,7 +60,6 @@ import org.cougaar.core.service.community.CommunityService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.multicast.AttributeBasedAddress;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -105,9 +105,9 @@ public class Blackboard extends Subscriber
   public MessageAddress getCID() { return self; }
 
   public static final boolean isSavePriorPublisher =
-    System.getProperty("org.cougaar.core.agent.savePriorPublisher", "false").equals("true");
+    SystemProperties.getBoolean("org.cougaar.core.agent.savePriorPublisher");
   public static final boolean enablePublishException =
-    System.getProperty("org.cougaar.core.agent.enablePublishException", "false").equals("true");
+    SystemProperties.getBoolean("org.cougaar.core.agent.enablePublishException");
 
   /** 
    * @property org.cougaar.core.blackboard.pedantic When true (the default) enables a variety
@@ -116,7 +116,7 @@ public class Blackboard extends Subscriber
    *
    */
   public static final boolean PEDANTIC = 
-    PropertyParser.getBoolean("org.cougaar.core.blackboard.pedantic", true);
+    SystemProperties.getBoolean("org.cougaar.core.blackboard.pedantic", true);
 
 
   /** the queue of messages to send */
@@ -765,7 +765,7 @@ public class Blackboard extends Subscriber
     Distributor d = new Distributor(this, myServiceBroker, self.getAddress());
     Persistence persistence = createPersistence();
     boolean lazyPersistence = 
-      System.getProperty("org.cougaar.core.persistence.lazy", "true").equals("true");
+      SystemProperties.getBoolean("org.cougaar.core.persistence.lazy", true);
     d.setPersistence(persistence, lazyPersistence);
     d.start(msgSwitch, state);       // msgSwitch, state
 
@@ -929,9 +929,9 @@ public class Blackboard extends Subscriber
     // its cache from the NameService
     // This is in milliseconds
     private long waitForNewCommChangeNotifications =
-      Long.getLong(
+      SystemProperties.getLong(
           "org.cougaar.core.blackboard.waitForNewCommChangeNotifications",
-          1000L).longValue();
+          1000L);
     
     private void reschedule() {
       if (thread != null) {

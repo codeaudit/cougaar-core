@@ -36,6 +36,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;
@@ -114,7 +115,7 @@ public class JvmStackDumpServlet extends BaseServletComponent {
 
       // check for the "?action=Dump" parameter
       if (!"Dump".equals(req.getParameter("action"))) {
-        String osName = System.getProperty("os.name");
+        String osName = SystemProperties.getProperty("os.name");
         boolean isWindows = 
           (osName != null && osName.indexOf("Windows") >= 0);
 
@@ -153,7 +154,7 @@ public class JvmStackDumpServlet extends BaseServletComponent {
 
       // check the response
       if (!didIt) {
-        String osName = System.getProperty("os.name");
+        String osName = SystemProperties.getProperty("os.name");
         boolean isWindows = 
           (osName != null && osName.indexOf("Windows") >= 0);
 

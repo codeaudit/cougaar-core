@@ -26,6 +26,7 @@
 
 package org.cougaar.core.logging;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.LoggerAdapter;
@@ -47,7 +48,7 @@ import org.cougaar.util.log.LoggerAdapter;
 public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingService {
 
   private static final boolean TRACK_DUPLICATE_LOGGING_PREFIX =
-    Boolean.getBoolean(
+    SystemProperties.getBoolean(
         "org.cougaar.core.logging.trackDuplicateLoggingPrefix");
 
   private final String prefix;

@@ -33,7 +33,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.util.PropertyParser;
 import org.xml.sax.ContentHandler;
 
 /**
@@ -80,21 +79,21 @@ public final class XMLConfigParser {
   // xsl options:
 
   private static final boolean VALIDATE =
-    Boolean.getBoolean("org.cougaar.society.xml.validate") ||
-    Boolean.getBoolean("org.cougaar.core.node.validate");
+    SystemProperties.getBoolean("org.cougaar.society.xml.validate") ||
+    SystemProperties.getBoolean("org.cougaar.core.node.validate");
 
   private static final boolean USE_XML_STYLESHEET = 
-    PropertyParser.getBoolean(
+    SystemProperties.getBoolean(
         "org.cougaar.society.xsl.checkXML",
         true);
 
   private static final String DEFAULT_XSL_FILE_NAME =
-    System.getProperty(
+    SystemProperties.getProperty(
         "org.cougaar.society.xsl.default.file",
         null);
 
   private static final String DYNAMIC_XSL_FILE_NAME = 
-    System.getProperty(
+    SystemProperties.getProperty(
         "org.cougaar.society.xsl.dynamic.file",
         "make_society.xsl");
 

@@ -26,10 +26,10 @@
 
 package org.cougaar.core.node;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logging;
 
 /**
@@ -62,10 +62,10 @@ public final class Heartbeat
   private static long maxIdleInterval;
 
   static {
-    idleInterval=PropertyParser.getInt("org.cougaar.core.agent.idleInterval", idleInterval);
+    idleInterval = SystemProperties.getInt("org.cougaar.core.agent.idleInterval", idleInterval);
     maxIdleInterval = (idleInterval+(idleInterval/10));
-    idleVerbose = PropertyParser.getBoolean("org.cougaar.core.agent.idle.verbose", idleVerbose);
-    idleVerboseInterval = PropertyParser.getInt("org.cougaar.core.agent.idle.verbose.interval",
+    idleVerbose = SystemProperties.getBoolean("org.cougaar.core.agent.idle.verbose", idleVerbose);
+    idleVerboseInterval = SystemProperties.getInt("org.cougaar.core.agent.idle.verbose.interval",
                                                 (int)idleVerboseInterval);
   }
 

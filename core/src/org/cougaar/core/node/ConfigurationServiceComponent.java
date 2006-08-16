@@ -45,7 +45,6 @@ import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.*;
 import org.cougaar.util.log.*;
 import org.cougaar.util.ConfigFinder;
-import org.cougaar.util.PropertyParser;
 
 /**
  * This component advertises the {@link ConfigurationService},

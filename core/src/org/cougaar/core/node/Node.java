@@ -47,6 +47,7 @@ import java.util.Vector;
 import java.util.jar.JarEntry;
 import java.util.jar.JarInputStream;
 import org.cougaar.bootstrap.Bootstrapper;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.ComponentDescription;
@@ -55,7 +56,6 @@ import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceBrokerSupport;
 import org.cougaar.util.Configuration;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -133,7 +133,7 @@ extends ContainerSupport
    */
   // @deprecated
   public static void main(String[] args){
-    if (PropertyParser.getBoolean(
+    if (SystemProperties.getBoolean(
           "org.cougaar.useBootstrapper", true)) {
       Logging.getLogger(Node.class).warn(
           "-Dorg.cougaar.useBootstrapper is deprecated."+
@@ -223,15 +223,15 @@ extends ContainerSupport
         // add a "late" system property
         int sepIdx = argi.indexOf('=');
         if (sepIdx < 0) {
-          System.setProperty(argi.substring(2), "");
+          SystemProperties.setProperty(argi.substring(2), "");
         } else {
-          System.setProperty(
+          SystemProperties.setProperty(
               argi.substring(2, sepIdx), argi.substring(sepIdx+1));
         }
       } else if (argi.equals("-n")) {
         // old "-n node" pattern
         String name = args[++i];
-        System.setProperty("org.cougaar.node.name", name);
+        SystemProperties.setProperty("org.cougaar.node.name", name);
         Logger logger = Logging.getLogger(Node.class);
         if (logger.isInfoEnabled()) {
           logger.info(
@@ -288,7 +288,7 @@ extends ContainerSupport
    */
   private static void loadSystemProperties() {
     String u = 
-      System.getProperty("org.cougaar.core.node.properties");
+      SystemProperties.getProperty("org.cougaar.core.node.properties");
     if (u == null) {
       u = "$INSTALL/configs/common/system.properties";
     }
@@ -307,11 +307,11 @@ extends ContainerSupport
             it.hasNext();
             ) {
           String key = (String) it.next();
-          if (System.getProperty(key) == null) {
+          if (SystemProperties.getProperty(key) == null) {
             try {
               String value = p.getProperty(key);
               value = Configuration.resolveValue(value);
-              System.setProperty(key, value);
+              SystemProperties.setProperty(key, value);
             } catch (RuntimeException re) {
               re.printStackTrace();
             }
@@ -347,6 +347,9 @@ extends ContainerSupport
    */
   public void load() {
     super.load();
+
+    // prevent future changes to the underlying system properties map
+    SystemProperties.finalizeProperties();
 
     // add the agent manager, which loads the node-agent
     add(new ComponentDescription(
@@ -420,11 +423,11 @@ extends ContainerSupport
           ((repositoryTime > 0) ? 
            ((new Date(repositoryTime)).toString()) :
            "(unknown time)"));
-      String vminfo = System.getProperty("java.vm.info");
-      String vmv = System.getProperty("java.vm.version");
+      String vminfo = SystemProperties.getProperty("java.vm.info");
+      String vmv = SystemProperties.getProperty("java.vm.version");
       System.out.println("VM: JDK "+vmv+" ("+vminfo+")");
-      String os = System.getProperty("os.name");
-      String osv = System.getProperty("os.version");
+      String os = SystemProperties.getProperty("os.name");
+      String osv = SystemProperties.getProperty("os.version");
       System.out.println("OS: "+os+" ("+osv+")");
     }
   }
@@ -436,8 +439,7 @@ extends ContainerSupport
 
   private static void maybeValidateJars() {
     // check for valid plugin jars
-    boolean validateJars = 
-      PropertyParser.getBoolean("org.cougaar.validate.jars", false);
+    boolean validateJars = SystemProperties.getBoolean("org.cougaar.validate.jars");
     if (validateJars) {
       // validate
       if (validatePluginJarsByStream()) {
@@ -454,11 +456,11 @@ extends ContainerSupport
   /** Returns true if all plugin jars are signed, else false */
   private static boolean validatePluginJarsByStream() {
     String jarSubdirectory = "plugins";
-    String installpath = System.getProperty("org.cougaar.install.path");
+    String installpath = SystemProperties.getProperty("org.cougaar.install.path");
     String defaultCertPath = "configs" + File.separatorChar + "common"
       + File.separatorChar + "alpcertfile.cer";
 
-    String certPath = System.getProperty("org.cougaar.security.certificate",
+    String certPath = SystemProperties.getProperty("org.cougaar.security.certificate",
         defaultCertPath);
 
     try{

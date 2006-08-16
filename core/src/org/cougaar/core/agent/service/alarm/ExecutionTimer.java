@@ -34,6 +34,7 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -423,7 +424,7 @@ public class ExecutionTimer extends Timer {
 
     // society.timeOffset wins if specified
     {
-      offset =  org.cougaar.util.PropertyParser.getLong("org.cougaar.core.society.timeOffset", DATE_ERROR);
+      offset =  SystemProperties.getLong("org.cougaar.core.society.timeOffset", DATE_ERROR);
       if (offset != DATE_ERROR) {
         if (logger.isInfoEnabled()) {
           logger.info("Exact time set by society.timeOffset ("+offset+")");
@@ -480,7 +481,7 @@ public class ExecutionTimer extends Timer {
     long date = DATE_ERROR;
     ParsedPropertyDate(String propertyName) {
       this.name = propertyName;
-      value = System.getProperty(name);
+      value = SystemProperties.getProperty(name);
 
       if (value != null) {
         try {

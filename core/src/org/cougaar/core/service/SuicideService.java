@@ -26,8 +26,8 @@
 
 package org.cougaar.core.service;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Service;
-import org.cougaar.util.PropertyParser;
 
 /** 
  * This service is used to tell the agent (or node) to exit, for
@@ -63,19 +63,19 @@ public interface SuicideService
 
   String SUICIDE_PROP = (SuicideService.class).getName()+".enable";
   boolean isSuicideEnabled_default = false;
-  boolean isSuicideEnabled = PropertyParser.getBoolean(SUICIDE_PROP, isSuicideEnabled_default); 
+  boolean isSuicideEnabled = SystemProperties.getBoolean(SUICIDE_PROP, isSuicideEnabled_default); 
 
   String PROACTIVE_PROP = (SuicideService.class).getName()+".proactive";
   boolean isProactiveEnabled_default = true;
-  boolean isProactiveEnabled = PropertyParser.getBoolean(PROACTIVE_PROP, isProactiveEnabled_default);
+  boolean isProactiveEnabled = SystemProperties.getBoolean(PROACTIVE_PROP, isProactiveEnabled_default);
 
   String PROPERIOD_PROP = (SuicideService.class).getName()+".proactivePeriod";
   double proactivePeriod_default = 1.0;
-  double proactivePeriod = PropertyParser.getDouble(PROPERIOD_PROP, proactivePeriod_default);
+  double proactivePeriod = SystemProperties.getDouble(PROPERIOD_PROP, proactivePeriod_default);
 
   String LOWMEM_PROP = (SuicideService.class).getName()+".lowMem";
   double lowMem_default = 0.02;
-  double lowMem = PropertyParser.getDouble(LOWMEM_PROP, lowMem_default);
+  double lowMem = SystemProperties.getDouble(LOWMEM_PROP, lowMem_default);
   
 
   /**

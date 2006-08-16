@@ -39,6 +39,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
@@ -54,11 +55,8 @@ import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.util.UnaryPredicate;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
-
-import EDU.oswego.cs.dl.util.concurrent.Mutex;
 
 /**
  * The Distributor coordinates blackboard transactions, subscriber
@@ -127,12 +125,12 @@ final class Distributor {
   private static final String PERSISTENCE_RESERVATION_TIMEOUT_PROP =
     "org.cougaar.core.blackboard.persistenceReservationTimeout";
   private static final long PERSISTENCE_RESERVATION_TIMEOUT =
-    Long.getLong(PERSISTENCE_RESERVATION_TIMEOUT_PROP, 120000L).longValue();
+    SystemProperties.getLong(PERSISTENCE_RESERVATION_TIMEOUT_PROP, 120000L);
 
   private static final String PERSIST_AT_STARTUP_PROP =
     "org.cougaar.core.blackboard.persistAtStartup";
   private static final boolean PERSIST_AT_STARTUP =
-    Boolean.getBoolean(PERSIST_AT_STARTUP_PROP);
+    SystemProperties.getBoolean(PERSIST_AT_STARTUP_PROP);
 
   private static final UnaryPredicate anythingP = 
     new UnaryPredicate() {
@@ -146,7 +144,7 @@ final class Distributor {
   /** The default setting for single transaction model */
   public static final boolean DEFAULT_SINGLE_TRANSACTION = false;
   private static final boolean SINGLE_TRANSACTION = 
-    PropertyParser.getBoolean(SINGLE_TRANSACTION_PROP, DEFAULT_SINGLE_TRANSACTION);
+    SystemProperties.getBoolean(SINGLE_TRANSACTION_PROP, DEFAULT_SINGLE_TRANSACTION);
 
   //
   // these are set in the constructor and are final:
@@ -154,7 +152,7 @@ final class Distributor {
 
   /** The publish history is available for subscriber use. */
   public final PublishHistory history =
-    (Boolean.getBoolean("org.cougaar.core.agent.keepPublishHistory") ?
+    (SystemProperties.getBoolean("org.cougaar.core.agent.keepPublishHistory") ?
      new PublishHistory() :
      null);
 
@@ -194,20 +192,25 @@ final class Distributor {
   private final Object transactionLock = new Object();
 
   /**
-   * when singleTransactionModel is enabled, transactionMutex is
+   * when singleTransactionModel is enabled, the transactionMutex is
    * locked for the duration of the transaction.  
    */
-  private final Mutex transactionMutex = new Mutex();
+  private final Object transactionMutexLock = new Object();
+  private boolean transactionMutexInUse = false;
 
   /**
    * Acquire the transaction mutex.  No-op if not running in SINGLE_TRANSACTION mode.
    */
   protected final void acquireTransactionMutex() {
     if (SINGLE_TRANSACTION) {
-      try {
-        transactionMutex.acquire();
-      } catch (InterruptedException ie) {
-        logger.error("Interrupted while acquiring transactionMutex", ie);
+      synchronized (transactionMutexLock) {
+        try {
+          while (transactionMutexInUse) { transactionMutexLock.wait(); }
+          transactionMutexInUse = true;
+        } catch (InterruptedException ie) {
+          transactionMutexLock.notify();
+          logger.error("Interrupted while acquiring transactionMutex", ie);
+        }
       }
     }
   }
@@ -217,7 +220,10 @@ final class Distributor {
    */
   protected final void releaseTransactionMutex() {
     if (SINGLE_TRANSACTION) {
-      transactionMutex.release();
+      synchronized (transactionMutexLock) {
+        transactionMutexInUse = false;
+        transactionMutexLock.notify(); 
+      }
     }
   }
 

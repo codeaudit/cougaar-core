@@ -32,8 +32,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.WeakHashMap;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.DynamicUnaryPredicate;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.StackElements;
 import org.cougaar.util.UnaryPredicate;
 
@@ -69,12 +69,12 @@ public class DeltaSubscription extends IncrementalSubscription {
   private static final String ENABLED_PROP =
     "org.cougaar.core.blackboard.DeltaSubscription.enable";
   private static final boolean ENABLED =
-    PropertyParser.getBoolean(ENABLED_PROP, true);
+    SystemProperties.getBoolean(ENABLED_PROP, true);
 
   private static final String RECORD_STACK_PROP =
     "org.cougaar.core.blackboard.DeltaSubscription.recordStack";
   private static final boolean RECORD_STACK =
-    Boolean.getBoolean(RECORD_STACK_PROP);
+    SystemProperties.getBoolean(RECORD_STACK_PROP);
 
   private static final Collection BLOCKER_COLLECTION =
     new BlockerCollection();

@@ -31,9 +31,9 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.ListIterator;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -64,11 +64,11 @@ public abstract class Timer implements Runnable {
   protected final static Logger log = Logging.getLogger(Timer.class);
 
   protected static final long EPSILON = 
-    PropertyParser.getLong(
+    SystemProperties.getLong(
         "org.cougaar.core.agent.service.alarm.Timer.epsilon",
         10*1000L);
   protected static final boolean USE_SCHEDULABLE = 
-    PropertyParser.getBoolean(
+    SystemProperties.getBoolean(
         "org.cougaar.core.agent.service.alarm.Timer.useSchedulable",
         true);
 

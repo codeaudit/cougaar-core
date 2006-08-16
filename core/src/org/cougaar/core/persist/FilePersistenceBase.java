@@ -44,6 +44,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.util.log.Logger;
 
@@ -83,11 +84,11 @@ public abstract class FilePersistenceBase
   private static final long MUTEX_TIMEOUT = 60000L;
 
   private static File getDefaultPersistenceRoot(String name) {
-    String installPath = System.getProperty("org.cougaar.install.path", "/tmp");
+    String installPath = SystemProperties.getProperty("org.cougaar.install.path", "/tmp");
     File workspaceDirectory =
-      new File(System.getProperty("org.cougaar.workspace", installPath + "/workspace"));
+      new File(SystemProperties.getProperty("org.cougaar.workspace", installPath + "/workspace"));
     return new File(workspaceDirectory,
-                    System.getProperty("org.cougaar.core.persistence.path", name));
+                    SystemProperties.getProperty("org.cougaar.core.persistence.path", name));
   }
 
   private File persistenceDirectory;

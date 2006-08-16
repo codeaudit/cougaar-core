@@ -32,6 +32,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -84,10 +85,10 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   private AgentQuiescenceStateService aqsService = null;
 
   private static final long ANNOUNCEMENT_DELAY =
-    Long.parseLong(System.getProperty("org.cougaar.core.node.quiescenceAnnounceDelay", "20000"));
+    SystemProperties.getLong("org.cougaar.core.node.quiescenceAnnounceDelay", 20000);
 
   //  private static final long ANNOUNCEMENT_DELAY = 30000L;
-  private static final String EOL = " "; //System.getProperty("line.separator");
+  private static final String EOL = " "; //SystemProperties.getProperty("line.separator");
 
   QuiescenceReportServiceProvider(String nodeName,
                                   AgentContainer agentContainer,

@@ -469,7 +469,7 @@ public class ConfigReader {
       logger.detail("read_props()");
     }
 
-    String server = System.getProperty(SERVER_PROP);
+    String server = SystemProperties.getProperty(SERVER_PROP);
     if (server != null) {
       if (logger.isDetailEnabled()) {
         logger.detail("adding \"WP="+server+"\" from "+SERVER_PROP);

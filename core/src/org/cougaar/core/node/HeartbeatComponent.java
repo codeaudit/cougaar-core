@@ -26,10 +26,10 @@
 
 package org.cougaar.core.node;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.PropertyParser;
 
 /**
  * This component loads the {@link Heartbeat} class.
@@ -45,7 +45,7 @@ implements Component
 {
 
   private static final boolean isHeartbeatOn =
-    PropertyParser.getBoolean(
+    SystemProperties.getBoolean(
         "org.cougaar.core.agent.heartbeat",
         true);
 

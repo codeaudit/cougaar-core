@@ -41,6 +41,7 @@ import java.rmi.server.RMISocketFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.SocketFactoryService;
@@ -77,8 +78,7 @@ public final class RMIUtil {
   private static final String RESOLVE_HOSTS_PROP =
     "org.cougaar.core.wp.resolver.rmi.resolveHosts";
   private static final boolean RESOLVE_HOSTS =
-    "true".equals(System.getProperty(
-          RESOLVE_HOSTS_PROP, "true"));
+    SystemProperties.getBoolean(RESOLVE_HOSTS_PROP, true);
 
   // all RMI registry lookups will prefix the name
   // with this path prefix, to keep the registry tidy
@@ -90,8 +90,8 @@ public final class RMIUtil {
   private static final String OLD_USE_SSL_PROP =
     "org.cougaar.core.naming.useSSL";
   private static final boolean USE_SSL =
-    Boolean.getBoolean(USE_SSL_PROP) ||
-    Boolean.getBoolean(OLD_USE_SSL_PROP);
+    SystemProperties.getBoolean(USE_SSL_PROP) ||
+    SystemProperties.getBoolean(OLD_USE_SSL_PROP);
 
   private RMIUtil() {}
 

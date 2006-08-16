@@ -26,6 +26,7 @@
 
 package org.cougaar.core.persist;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.adaptivity.OMCRange;
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.util.log.Logger;
@@ -55,15 +56,12 @@ public abstract class PersistencePluginAdapter implements PersistenceNames {
     this.pps = pps;
     this.name = name;
     this.params = params;
-    try {
-      archiveCount = Integer.parseInt(System.getProperty(PERSISTENCE_ARCHIVE_COUNT_PROP));
-    } catch (Exception e) {
-      if (Boolean.getBoolean("org.cougaar.core.persistence.archivingDisabled")) {
-        archiveCount = 0;
-      } else {
-        archiveCount = Integer.MAX_VALUE;
-      }
-    }
+    archiveCount = 
+      SystemProperties.getInt(
+          PERSISTENCE_ARCHIVE_COUNT_PROP,
+          (SystemProperties.getBoolean("org.cougaar.core.persistence.archivingDisabled") ?
+           0 :
+           Integer.MAX_VALUE));
     Logger logger = pps.getLogger();
     for (int i = 0; i < params.length; i++) {
       String param = params[i];

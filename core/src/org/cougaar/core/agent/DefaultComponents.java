@@ -32,10 +32,10 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.util.PropertyParser;
 
 /**
  * Hard-coded components for INI and DB configurations, which
@@ -92,7 +92,7 @@ abstract class DefaultComponents {
       l.add(MTS_SOCKET_FACTORY);
 
       // Split since 11.2.0
-      if (PropertyParser.getBoolean("org.cougaar.core.load.wp", true)) {
+      if (SystemProperties.getBoolean("org.cougaar.core.load.wp", true)) {
 	// Load WP Cache / Client pieces
 	l.add(WP_RESOLVER_CONTAINER);
 	l.add(WP_CONFIG_MANAGER);
@@ -109,7 +109,7 @@ abstract class DefaultComponents {
 	l.add(WPBOOT_ENSUREFOUND);	
       }
 
-      if (Boolean.getBoolean("org.cougaar.metrics.trivial")) {
+      if (SystemProperties.getBoolean("org.cougaar.metrics.trivial")) {
         l.add(TRIVIAL_QOS_METRICS_SERVICE);
       } else {
         l.add(QOS_METRICS_SERVICE);
@@ -118,7 +118,7 @@ abstract class DefaultComponents {
 
       l.add(INCARNATION); // new since 11.2.0
 
-      if (Boolean.getBoolean("org.cougaar.core.mts.singlenode")) {
+      if (SystemProperties.getBoolean("org.cougaar.core.mts.singlenode")) {
         l.add(LOCAL_MESSAGE_TRANSPORT_SERVICE);
       } else {
         l.add(MESSAGE_TRANSPORT_SERVICE);
@@ -127,7 +127,7 @@ abstract class DefaultComponents {
       l.add(REAL_TIME_COMP); // Split into 2 is for 11.4
       l.add(NATURAL_TIME_COMP);
 
-      if (PropertyParser.getBoolean("org.cougaar.core.load.servlet", true)) {
+      if (SystemProperties.getBoolean("org.cougaar.core.load.servlet", true)) {
         l.add(SERVLET_SERVICE);
       }
 
@@ -150,26 +150,26 @@ abstract class DefaultComponents {
     l.addAll(findComponents(cds, BINDER));
 
     if (isNode) {
-      if (PropertyParser.getBoolean("org.cougaar.core.load.community", true)) {
+      if (SystemProperties.getBoolean("org.cougaar.core.load.community", true)) {
         l.add(COMMUNITY_INITIALIZER_SERVICE);
       }
-      if (PropertyParser.getBoolean("org.cougaar.core.load.planning", true)) {
+      if (SystemProperties.getBoolean("org.cougaar.core.load.planning", true)) {
         l.add(ASSET_INITIALIZER_SERVICE);
       }
     }
 
     l.add(THREAD_SERVICE);
     l.add(SCHEDULER_SERVICE);
-    if (PropertyParser.getBoolean("org.cougaar.core.load.planning", true)) {
+    if (SystemProperties.getBoolean("org.cougaar.core.load.planning", true)) {
       l.add(PROTOTYPE_REGISTRY_SERVICE);
       l.add(LDM_SERVICE);
     }
-    if (PropertyParser.getBoolean("org.cougaar.core.load.servlet", true)) {
+    if (SystemProperties.getBoolean("org.cougaar.core.load.servlet", true)) {
       l.add(LEAF_SERVLET_SERVICE);
     }
 
     l.add(DOMAIN_MANAGER);
-    if (PropertyParser.getBoolean("org.cougaar.core.load.community", true)) {
+    if (SystemProperties.getBoolean("org.cougaar.core.load.community", true)) {
       l.add(COMMUNITY_SERVICE);
     }
     l.add(BLACKBOARD_SERVICE);
@@ -180,7 +180,7 @@ abstract class DefaultComponents {
     // HTTP service advertising
     // This re-order & split is new since 11.2.0
     if (isNode) {
-      if (PropertyParser.getBoolean("org.cougaar.core.load.wp.server", true)) {
+      if (SystemProperties.getBoolean("org.cougaar.core.load.wp.server", true)) {
 	// Add WP Server Components
 	l.add(WP_SERVER_CONTAINER);
 	l.add(WP_SERVER_CONFIG_MANAGER);

@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -83,9 +84,9 @@ implements Component
   // is recommended.
   private static final int DEFAULT_ACCESS_BITS = 8;
   private static final int ACCESS_BITS = 
-    Integer.getInteger(
+    SystemProperties.getInt(
         "org.cougaar.core.wp.resolver.accessBits",
-        DEFAULT_ACCESS_BITS).intValue();
+        DEFAULT_ACCESS_BITS);
 
   // ratio of non-expired entries to evict if the cache is full
   // and doesn't contain expired entries

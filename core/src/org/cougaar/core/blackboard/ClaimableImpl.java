@@ -30,7 +30,7 @@ import java.io.IOException;
 import java.io.NotActiveException;
 import java.io.ObjectInputStream;
 
-import org.cougaar.util.PropertyParser;
+import org.cougaar.bootstrap.SystemProperties;
 
 /** 
  * Implementation of the {@link Claimable} API.
@@ -51,7 +51,7 @@ public class ClaimableImpl
 {
   private static boolean isDebugging = false;
   static {
-    isDebugging = PropertyParser.getBoolean(
+    isDebugging = SystemProperties.getBoolean(
         "org.cougaar.core.blackboard.Claimable.debug", isDebugging);
   }
 

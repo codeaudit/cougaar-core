@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.TreeSet;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.ThreadListenerService;
 import org.cougaar.core.service.ThreadService;
@@ -144,7 +145,7 @@ public class PercentageLoadSelector
 
 
     public PercentageLoadSelector(ServiceBroker sb) {
-	String propertiesFilename = System.getProperty(TARGETS_PROP);
+	String propertiesFilename = SystemProperties.getProperty(TARGETS_PROP);
 	if (propertiesFilename != null) {
 	    try {
 		FileInputStream fos = new FileInputStream(propertiesFilename);

@@ -29,6 +29,7 @@ package org.cougaar.core.thread;
 import java.util.Iterator;
 import java.util.List;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -107,7 +108,7 @@ public final class ThreadServiceProvider
 	ServiceBroker the_sb = sb;
 	isRoot = !the_sb.hasService(ThreadService.class);
 
-	String type = System.getProperty(SERVICE_TYPE_PROPERTY, 
+	String type = SystemProperties.getProperty(SERVICE_TYPE_PROPERTY, 
 					 "hierarchical");
 	if (type.equals("trivial")) {
 	    if (isRoot)	{

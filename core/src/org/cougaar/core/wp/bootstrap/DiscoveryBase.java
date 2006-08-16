@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
@@ -59,15 +60,13 @@ implements Component
   private static final String PROP_PREFIX =
     "org.cougaar.core.wp.bootstrap.discovery";
   private static final long MIN_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          PROP_PREFIX+".minDelay",
-          "8000"));
+    SystemProperties.getLong(
+        PROP_PREFIX+".minDelay",
+        8000);
   private static final long MAX_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          PROP_PREFIX+".maxDelay",
-          "120000"));
+    SystemProperties.getLong(
+        PROP_PREFIX+".maxDelay",
+        120000);
 
   protected ServiceBroker sb;
 

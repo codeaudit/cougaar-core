@@ -36,6 +36,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.LoggingService;
@@ -43,7 +44,6 @@ import org.cougaar.core.service.SchedulerService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.CircularQueue;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.Trigger;
 
 /**
@@ -109,13 +109,13 @@ class SchedulerServiceProvider
 
   static {
     String p = "org.cougaar.core.service.SchedulerService.";
-    keepingStatistics = PropertyParser.getBoolean(p+"statistics", keepingStatistics);
-    dumpingStatistics = PropertyParser.getBoolean(p+"dumpStatistics", dumpingStatistics);
+    keepingStatistics = SystemProperties.getBoolean(p+"statistics", keepingStatistics);
+    dumpingStatistics = SystemProperties.getBoolean(p+"dumpStatistics", dumpingStatistics);
     if (dumpingStatistics) keepingStatistics=true;
-    isWatching = PropertyParser.getBoolean(p+"watching", isWatching);
-    warningTime = PropertyParser.getLong(p+"warningTime", warningTime);
-    staticScheduler = PropertyParser.getBoolean(p+"staticScheduler", staticScheduler);
-    nThreads = PropertyParser.getInt(p+"schedulerThreads", nThreads);
+    isWatching = SystemProperties.getBoolean(p+"watching", isWatching);
+    warningTime = SystemProperties.getLong(p+"warningTime", warningTime);
+    staticScheduler = SystemProperties.getBoolean(p+"staticScheduler", staticScheduler);
+    nThreads = SystemProperties.getInt(p+"schedulerThreads", nThreads);
   }
 
 
@@ -137,8 +137,8 @@ class SchedulerServiceProvider
     if (staticScheduler) {
       synchronized (ssLock) {
         if (singletonScheduler == null) {
-          //singletonScheduler = new SimpleScheduler(System.getProperty("org.cougaar.core.node.Node.name", "unknown"));
-          singletonScheduler = new MultiScheduler(System.getProperty("org.cougaar.core.node.Node.name", "unknown"));
+          //singletonScheduler = new SimpleScheduler(SystemProperties.getProperty("org.cougaar.core.node.Node.name", "unknown"));
+          singletonScheduler = new MultiScheduler(SystemProperties.getProperty("org.cougaar.core.node.Node.name", "unknown"));
         }
         return singletonScheduler;
       }
@@ -574,7 +574,7 @@ class SchedulerServiceProvider
     /** dump reports on plugin usage */
     private synchronized void report() {
         
-      String nodeName = System.getProperty("org.cougaar.core.node.Node.name", "unknown");
+      String nodeName = SystemProperties.getProperty("org.cougaar.core.node.Node.name", "unknown");
       try {
         File f = new File(nodeName+".statistics");
         FileOutputStream fos = new FileOutputStream(f);

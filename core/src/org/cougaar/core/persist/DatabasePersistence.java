@@ -62,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.service.DataProtectionKey;
 import org.cougaar.util.log.Logger;
 
@@ -106,13 +107,13 @@ public class DatabasePersistence
   private static final String ARCHIVE     = "'a'";
 
   String databaseURL =
-    System.getProperty("org.cougaar.core.persistence.database.url");
+    SystemProperties.getProperty("org.cougaar.core.persistence.database.url");
   String databaseUser =
-    System.getProperty("org.cougaar.core.persistence.database.user");
+    SystemProperties.getProperty("org.cougaar.core.persistence.database.user");
   String databasePassword =
-    System.getProperty("org.cougaar.core.persistence.database.password");
+    SystemProperties.getProperty("org.cougaar.core.persistence.database.password");
   String databaseDriver =
-    System.getProperty("org.cougaar.core.persistence.database.driver");
+    SystemProperties.getProperty("org.cougaar.core.persistence.database.driver");
   String intDef = "NUMBER";
   String longBinaryDef = "LONG RAW";
   String timestampDef = "BIGINT";

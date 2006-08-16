@@ -31,6 +31,7 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
@@ -274,7 +275,7 @@ implements Component
     // Set a static flag for whether to skip reconciliation,
     // based on a -D argument
     skipReconciliation =
-      Boolean.getBoolean(
+      SystemProperties.getBoolean(
           "org.cougaar.core.node.SkipReconciliation");
     if (log.isDebugEnabled()) {
       log.debug(

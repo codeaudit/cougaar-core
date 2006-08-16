@@ -31,10 +31,10 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -60,14 +60,14 @@ public class XMLComponentInitializerServiceProvider
   private static final String XML_FILE_NAME_PROP = 
     "org.cougaar.society.file";
   private static final String XML_FILE_NAME = 
-    System.getProperty(XML_FILE_NAME_PROP);
+    SystemProperties.getProperty(XML_FILE_NAME_PROP);
 
   private static final String DEFAULT_AGENT_PROP =
     "org.cougaar.agent.defaultFile";
   private static final String DEFAULT_AGENT;
   static {
     String s = 
-      System.getProperty(DEFAULT_AGENT_PROP, "DefaultAgent.xml");
+      SystemProperties.getProperty(DEFAULT_AGENT_PROP, "DefaultAgent.xml");
     // trim off trailing ".xml"
     String x = ".xml";
     int xlen = x.length();
@@ -84,13 +84,13 @@ public class XMLComponentInitializerServiceProvider
   private static final String NODE_NAME_PROP =
     "org.cougaar.node.name";
   private static final String NODE_NAME =
-    System.getProperty(NODE_NAME_PROP);
+    SystemProperties.getProperty(NODE_NAME_PROP);
 
   // backwards compatibility for the wp server:
   private static final String IMPLICIT_WP_SERVER_PROP = 
     "org.cougaar.core.load.wp.server";
   private static final boolean IMPLICIT_WP_SERVER = 
-    PropertyParser.getBoolean(IMPLICIT_WP_SERVER_PROP, true);
+    SystemProperties.getBoolean(IMPLICIT_WP_SERVER_PROP, true);
 
   private static final String MY_CLASS_NAME =
     XMLComponentInitializerServiceProvider.class.getName();

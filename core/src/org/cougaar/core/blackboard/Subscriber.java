@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.util.LockFlag;
@@ -69,16 +70,15 @@ public class Subscriber {
   private static final Logger logger = Logging.getLogger(Subscriber.class);
 
   private static final boolean isEnforcing =
-    Boolean.valueOf(
-        System.getProperty(
-          "org.cougaar.core.blackboard.enforceTransactions",
-          "true")).booleanValue();
+    SystemProperties.getBoolean(
+        "org.cougaar.core.blackboard.enforceTransactions",
+        true);
 
   private static final boolean warnUnpublishChanges = 
-    "true".equals(System.getProperty("org.cougaar.core.blackboard.debug","false"));
+    SystemProperties.getBoolean("org.cougaar.core.blackboard.debug");
 
   private static final boolean enableTimestamps = 
-    Boolean.getBoolean("org.cougaar.core.blackboard.timestamp");
+    SystemProperties.getBoolean("org.cougaar.core.blackboard.timestamp");
 
   private BlackboardClient theClient = null;
   private Distributor theDistributor = null;

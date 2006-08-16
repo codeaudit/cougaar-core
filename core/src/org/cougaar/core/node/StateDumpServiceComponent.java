@@ -33,6 +33,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;
@@ -162,7 +163,7 @@ public final class StateDumpServiceComponent
 	private void dumpThreads()
 	{
 	    // Only works in Linux
-	    String os_name = System.getProperty("os.name");
+	    String os_name = SystemProperties.getProperty("os.name");
 	    if (!os_name.equals("Linux")) {
 		logger.warn("Can't find pid to dump threads in " + os_name);
 		return;

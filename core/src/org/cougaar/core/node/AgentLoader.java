@@ -34,6 +34,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.component.Component;
@@ -70,7 +71,7 @@ implements Component
     "org.cougaar.core.node.ignoreRehydratedAgentList";
 
   private static final boolean ignoreRehydratedAgentDescs =
-    Boolean.getBoolean(IGNORE_REHYDRATED_AGENT_LIST_PROP);
+    SystemProperties.getBoolean(IGNORE_REHYDRATED_AGENT_LIST_PROP);
 
   private ServiceBroker sb;
 

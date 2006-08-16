@@ -49,6 +49,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContextTable;
 import org.cougaar.core.blackboard.BulkEnvelopeTuple;
@@ -152,7 +153,7 @@ public class PersistenceServiceComponent
 
   private static final long PERSISTENCE_INTERVAL_DFLT = 300000L;
   private static final boolean WRITE_DISABLED_DFLT =
-    Boolean.getBoolean(PERSISTENCE_DISABLE_WRITE_PROP);
+    SystemProperties.getBoolean(PERSISTENCE_DISABLE_WRITE_PROP);
 
   private static final String PERSISTENCE_CONSOLIDATION_PERIOD_PROP =
     PERSISTENCE_PROP_PREFIX + PERSISTENCE_CONSOLIDATION_PERIOD_NAME;
@@ -161,7 +162,7 @@ public class PersistenceServiceComponent
   private static final String[] PERSISTENCE_CLASSES_DFLT = getPersistenceClassesDflt();
 
   private static String[] getPersistenceClassesDflt() {
-    String prop = System.getProperty(PERSISTENCE_CLASS_PROP);
+    String prop = SystemProperties.getProperty(PERSISTENCE_CLASS_PROP);
     if (prop != null) {
       try {
         return CSVUtility.parse(prop);
@@ -170,7 +171,7 @@ public class PersistenceServiceComponent
       }
     }
     boolean disabled =
-      System.getProperty(PERSISTENCE_ENABLE_PROP, "false").equals("false");
+      SystemProperties.getProperty(PERSISTENCE_ENABLE_PROP, "false").equals("false");
     if (disabled) return new String[0];
     return new String[] {
       FilePersistence.class.getName() + PARAM_SEP + FILE_MEDIA_NAME
@@ -184,11 +185,11 @@ public class PersistenceServiceComponent
   }
 
   private long PERSISTENCE_INTERVAL =
-    Long.getLong(PERSISTENCE_INTERVAL_PROP,
-                 PERSISTENCE_INTERVAL_DFLT).longValue();
+    SystemProperties.getLong(PERSISTENCE_INTERVAL_PROP,
+                 PERSISTENCE_INTERVAL_DFLT);
   private int PERSISTENCE_CONSOLIDATION_PERIOD =
-    Integer.getInteger(PERSISTENCE_CONSOLIDATION_PERIOD_PROP,
-                       PERSISTENCE_CONSOLIDATION_PERIOD_DFLT).intValue();
+    SystemProperties.getInt(PERSISTENCE_CONSOLIDATION_PERIOD_PROP,
+                            PERSISTENCE_CONSOLIDATION_PERIOD_DFLT);
 
   private static class RehydrationSet {
     PersistencePlugin ppi;
@@ -376,7 +377,11 @@ public class PersistenceServiceComponent
   }
 
   static {
-    PersistenceInputStream.checkSuperclass();
+    boolean checkPatch = 
+      SystemProperties.getBoolean(PERSISTENCE_VERIFY_JAVA_IO_PATCH_PROP, true);
+    if (checkPatch) {
+      PersistenceInputStream.checkSuperclass();
+    }
   }
 
   // Component implementation
@@ -399,7 +404,7 @@ public class PersistenceServiceComponent
   private static List getParametersFromProperties(MessageAddress agentId) {
     List ret = new ArrayList();
     String pname = PERSISTENCE_PARAMETERS_PROP + "." + agentId;
-    String pvalue = System.getProperty(pname);
+    String pvalue = SystemProperties.getProperty(pname);
     if (pvalue != null) {
       String[] ps = CSVUtility.parse(pvalue);
       for (int i = 0; i < ps.length; i++) {
@@ -558,7 +563,7 @@ public class PersistenceServiceComponent
       
       if (dataProtectionService == null) {
         if (logger.isInfoEnabled()) logger.info("No DataProtectionService Available.");
-        if (Boolean.getBoolean("org.cougaar.core.persistence.DataProtectionServiceStubEnabled")) {
+        if (SystemProperties.getBoolean("org.cougaar.core.persistence.DataProtectionServiceStubEnabled")) {
           dataProtectionService = new DataProtectionServiceStub();
         }
       } else {
@@ -609,7 +614,7 @@ public class PersistenceServiceComponent
   private void addPlugin(PersistencePlugin ppi, String pluginName, String[] pluginParams)
     throws PersistenceException
   {
-    boolean deleteOldPersistence = Boolean.getBoolean("org.cougaar.core.persistence.clear");
+    boolean deleteOldPersistence = SystemProperties.getBoolean("org.cougaar.core.persistence.clear");
     if (deleteOldPersistence && logger.isInfoEnabled()) {
       logger.info("Clearing old persistence data");
     }

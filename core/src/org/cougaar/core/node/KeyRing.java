@@ -32,6 +32,7 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.util.HashMap;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.ConfigFinder;
 
 /**
@@ -53,13 +54,13 @@ public final class KeyRing {
   private static KeyStore keystore = null;
 
   static {
-    String installpath = System.getProperty("org.cougaar.install.path");
+    String installpath = SystemProperties.getProperty("org.cougaar.install.path");
     String defaultKeystorePath = installpath + File.separatorChar
                                 + "configs" + File.separatorChar + "common"
                                 + File.separatorChar + ".keystore";
 
-    ksPass = System.getProperty("org.cougaar.security.keystore.password","alpalp");
-    ksPath = System.getProperty("org.cougaar.security.keystore", defaultKeystorePath);
+    ksPass = SystemProperties.getProperty("org.cougaar.security.keystore.password","alpalp");
+    ksPath = SystemProperties.getProperty("org.cougaar.security.keystore", defaultKeystorePath);
 
     System.out.println("Secure message keystore: path=" + ksPath + ", pass=" + ksPass);
   }

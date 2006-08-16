@@ -30,6 +30,7 @@ import java.net.URI;
 import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
 import java.util.Map;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
@@ -56,15 +57,13 @@ public class RMIDiscovery
 extends DiscoveryBase
 {
   private static final long MIN_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          "org.cougaar.core.wp.resolver.rmi.minLookup",
-          "8000"));
+    SystemProperties.getLong(
+        "org.cougaar.core.wp.resolver.rmi.minLookup",
+        8000);
   private static final long MAX_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          "org.cougaar.core.wp.resolver.rmi.maxLookup",
-          "120000"));
+    SystemProperties.getLong(
+        "org.cougaar.core.wp.resolver.rmi.maxLookup",
+        120000);
 
   private ConfigService configService;
   private final ConfigService.Client configClient =

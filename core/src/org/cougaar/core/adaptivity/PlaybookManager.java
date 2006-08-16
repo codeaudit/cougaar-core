@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.plugin.ComponentPlugin;
@@ -231,6 +232,6 @@ public class PlaybookManager
       PlaybookReadService.Listener l = (PlaybookReadService.Listener) i.next();
       blackboard.publishChange(l);
     }
-    if (logger.isDebugEnabled()) logger.debug("New constrained plays" + System.getProperty("line.separator") + this);
+    if (logger.isDebugEnabled()) logger.debug("New constrained plays" + SystemProperties.getProperty("line.separator") + this);
   }
 }

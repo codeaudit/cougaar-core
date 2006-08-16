@@ -49,6 +49,7 @@ import javax.xml.transform.sax.TemplatesHandler;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -285,7 +286,12 @@ public class XSLTransformer {
       saxTFactory.setURIResolver(resolver);
 
       // create reusable xml reader
-      xml_reader = XMLReaderFactory.createXMLReader();
+      String xml_driver = SystemProperties.getProperty("org.xml.sax.driver");
+      if (xml_driver == null) {
+        xml_reader = XMLReaderFactory.createXMLReader();
+      } else {
+        xml_reader = XMLReaderFactory.createXMLReader(xml_driver);
+      }
       xml_reader.setEntityResolver(resolver);
 
       // find the appropriate t2_transformer_handler.

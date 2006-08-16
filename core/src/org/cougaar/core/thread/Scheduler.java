@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.RandomAccess;
 
 import org.cougaar.core.service.ThreadControlService;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;

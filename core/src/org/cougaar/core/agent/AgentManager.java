@@ -36,6 +36,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
@@ -149,7 +150,7 @@ public class AgentManager
   //
 
   private String getNodeName() {
-    String nodeName = System.getProperty("org.cougaar.node.name");
+    String nodeName = SystemProperties.getProperty("org.cougaar.node.name");
     if (nodeName == null) {
       try {
         nodeName = InetAddress.getLocalHost().getHostName();
@@ -287,7 +288,7 @@ public class AgentManager
   }
 
   private ComponentDescription getNodeAgentDescription(String nodeName) {
-    String classname = System.getProperty(NODE_AGENT_CLASSNAME_PROPERTY,
+    String classname = SystemProperties.getProperty(NODE_AGENT_CLASSNAME_PROPERTY,
         "org.cougaar.core.agent.AgentImpl");
     List params = new ArrayList(1);
     params.add(nodeName);
@@ -305,10 +306,10 @@ public class AgentManager
   }
 
   private String getComponentInitializerClass() {
-    String component = System.getProperty(INITIALIZER_PROP);
+    String component = SystemProperties.getProperty(INITIALIZER_PROP);
     if (component == null) {
       component = getDefaultComponentInitializerClass();
-      System.setProperty(INITIALIZER_PROP, component);
+      SystemProperties.setProperty(INITIALIZER_PROP, component);
     }
     // if full class name not specified, intuit it
     if (component.indexOf(".") < 0) {
@@ -335,8 +336,8 @@ public class AgentManager
     // initializer was not selected.  Otherwise, INI files are used
     // (and no DBInitializerService is provided) however, users may
     // specify, for example, an XML initializer
-    String filename = System.getProperty(FILENAME_PROP);
-    String expt = System.getProperty(EXPTID_PROP);
+    String filename = SystemProperties.getProperty(FILENAME_PROP);
+    String expt = SystemProperties.getProperty(EXPTID_PROP);
     Logger logger = Logging.getLogger(AgentManager.class);
     if ((filename == null) && (expt == null)) {
       // use the default "name.ini"

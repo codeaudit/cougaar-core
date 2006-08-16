@@ -95,7 +95,7 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
         mobileAgent = MessageAddress.getMessageAddress(getParameter(MOBILE_AGENT_PARAM,"Source1"));
         originNode= MessageAddress.getMessageAddress(getParameter(ORIGIN_NODE_PARAM,"NODE1"));        
         destNode= MessageAddress.getMessageAddress(getParameter(DEST_NODE_PARAM,"NODE2"));
-        isForceRestart= Boolean.getBoolean(getParameter(IS_FORCE_RESTART_PARAM ,"false"));
+        isForceRestart= "true".equals(getParameter(IS_FORCE_RESTART_PARAM ,"false"));
         if (log.isInfoEnabled())
             log.info("Loaded MoveAgentLoop Plugin" +
                     " mobileAgent=" + mobileAgent +

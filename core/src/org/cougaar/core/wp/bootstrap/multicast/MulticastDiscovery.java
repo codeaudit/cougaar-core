@@ -42,6 +42,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.LoggingService;
@@ -62,15 +63,13 @@ public class MulticastDiscovery
 extends DiscoveryBase
 {
   private static final long MIN_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          "org.cougaar.core.wp.resolver.multicast.minLookup",
-          "30000"));
+    SystemProperties.getLong(
+        "org.cougaar.core.wp.resolver.multicast.minLookup",
+        30000);
   private static final long MAX_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          "org.cougaar.core.wp.resolver.multicast.maxLookup",
-          "120000"));
+    SystemProperties.getLong(
+        "org.cougaar.core.wp.resolver.multicast.maxLookup",
+        120000);
 
   private ConfigService configService;
 

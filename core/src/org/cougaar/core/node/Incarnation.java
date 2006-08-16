@@ -36,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -68,9 +69,9 @@ implements Component
 {
 
   private static final long RESTART_CHECK_INTERVAL = 
-    Long.getLong(
+    SystemProperties.getLong(
         "org.cougaar.core.node.incarnation.period",
-        43000L).longValue();
+        43000L);
 
   private ServiceBroker sb;
 

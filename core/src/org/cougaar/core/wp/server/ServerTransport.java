@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Service;
@@ -84,7 +85,7 @@ implements Component
    * @see WPAnswer
    */
   private final boolean USE_SERVER_TIME =
-    Boolean.getBoolean(
+    SystemProperties.getBoolean(
         "org.cougaar.core.wp.server.useServerTime");
 
   // pick an action that doesn't conflict with WPQuery

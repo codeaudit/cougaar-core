@@ -37,6 +37,7 @@ import java.net.URLConnection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
@@ -67,15 +68,13 @@ extends DiscoveryBase
   private static final String DEFAULT_PATH = "/$~/wp_bootstrap";
 
   private static final long MIN_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          "org.cougaar.core.wp.resolver.http.minLookup",
-          "8000"));
+    SystemProperties.getLong(
+        "org.cougaar.core.wp.resolver.http.minLookup",
+        8000);
   private static final long MAX_DELAY = 
-    Long.parseLong(
-        System.getProperty(
-          "org.cougaar.core.wp.resolver.http.maxLookup",
-          "120000"));
+    SystemProperties.getLong(
+        "org.cougaar.core.wp.resolver.http.maxLookup",
+        120000);
 
   private ConfigService configService;
 

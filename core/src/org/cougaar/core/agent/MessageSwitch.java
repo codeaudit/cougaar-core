@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
@@ -50,7 +51,6 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.wp.WhitePagesMessage;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.PropertyParser;
 import org.cougaar.util.log.Logging;
 
 /**
@@ -77,14 +77,13 @@ implements Component
   private static final boolean showTraffic;
   private static final boolean showWhitePagesTraffic;
   static {
-    boolean isQuiet =
-      PropertyParser.getBoolean("org.cougaar.core.agent.quiet", false);
+    boolean isQuiet = SystemProperties.getBoolean("org.cougaar.core.agent.quiet");
     if (isQuiet) {
       showTraffic = false;
       showWhitePagesTraffic = false;
     } else {
       String trafficParam =
-        System.getProperty("org.cougaar.core.agent.showTraffic", "true");
+        SystemProperties.getProperty("org.cougaar.core.agent.showTraffic", "true");
       if ("true".equalsIgnoreCase(trafficParam)) {
         showTraffic = true;
         showWhitePagesTraffic = false;

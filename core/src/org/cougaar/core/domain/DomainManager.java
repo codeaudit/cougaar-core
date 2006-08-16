@@ -58,7 +58,6 @@ import org.cougaar.core.service.DomainForBlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.ConfigFinder;
-import org.cougaar.util.PropertyParser;
 
 /**
  * This component is a container for {@link Domain}s.
@@ -81,8 +80,8 @@ extends ContainerSupport
 {
 
   private static final String FILENAME = 
-    (PropertyParser.getBoolean("org.cougaar.core.domain.config.enable", true) ?
-     System.getProperty("org.cougaar.core.domain.config.filename", "LDMDomains.ini") :
+    (SystemProperties.getBoolean("org.cougaar.core.domain.config.enable", true) ?
+     SystemProperties.getProperty("org.cougaar.core.domain.config.filename", "LDMDomains.ini") :
      null);
 
   private final static String PREFIX = "org.cougaar.domain.";
@@ -90,7 +89,7 @@ extends ContainerSupport
 
   private final static boolean isPlanningEnabled;
   static {
-    isPlanningEnabled=PropertyParser.getBoolean("org.cougaar.core.load.planning", true);
+    isPlanningEnabled = SystemProperties.getBoolean("org.cougaar.core.load.planning", true);
   }
 
   /** Insertion point for a DomainManager, defined relative to its parent, Agent. */

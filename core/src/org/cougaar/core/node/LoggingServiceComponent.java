@@ -26,6 +26,7 @@
 
 package org.cougaar.core.node;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
@@ -36,7 +37,6 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.PropertyParser;
 
 /**
  * This component advertises the {@link LoggingService}
@@ -57,7 +57,7 @@ implements Component
 {
 
   private static final String ADD_AGENT_PREFIX =
-    System.getProperty(
+    SystemProperties.getProperty(
         "org.cougaar.core.logging.addAgentPrefix", "true");
 
   private ServiceBroker sb;

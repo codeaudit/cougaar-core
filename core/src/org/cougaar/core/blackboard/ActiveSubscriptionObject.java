@@ -25,7 +25,8 @@
  */
 
 package org.cougaar.core.blackboard;
-import org.cougaar.util.PropertyParser;
+
+import org.cougaar.bootstrap.SystemProperties;
 
 /**
  * Marker interface for blackboard objects that react to
@@ -66,7 +67,7 @@ public interface ActiveSubscriptionObject {
    * at LP invocation time rather than immediately during publishAdd
    * @note deferCommit implies that the ActiveSubscriptionObject cannot veto publishes!
    */
-  boolean deferCommit = PropertyParser.getBoolean(
+  boolean deferCommit = SystemProperties.getBoolean(
       DEFER_COMMIT_PROPERTY, DEFAULT_DEFER_COMMIT);
 
   /**
