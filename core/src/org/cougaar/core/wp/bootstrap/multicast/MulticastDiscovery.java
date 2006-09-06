@@ -62,15 +62,6 @@ import org.cougaar.core.wp.bootstrap.DiscoveryService;
 public class MulticastDiscovery
 extends DiscoveryBase
 {
-  private static final long MIN_DELAY = 
-    SystemProperties.getLong(
-        "org.cougaar.core.wp.resolver.multicast.minLookup",
-        30000);
-  private static final long MAX_DELAY = 
-    SystemProperties.getLong(
-        "org.cougaar.core.wp.resolver.multicast.maxLookup",
-        120000);
-
   private ConfigService configService;
 
   private final ConfigService.Client configClient =
@@ -85,6 +76,10 @@ extends DiscoveryBase
         removePoller(getBootEntry(b));
       }
     };
+
+  protected String getConfigPrefix() {
+    return "org.cougaar.core.wp.resolver.multicast.";
+  }
 
   public void load() {
     super.load();
@@ -103,14 +98,6 @@ extends DiscoveryBase
     }
 
     super.unload();
-  }
-
-  protected long getMinDelay() {
-    return MIN_DELAY;
-  }
-
-  protected long getMaxDelay() {
-    return MAX_DELAY;
   }
 
   protected AddressEntry getBootEntry(Bundle b) {

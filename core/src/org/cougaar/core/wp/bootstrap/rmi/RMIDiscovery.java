@@ -56,15 +56,6 @@ import org.cougaar.core.wp.bootstrap.DiscoveryBase;
 public class RMIDiscovery
 extends DiscoveryBase
 {
-  private static final long MIN_DELAY = 
-    SystemProperties.getLong(
-        "org.cougaar.core.wp.resolver.rmi.minLookup",
-        8000);
-  private static final long MAX_DELAY = 
-    SystemProperties.getLong(
-        "org.cougaar.core.wp.resolver.rmi.maxLookup",
-        120000);
-
   private ConfigService configService;
   private final ConfigService.Client configClient =
     new ConfigService.Client() {
@@ -87,6 +78,10 @@ extends DiscoveryBase
   public void setSocketFactoryService(
       SocketFactoryService socketFactoryService) {
     this.socketFactoryService = socketFactoryService;
+  }
+
+  protected String getConfigPrefix() {
+    return "org.cougaar.core.wp.resolver.rmi.";
   }
 
   public void load() {
@@ -116,14 +111,6 @@ extends DiscoveryBase
       }
       return socFac;
     }
-  }
-
-  protected long getMinDelay() {
-    return MIN_DELAY;
-  }
-
-  protected long getMaxDelay() {
-    return MAX_DELAY;
   }
 
   protected AddressEntry getBootEntry(Bundle b) {

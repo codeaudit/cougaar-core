@@ -40,6 +40,7 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;
+import org.cougaar.core.wp.Parameters;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
@@ -57,16 +58,7 @@ public abstract class DiscoveryBase
 extends GenericStateModelAdapter
 implements Component
 {
-  private static final String PROP_PREFIX =
-    "org.cougaar.core.wp.bootstrap.discovery";
-  private static final long MIN_DELAY = 
-    SystemProperties.getLong(
-        PROP_PREFIX+".minDelay",
-        8000);
-  private static final long MAX_DELAY = 
-    SystemProperties.getLong(
-        PROP_PREFIX+".maxDelay",
-        120000);
+  protected Config config;
 
   protected ServiceBroker sb;
 
@@ -81,6 +73,10 @@ implements Component
   // Map<Object, Poller>
   protected final Map table = new HashMap();
 
+  public void setParameter(Object o) {
+    configure(o);
+  }
+
   public void setServiceBroker(ServiceBroker sb) {
     this.sb = sb;
   }
@@ -93,8 +89,20 @@ implements Component
     this.threadService = threadService;
   }
 
+  protected String getConfigPrefix() {
+    return "org.cougaar.core.wp.bootstrap.discovery.";
+  }
+
+  protected void configure(Object o) {
+    if (config == null) {
+      config = new Config(o, getConfigPrefix());
+    }
+  }
+
   public void load() {
     super.load();
+
+    configure(null);
 
     // which agent are we in?
     AgentIdentificationService ais = (AgentIdentificationService)
@@ -154,10 +162,10 @@ implements Component
    * {@link #getMaxDelay}.
    */
   protected long getMinDelay() {
-    return MIN_DELAY;
+    return config.minDelay;
   }
   protected long getMaxDelay() {
-    return MAX_DELAY;
+    return config.maxDelay;
   }
 
   protected Object getKey(Object bootObj) {
@@ -439,5 +447,21 @@ implements Component
   private static class Destroy implements QueueElement {
     private static final Destroy INSTANCE = new Destroy();
     public static Destroy getInstance() { return INSTANCE; }
+  }
+
+  /** config options */
+  protected static class Config {
+    public final long minDelay;
+    public final long maxDelay;
+
+    public Config(Object o, String prefix) {
+      Parameters p = new Parameters(o, prefix);
+      minDelay = p.getLong("minLookup", 8000);
+      maxDelay = p.getLong("maxLookup", 120000);
+      if (minDelay <= 0 || minDelay > maxDelay) {
+        throw new RuntimeException(
+            "Invalid delay (min="+minDelay+", max="+maxDelay+")");
+      }
+    }
   }
 }
