@@ -64,7 +64,7 @@ import org.cougaar.util.ConfigFinder;
  *
  * @property org.cougaar.core.load.planning
  *   If enabled, the domain manager will load the planning-specific
- *   PlanningDomain.  See bug 2522.  Default <em>true</em>
+ *   PlanningDomain.  See bug 2522.  Defaults to <em>true</em>.
  *
  * @property org.cougaar.core.domain.config.enable
  *   Enable the "-Dorg.cougaar.core.domain.config.filename" option
@@ -79,23 +79,32 @@ public class DomainManager
 extends ContainerSupport
 {
 
+  private static final boolean READ_CONFIG_FILE = 
+    SystemProperties.getBoolean(
+        "org.cougaar.core.domain.config.enable",
+        true);
+
   private static final String FILENAME = 
-    (SystemProperties.getBoolean("org.cougaar.core.domain.config.enable", true) ?
-     SystemProperties.getProperty("org.cougaar.core.domain.config.filename", "LDMDomains.ini") :
-     null);
+    SystemProperties.getProperty(
+        "org.cougaar.core.domain.config.filename",
+        "LDMDomains.ini");
+
+  private static final boolean LOAD_PLANNING =
+    SystemProperties.getBoolean("org.cougaar.core.load.planning", true);
 
   private final static String PREFIX = "org.cougaar.domain.";
   private final static int PREFIXLENGTH = PREFIX.length();
 
-  private final static boolean isPlanningEnabled;
-  static {
-    isPlanningEnabled = SystemProperties.getBoolean("org.cougaar.core.load.planning", true);
-  }
 
   /** Insertion point for a DomainManager, defined relative to its parent, Agent. */
   public static final String INSERTION_POINT = 
     Agent.INSERTION_POINT + ".DomainManager";
   private final static String CONTAINMENT_POINT = INSERTION_POINT;
+
+  // set parameter defaults
+  private boolean readConfigFile = READ_CONFIG_FILE;
+  private String filename = FILENAME;
+  private boolean loadPlanning = LOAD_PLANNING;
 
   private final Object lock = new Object();
   private List delayedXPlans = Collections.EMPTY_LIST;
@@ -110,6 +119,29 @@ extends ContainerSupport
   private XPlanServiceProvider xplanSP;
   private DomainServiceProvider domainSP;
   private DomainForBlackboardServiceProvider domainForBlackboardSP;
+
+  public void setParameter(Object o) {
+    List l = (List) o;
+    for (int i = 0; i < l.size(); i++) {
+      String si = (String) l.get(i);
+      int sep = si.indexOf('=');
+      if (sep <= 0) {
+        throw new IllegalArgumentException(
+            "Expecting a \"name=value\" parameter, not "+si);
+      }
+      String name = si.substring(0, sep).trim();
+      String value = si.substring(sep+1).trim();
+      if ("load_planning".equals(name)) {
+        loadPlanning = "true".equals(value);
+      } else if ("read_config_file".equals(name)) {
+        readConfigFile = "true".equals(value);
+      } else if ("filename".equals(name)) {
+        filename = value;
+      } else {
+        throw new IllegalArgumentException("Unknown parameter name: "+name);
+      }
+    }
+  }
 
   public void setAgentIdentificationService(AgentIdentificationService ais) {
     this.agentIdService = ais;
@@ -378,7 +410,7 @@ extends ContainerSupport
           "root", 
           "org.cougaar.core.domain.RootDomain");
 
-      if (isPlanningEnabled) {
+      if (loadPlanning) {
         // setup the planning domain
         addDomain(
             l,
@@ -683,13 +715,13 @@ extends ContainerSupport
   }
   
   private void initializeFromConfigFiles(List descs) {
-    if (FILENAME == null || FILENAME.equals("")) {
+    if (!readConfigFile || filename == null || filename.equals("")) {
       return;
     }
     InputStream in = null;
     try {
       in = org.cougaar.util.ConfigFinder.getInstance().open(
-          FILENAME);
+          filename);
       InputStreamReader isr = new InputStreamReader(in);
       BufferedReader br = new BufferedReader(isr);
 
@@ -705,20 +737,20 @@ extends ContainerSupport
         }
         int l = line.indexOf('=');
         if (l == -1) {
-          loggingService.error(FILENAME+" syntax error: line "+lc);
+          loggingService.error(filename+" syntax error: line "+lc);
           continue;
         }
         String name = line.substring(0,l).trim();
         String val = line.substring(l+1).trim();
         if (name.length()==0 || val.length()==0) {
-          loggingService.error(FILENAME+" syntax error: line "+lc);
+          loggingService.error(filename+" syntax error: line "+lc);
           continue;
         }
         addDomain(descs, name, val);
       }
     } catch (Exception ex) {
       if (! (ex instanceof FileNotFoundException)) {
-        loggingService.error(FILENAME+" exception: "+ex);
+        loggingService.error(filename+" exception: "+ex);
         ex.printStackTrace();
       }
     } finally {
@@ -727,7 +759,7 @@ extends ContainerSupport
 	  in.close();
 	} catch(Exception e) {
 	  if (loggingService.isDebugEnabled())
-	    loggingService.debug("Failed closing input stream for " + FILENAME, e);
+	    loggingService.debug("Failed closing input stream for " + filename, e);
 	}
 	in = null;
       }
