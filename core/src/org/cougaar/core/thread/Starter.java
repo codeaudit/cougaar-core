@@ -39,6 +39,10 @@ import org.cougaar.util.CircularQueue;
 final class Starter extends Thread
 {
 
+    // At least one thread must be a non-daemon thread, otherwise the JVM
+    // will exit.  We'll mark this thread as our non-daemon "keep-alive".
+    private static final boolean DAEMON = false;
+
     private static Starter singleton;
 
     static void startThread()  {
@@ -59,7 +63,7 @@ final class Starter extends Thread
 
     private Starter() {
 	super("Scheduler Starter");
-	setDaemon(true);
+	setDaemon(DAEMON);
 	queue = new CircularQueue();
 	lock = new Object();
     }

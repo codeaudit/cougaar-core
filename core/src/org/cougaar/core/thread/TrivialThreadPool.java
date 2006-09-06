@@ -39,7 +39,12 @@ import org.cougaar.util.log.Logging;
  */
 class TrivialThreadPool
 {
+    // As noted in Starter, we need at least one thread to be non-daemon
+    // to keep our JVM alive.  We mark the first ThreadRunner as non-daemon.
+    private static final boolean DAEMON = false;
+
     private static TrivialThreadPool singleton = new TrivialThreadPool();
+
     static TrivialThreadPool pool() 
     {
 	return singleton;
@@ -49,6 +54,13 @@ class TrivialThreadPool
     ThreadRunner[] pool = new ThreadRunner[100];
     ArrayList list_pool = new ArrayList();
     Logger logger = Logging.getLogger(getClass().getName());
+
+    private TrivialThreadPool() {
+      if (!DAEMON) {
+        // Start our keep-alive
+        pool[0] = new ThreadRunner(false);
+      }
+    }
 
     synchronized String generateName() {
 	return "TrivialThread-" + anon_count++;
@@ -61,10 +73,13 @@ class TrivialThreadPool
 	Object lock = new Object();
 	long start_time;
 
-	ThreadRunner() 
-	{
+	ThreadRunner() {
+          this(true);
+        }
+
+	ThreadRunner(boolean daemon) {
 	    super("ThreadRunner");
-	    setDaemon(true);
+	    setDaemon(daemon);
 	    super.start();
 	}
 
