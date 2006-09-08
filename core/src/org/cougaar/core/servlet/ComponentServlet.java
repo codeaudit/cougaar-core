@@ -36,6 +36,7 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ServletService;
 import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.GenericStateModelAdapter;
@@ -148,25 +149,30 @@ implements Component {
     }
   }
 
-  public void setServletService(ServletService servletService) {
-    this.servletService = servletService;
-  }
-
   public void initialize() throws StateModelException { gsm.initialize(); }
 
   public void load() {
     gsm.load();
-    
+
+    // get the servlet service, if available
+    servletService = (ServletService)
+      serviceBroker.getService(this, ServletService.class, null);
+    if (servletService == null) {
+      LoggingService log = (LoggingService)
+        serviceBroker.getService(this, LoggingService.class, null);
+      if (log != null && log.isWarnEnabled()) {
+        log.warn("Unable to obtain servlet service");
+      }
+      return;
+    }
+
     // register this servlet
     String path = getPath();
     try {
       servletService.register(path, this);
     } catch (Exception e) {
       String failMsg =
-        ((path == null) ?
-         "Servlet path not specified" :
-         (servletService == null) ?
-         "Unable to obtain servlet service" :
+        (path == null ? "Servlet path not specified" :
          "Unable to register servlet with path \""+path+"\"");
       throw new RuntimeException(failMsg, e);
     }
