@@ -74,7 +74,7 @@ implements SimpleRelay, Serializable {
     return query;
   }
 
-  public void setQuery(Object reply) {
+  public void setQuery(Object query) {
     this.query = query;
   }
 
