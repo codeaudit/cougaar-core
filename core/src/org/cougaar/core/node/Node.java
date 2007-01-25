@@ -35,6 +35,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
@@ -55,6 +57,7 @@ import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceBrokerSupport;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.util.Configuration;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
@@ -150,7 +153,7 @@ extends ContainerSupport
    *
    * @see org.cougaar.bootstrap.Bootstrapper
    */
-  public static void launch(String[] args) {
+  public static void launch(Object[] args) {
     // convert any command-line args to System Properties
     loadSystemProperties();
     if (!setSystemProperties(args)) {
@@ -164,17 +167,15 @@ extends ContainerSupport
     maybeValidateJars();
 
     // create the root service broker and binding site
-    final ServiceBroker rootsb = 
-      new ServiceBrokerSupport() {
-      };
+    final ServiceBroker rootsb = new ServiceBrokerSupport() {};
     BindingSite rootbs = 
       new BindingSite() {
-        public ServiceBroker getServiceBroker() {
-          return rootsb;
-        }
-        public void requestStop() {
-        }
+        public ServiceBroker getServiceBroker() { return rootsb; }
+        public void requestStop() { }
       };
+
+    // import external container services, if any
+    importServices(rootsb, args);
 
     // try block to ensure we catch all exceptions and exit gracefully
     try {
@@ -188,6 +189,88 @@ extends ContainerSupport
           "  Exception is: " +
           e );
       e.printStackTrace();
+    }
+  }
+
+  /**
+   * Import services passed in by our {@link #launch} args.
+   * <p>
+   * Examples of supported args[<i>index</i>] values:<pre>
+   *   // just like "rootsb.addService(clazz, sp)"
+   *   new Object[] { MyService.class, new ServiceProvider() {..} }
+   *
+   *   // use a boilerplate ServiceProvider service wrapper
+   *   new Object[] { MyService.class, new MyService() {..} }
+   *
+   *   // use reflection to avoid most classloader problems
+   *   new Object[] { "com.foo.MyService", new InvocationHandler() {..} }
+   * </pre>
+   */
+  public static void importServices(ServiceBroker rootsb, Object[] args) {
+    for (int i = 0; i < args.length; i++) {
+      // look for an Object[2]
+      Object oi = args[i];
+      if (oi instanceof String) continue;
+      if (!(oi instanceof Object[])) {
+        throw new RuntimeException(
+            "Expecting a String or Object[], not "+oi);
+      }
+      Object[] oa = (Object[]) oi;
+      if (oa.length != 2) {
+        throw new RuntimeException(
+            "Expecting an Object[2], not ["+oa.length+"]");
+      }
+      Object cl_obj = oa[0];
+      Object sv_obj = oa[1];
+
+      // get the service class
+      final Class clazz;
+      if (cl_obj instanceof Class) {
+        clazz = (Class) cl_obj;
+      } else if (cl_obj instanceof String) {
+        try {
+          clazz = Class.forName((String) cl_obj);
+        } catch (Exception e) {
+          throw new RuntimeException("Unknown classname "+cl_obj, e);
+        }
+      } else {
+        throw new RuntimeException(
+            "Expecting a Class or String, not "+cl_obj);
+      }
+
+      // get the service provider
+      ServiceProvider sp;
+      if (sv_obj instanceof ServiceProvider) {
+        sp = (ServiceProvider) sv_obj;
+      } else {
+        final Object service;
+        if (sv_obj instanceof InvocationHandler) {
+          // create a reflective proxy
+          service = 
+            Proxy.newProxyInstance(
+                rootsb.getClass().getClassLoader(),
+                new Class[] {clazz},
+                ((InvocationHandler) sv_obj));
+        } else {
+          // it's okay of the object doesn't implement "Service", since it
+          // might be implement in code that lacks our Service API.
+          service = sv_obj;
+        }
+
+        sp = new ServiceProvider() {
+          public Object getService(
+              ServiceBroker sb, Object requestor, Class serviceClass) {
+            return (clazz.isAssignableFrom(serviceClass) ? service : null);
+          }
+          public void releaseService(
+              ServiceBroker sb, Object requestor,
+              Class serviceClass, Object service) {
+          }
+        };
+      }
+
+      // add the service
+      rootsb.addService(clazz, sp);
     }
   }
 
@@ -215,10 +298,12 @@ extends ContainerSupport
    * <p>
    * @return false if node should exit
    */
-  private static boolean setSystemProperties(String[] args) {
+  private static boolean setSystemProperties(Object[] args) {
     // separate the args into "-D" properties and normal arguments
     for (int i = 0; i < args.length; i++) {
-      String argi = args[i];
+      Object oi = args[i];
+      if (!(oi instanceof String)) continue; 
+      String argi = (String) oi;
       if (argi.startsWith("-D")) {
         // add a "late" system property
         int sepIdx = argi.indexOf('=');
@@ -230,7 +315,7 @@ extends ContainerSupport
         }
       } else if (argi.equals("-n")) {
         // old "-n node" pattern
-        String name = args[++i];
+        String name = (String) args[++i];
         SystemProperties.setProperty("org.cougaar.node.name", name);
         Logger logger = Logging.getLogger(Node.class);
         if (logger.isInfoEnabled()) {
