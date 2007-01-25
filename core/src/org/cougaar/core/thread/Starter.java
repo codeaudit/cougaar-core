@@ -26,6 +26,7 @@
 
 package org.cougaar.core.thread;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.CircularQueue;
 
 /**
@@ -41,7 +42,8 @@ final class Starter extends Thread
 
     // At least one thread must be a non-daemon thread, otherwise the JVM
     // will exit.  We'll mark this thread as our non-daemon "keep-alive".
-    private static final boolean DAEMON = false;
+    private static final boolean DAEMON =
+        SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
     private static Starter singleton;
 

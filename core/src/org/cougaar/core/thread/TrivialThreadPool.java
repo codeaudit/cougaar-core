@@ -28,6 +28,7 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
@@ -41,7 +42,8 @@ class TrivialThreadPool
 {
     // As noted in Starter, we need at least one thread to be non-daemon
     // to keep our JVM alive.  We mark the first ThreadRunner as non-daemon.
-    private static final boolean DAEMON = false;
+    private static final boolean DAEMON =
+        SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
     private static TrivialThreadPool singleton = new TrivialThreadPool();
 
