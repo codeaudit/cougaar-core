@@ -107,8 +107,8 @@ class QuiescenceMonitor {
         is.close();
       }
     } catch (FileNotFoundException e) {
-      if (logger.isWarnEnabled()) {
-        logger.warn("File not found: " + e.getMessage() + ". Using defaults");
+      if (logger.isInfoEnabled()) {
+        logger.info("File not found: " + e.getMessage() + ". Using defaults");
       }
       installDefaultExclusions();
     } catch (Exception e) {
