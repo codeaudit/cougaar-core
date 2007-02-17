@@ -26,10 +26,15 @@
 
 package org.cougaar.core.agent;
 
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.Service;
@@ -38,6 +43,7 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentContainmentService;
 import org.cougaar.core.service.AgentIdentificationService;
+import org.cougaar.core.util.Reflection;
 import org.cougaar.util.GenericStateModel;
 
 /**
@@ -49,6 +55,9 @@ import org.cougaar.util.GenericStateModel;
  */
 public class AgentImpl extends Agent {
 
+  // from "setParameter(..)", cleared in "load()"
+  private List params;
+
   // this agent's address
   private MessageAddress localAgent;
 
@@ -58,32 +67,17 @@ public class AgentImpl extends Agent {
   }
 
   /**
-   * Expects the parameter to specify the MessageAddress,
-   * either through a single String or the first element of
-   * a List.
+   * Required parameter, minimally our agent name.
    */
-  public void setParameter(Object o) {
-    MessageAddress cid = null;
-    if (o instanceof MessageAddress) {
-      cid = (MessageAddress) o;
-    } else if (o instanceof String) {
-      cid = MessageAddress.getMessageAddress((String) o);
-    } else if (o instanceof List) {
-      List l = (List) o;
-      if (!l.isEmpty()) {
-        Object o1 = l.get(0);
-        if (o1 instanceof MessageAddress) {
-          cid = (MessageAddress) o1;
-        } else if (o1 instanceof String) {
-          cid = MessageAddress.getMessageAddress((String) o1);
-        }
-      }
+  public void setParameter(Object param) {
+    Object o = param;
+    if (o instanceof Object[]) {
+      o = Arrays.asList((Object[]) o);
     }
-    if (cid == null) {
-      throw new IllegalArgumentException(
-          "Invalid agent parameter: "+o);
+    if (o != null && !(o instanceof List)) {
+      o = Collections.singletonList(o);
     }
-    this.localAgent = cid;
+    params = (List) o;
   }
 
   // disable super load sequence
@@ -110,6 +104,25 @@ public class AgentImpl extends Agent {
     // can't call super.load()!
     transitState("load()", UNLOADED, LOADED);
 
+    // take parameters
+    List p = params;
+    params = null;
+
+    // first parameter is our agent name
+    Object p0 = (p == null || p.isEmpty() ? null : p.get(0));
+    if (p0 instanceof String) {
+      p0 = MessageAddress.getMessageAddress((String) p0);
+    }
+    if (!(p0 instanceof MessageAddress)) {
+      throw new RuntimeException(
+          "Expecting an agent name as parameter[0], not "+
+          (p0 == null ? "null" : p0.getClass().getName()));
+    }
+    this.localAgent = (MessageAddress) p0;
+
+    // the remaining parameters are external components
+    List ext = p.subList(1, p.size());
+
     add_agent_state_model_service();
     add_agent_containment_service();
     add_agent_component_model_service();
@@ -118,7 +131,9 @@ public class AgentImpl extends Agent {
 
     ServiceProvider sp = add_agent_component_list_service(l);
 
-    this.add_agent_identification_service(localAgent);
+    add_agent_identification_service(localAgent);
+
+    add_external_components(ext);
 
     // start with a bootstrap component, which must use our
     // AgentBootstrapService to add more components that we
@@ -241,6 +256,82 @@ public class AgentImpl extends Agent {
         }
       };
     add_service(clazz, service);
+  }
+
+  //
+  private void add_external_components(List l) {
+    int n = (l == null ? 0 : l.size());
+    for (int i = 0; i < n; i++) {
+      Object oi = l.get(i);
+      try {
+        add_external_component(oi);
+      } catch (Exception e) {
+        throw new RuntimeException(
+            "Unable to add_external_component ["+i+" / "+n+"]", e);
+      }
+    }
+  }
+
+  // 
+  private void add_external_component(Object o) throws Exception {
+    // cast parameter as list
+    List args;
+    if (o instanceof List) {
+      args = (List) o;
+    } else if (o instanceof Object[]) {
+      args = Arrays.asList((Object[]) o);
+    } else if (o instanceof String) {
+      // ignore strings
+      return;
+    } else {
+      // support comp-desc?
+      throw new RuntimeException(
+          "Expecting a List, Object[], or String, not "+
+          (o == null ? "null" : o.getClass().getName()));
+    }
+
+    int n = (args == null ? 0 : args.size());
+    if (n < 3) {
+      throw new RuntimeException(
+          "Invalid external component definition, expecting:\n"+
+          "\n  insertionPoint, priority, classname, [arg0, ..]");
+    }
+
+    // for now, only support agent-level HIGH external components
+    Object ip = args.get(0);
+    if (!"Node.AgentManager.Agent.Component".equals(ip)) {
+      throw new RuntimeException(
+          "External component InsertionPoint must be "+
+          "Node.AgentManager.Agent.Component"+
+          ", not "+ip);
+    }
+    Object pr = args.get(1);
+    if (!"HIGH".equals(pr)) {
+      throw new RuntimeException(
+          "External component Priority must be "+
+          "HIGH"+
+          ", not "+pr);
+    }
+
+    Object c = args.get(2);
+    if (c instanceof String) {
+      c = Class.forName((String) c);
+    }
+    if (c instanceof Class) {
+      c = ((Class) c).newInstance();
+    }
+    if (!(c instanceof Component)) {
+      c = Reflection.makeProxy(c, Component.class);
+    }
+
+    if (n > 2) {
+      List l = new ArrayList(args.subList(3, n));
+      Class cl = c.getClass();
+      Method m = cl.getMethod("setParameter", new Class[] { Object.class });
+      m.invoke(c, new Object[] { l });
+    }
+
+    addComponent(c, null);
   }
 
   private ServiceProvider add_service(

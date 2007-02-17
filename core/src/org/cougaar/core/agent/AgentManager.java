@@ -30,8 +30,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +44,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.StateTuple;
+import org.cougaar.core.component.ViewService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeControlService;
@@ -78,31 +79,44 @@ public class AgentManager
   private static final String NODE_AGENT_CLASSNAME_PROPERTY =
       "org.cougaar.core.node.classname";
 
+  private List params;
+
   private ServiceProvider nodeIdentificationSP;
   private ServiceProvider nodeControlSP;
   
   private boolean isNodeShuttingDown = false;
   private final Object shutdownLock = new Object();
   
+  public void setParameter(Object o) {
+    if (!(o instanceof List)) {
+      throw new IllegalArgumentException(
+          "Expecting a List, not "+
+          (o == null ? "null" : o.getClass().getName()));
+    }
+    params = (List) o;
+  }
+
   public void load() {
     super.load();
+
+    List ext = params;
+    params = null;
 
     String nodeName = getNodeName();
 
     add_node_identification_service(nodeName);
 
-    add_node_control_service(nodeName);
+    add_node_control_service();
 
     add(getInitializerDescription());
 
     addAll(getAgentBinderDescriptions(nodeName));
 
-    add(getNodeAgentDescription(nodeName));
+    add(getNodeAgentDescription(nodeName, ext));
   }
 
   /**
    * Unload Agent manager.
-   * <p>
    * 
    * @see org.cougaar.util.GenericStateModel#unload()
    */
@@ -177,7 +191,7 @@ public class AgentManager
     nodeIdentificationSP = add_service(clazz, service);
   }
 
-  private void add_node_control_service(final String nodeName) {
+  private void add_node_control_service() {
     // instead of using the node's or our service broker as the
     // "rootsb", we use our child service broker.  All components
     // and agents are loaded as our children, so this is should
@@ -234,9 +248,7 @@ public class AgentManager
           }
 
           public void shutdown() {
-            final MessageAddress localNode =
-              MessageAddress.getMessageAddress(nodeName);
-            shutdownNode(localNode);
+            shutdownNode();
           }
         };
     nodeControlSP = add_service(clazz, service);
@@ -287,11 +299,15 @@ public class AgentManager
         ComponentDescriptions.sort(cds.extractInsertionPointComponent(INSERTION_POINT + ".Binder"));
   }
 
-  private ComponentDescription getNodeAgentDescription(String nodeName) {
+  private ComponentDescription getNodeAgentDescription(
+      String nodeName, List external_components) {
     String classname = SystemProperties.getProperty(NODE_AGENT_CLASSNAME_PROPERTY,
         "org.cougaar.core.agent.AgentImpl");
     List params = new ArrayList(1);
     params.add(nodeName);
+    if (external_components != null) {
+      params.addAll(external_components);
+    }
     ComponentDescription desc =
         new ComponentDescription(classname,
             Agent.INSERTION_POINT,
@@ -404,7 +420,7 @@ public class AgentManager
       public Object eval(Object o) {
         List cds = (List) o;
 
-        HashMap ret = new HashMap(cds.size());
+        Map ret = new LinkedHashMap(cds.size());
         for (Iterator iter = componentIterator(); iter.hasNext(); ) {
           Object ob = iter.next();
           ComponentDescription desc = (ComponentDescription) ob;
@@ -493,11 +509,8 @@ public class AgentManager
 
   /**
    * Shuts down the local node.
-   * <p>
-   * 
-   * @param localNode the local node to be shutdown.
    */
-  protected void shutdownNode(final MessageAddress localNode) {
+  protected void shutdownNode() {
     synchronized(shutdownLock) {
       if (isNodeShuttingDown) {
         // Shut down sequence has already been initiated.
@@ -507,25 +520,24 @@ public class AgentManager
     }
     Runnable r = new Runnable() {
       public void run() {
-        Iterator it = getAgentAddresses().iterator();
-        // Remove all agents, node agent should be last.
-        while (it.hasNext()) {
-          MessageAddress addr = (MessageAddress)it.next();
-          if (addr == null || addr.equals(localNode)) {
-            continue;
+        // Remove all agents in reverse load order
+        //
+        // Note that we remove the nodeAgent last
+        List l = new ArrayList(getAgentAddresses());
+        for (int i = l.size() - 1; i >= 0; i--) {
+          Object oi = l.get(i);
+          if (oi instanceof MessageAddress) {
+            removeAgent((MessageAddress) oi);
           }
-          removeAgent(addr);
         }
-        // Remove node agent.
-        removeAgent(localNode);
-        
+
         revokeServices();
-        
+
         // For debugging purposes: verify all services have been revoked
         ServiceBroker sb = getServiceBroker();
-        it = sb.getCurrentServiceClasses();
-        while (it.hasNext()) {
-          Class cl = (Class)it.next();
+        for (Iterator iter = sb.getCurrentServiceClasses(); iter.hasNext(); ) {
+          Class cl = (Class) iter.next();
+          if (ViewService.class.isAssignableFrom(cl)) continue;
           Logging.getLogger(this.getClass()).error(
               "Service should have been revoked: " + cl.getName());
         }

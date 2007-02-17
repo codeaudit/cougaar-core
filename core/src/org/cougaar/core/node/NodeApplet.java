@@ -34,19 +34,13 @@ import java.awt.Graphics;
 import java.awt.LayoutManager;
 import java.applet.Applet;
 import java.applet.AppletContext;
+import java.lang.reflect.Method;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import org.cougaar.bootstrap.Bootstrapper;
-import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.node.Node;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.BindingUtility;
-import org.cougaar.core.component.Service;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceBrokerSupport;
-import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.AppletService;
 
 /**
@@ -80,12 +74,12 @@ public class NodeApplet extends Applet {
   };
 
   private static final String[] DEFAULT_PROPS = new String[] {
-    // config path without $CWD
-    "-Dorg.cougaar.config.path=$CIP;$CIP/configs/common",
     // read the node from XML
     "-Dorg.cougaar.core.node.InitializationComponent=XML",
     // avoid javaiopatch check in persistence
     "-Dorg.cougaar.core.persistence.verifyJavaIOPatch=false",
+    // don't set thread name (access denied)
+    "-Dorg.cougaar.core.blackboard.client.setThreadName=false",
     // local-only wp
     "-Dorg.cougaar.society.xsl.param.wpserver=singlenode",
     // local-only mts
@@ -113,9 +107,13 @@ public class NodeApplet extends Applet {
   private static final int LOADING = 0;
   private static final int RUNNING = 1;
   private static final int FAILED  = 2;
+  private static final int STOPPED = 3;
 
   private final Object state_lock = new Object();
   private int state = LOADING;
+
+  // shutdown support
+  private final NodeControlSupport ncs = new NodeControlSupport();
 
   public void init() {
     setLayout(new BorderLayout());
@@ -129,31 +127,37 @@ public class NodeApplet extends Applet {
       updateState(FAILED, e);
       return;
     }
-    SystemProperties.overrideProperties(props);
 
+    // define external services
+    List l = new ArrayList();
+    l.add(new Object[] {
+      "Node.AgentManager.Agent.Component",
+      "HIGH",
+      "org.cougaar.core.node.SetPropertiesComponent",
+      props});
+     l.add(new Object[] {
+      "Node.AgentManager.Agent.Component",
+      "HIGH",
+      "org.cougaar.core.node.GetServiceComponent",
+      "org.cougaar.core.node.NodeControlService",
+      ncs});
+    l.add(new Object[] {
+      "Node.AgentManager.Agent.Component",
+      "HIGH",
+      "org.cougaar.core.node.AddServiceComponent",
+      "org.cougaar.core.service.AppletService",
+      createAppletService(),
+      "true"});
+    final Object[] args = l.toArray();
+
+    // launch node
     Runnable r = new Runnable() {
       public void run() {
-        // create the root service broker and binding site
-        final ServiceBroker rootsb = new ServiceBrokerSupport() { };
-        BindingSite rootbs = 
-          new BindingSite() {
-            public ServiceBroker getServiceBroker() { return rootsb; }
-            public void requestStop() { }
-          };
-
-        // add our AppletService
-        AppletService appletService = createAppletService();
-        rootsb.addService(
-            AppletService.class,
-            new SimpleServiceProvider(AppletService.class, appletService));
-
-        // launch the node
         Throwable t = null;
         try {
-          Node myNode = new Node();
-          // this will call our "load()" method
-          BindingUtility.activate(myNode, rootbs, rootsb);
-          // done with our job... quietly finish.
+          Class cl = Class.forName("org.cougaar.core.node.Node");
+          Method m = cl.getMethod("launch", new Class[] {Object[].class});
+          m.invoke(null, new Object[] {args});
         } catch (Throwable e) {
           t = new RuntimeException("Unable to start node", e);
         }
@@ -161,23 +165,18 @@ public class NodeApplet extends Applet {
         updateState((t == null ? RUNNING : FAILED), t);
       }
     };
-
     (new Thread(r, "Cougaar main")).start();
   }
 
   private Properties createProperties() {
     Properties ret = new Properties();
 
-    // applets are always allowed to see these properties:
-    ret.put("file.separator", System.getProperty("file.separator"));
-    ret.put("java.class.version", System.getProperty("java.class.version"));
-    ret.put("java.vendor", System.getProperty("java.vendor"));
-    ret.put("java.vendor.url", System.getProperty("java.vendor.url"));
-    ret.put("java.version", System.getProperty("java.version"));
-    ret.put("line.separator", System.getProperty("line.separator"));
-    ret.put("os.arch", System.getProperty("os.arch"));
-    ret.put("os.name", System.getProperty("os.name"));
-    ret.put("path.separator", System.getProperty("path.separator"));
+    // tell our node to call "SystemProperties.overrideProperties(..)"
+    // and set the minimal allowed applet -Ds:
+    //   java.version, os.name, ..
+    ret.put("override_props", "true");
+    ret.put("finalize_props", "true");
+    ret.put("put_applet_props", "true");
 
     // figure out our cip, which is our path minus the basename
     // e.g.  http://x:y/z/file -->  http://x:y/z
@@ -197,6 +196,9 @@ public class NodeApplet extends Applet {
     ret.put("org.cougaar.install.path", cip);
     ret.put("user.home", cip);
     ret.put("user.dir", cip);
+
+    // config path without $CWD
+    ret.put("org.cougaar.config.path", cip+";"+cip+"/configs/common");
 
     // set default properties
     putAll(ret, DEFAULT_PROPS);
@@ -253,7 +255,8 @@ public class NodeApplet extends Applet {
   }
 
   public void destroy() {
-    // call NodeControlService.shutdown()?
+    updateState(STOPPED, null);
+    ncs.shutdown();
   }
 
   public String getAppletInfo() {
@@ -338,6 +341,7 @@ public class NodeApplet extends Applet {
           msg =
             (state == LOADING ? "Loading Cougaar.." :
              state == RUNNING ? "Cougaar is Running" :
+             state == STOPPED ? "Stopping Cougaar" :
              "Failed to start Cougaar (see Java Console)");
         }
 
@@ -364,18 +368,22 @@ public class NodeApplet extends Applet {
     paintHandler.paint(superPaintHandler, g);
   }
 
-  private static final class SimpleServiceProvider implements ServiceProvider {
-    private final Class clazz;
-    private final Service service;
-    public SimpleServiceProvider(Class clazz, Service service) {
-      this.clazz = clazz;
-      this.service = service;
+  private class NodeControlSupport {
+    private Object svc;
+    public void setService(Class cl, Object svc) {
+      this.svc = svc;
     }
-    public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
-      return (clazz.isAssignableFrom(serviceClass) ? service : null);
-    }
-    public void releaseService(
-        ServiceBroker sb, Object requestor, Class serviceClass, Object service) {
+    public void shutdown() {
+      if (svc != null) {
+        try {
+          Class cl = svc.getClass();
+          Method m = cl.getMethod("shutdown", null);
+          m.invoke(svc, null);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      }
+      svc = null;
     }
   }
 }

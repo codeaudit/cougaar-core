@@ -35,14 +35,15 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Proxy;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 import java.util.Vector;
@@ -57,10 +58,7 @@ import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceBrokerSupport;
-import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.util.Configuration;
-import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
 
 /**
  * This component is the root component of the
@@ -125,20 +123,28 @@ extends ContainerSupport
 {
   public static final String INSERTION_POINT = "Node";
 
+  private List params;
+
   /**
    * Node entry point.
    * <p>
-   * If org.cougaar.useBootstrapper is true, will search for
-   * installed jar files in order to load all classes.  Otherwise,
-   * will rely solely on classpath.
+   * If org.cougaar.useBootstrapper is true, this method will load all jars
+   * file on the jar path (typically "lib/" and "sys/").  Otherwise, this
+   * method will rely solely on the classpath.
    *
    * @see #launch(String[])
    */
   // @deprecated
-  public static void main(String[] args){
-    if (SystemProperties.getBoolean(
-          "org.cougaar.useBootstrapper", true)) {
-      Logging.getLogger(Node.class).warn(
+  public static void main(String[] args) {
+    boolean useBootstrapper;
+    try {
+      useBootstrapper = 
+        SystemProperties.getBoolean("org.cougaar.useBootstrapper", true);
+    } catch (Exception e) {
+      useBootstrapper = true;
+    }
+    if (useBootstrapper) {
+      System.err.println(
           "-Dorg.cougaar.useBootstrapper is deprecated."+
           "  Invoke Bootstrapper directly.");
       Bootstrapper.launch(Node.class.getName(), args);
@@ -148,12 +154,125 @@ extends ContainerSupport
   }
 
   /**
-   * The real entry-point for Node, generally invoked via 
-   * the bootstrapper.
+   * The real entry-point for Node, which is generally invoked via the
+   * bootstrapper.
    *
    * @see org.cougaar.bootstrap.Bootstrapper
    */
   public static void launch(Object[] args) {
+    // create the root service broker and binding site
+    final ServiceBroker rootsb = new ServiceBrokerSupport() {};
+    BindingSite rootbs = 
+      new BindingSite() {
+        public ServiceBroker getServiceBroker() { return rootsb; }
+        public void requestStop() { }
+      };
+
+    // create and load our node
+    try {
+      Node myNode = new Node();
+      if (args != null) {
+        myNode.setParameter(args);
+      }
+      BindingUtility.activate(myNode, rootbs, rootsb);
+    } catch (Throwable e) {
+      // catch all exceptions and exit gracefully
+      System.out.println(
+          "Caught an exception at the highest try block."+
+          "  Exception is: " +
+          e );
+      e.printStackTrace();
+    }
+
+    // the node-internal threads keep it alive, until "shutdown()" is called
+  }
+
+  protected String specifyContainmentPoint() {
+    return INSERTION_POINT;
+  }
+
+  protected ServiceBroker createChildServiceBroker(BindingSite bs) {
+    // node uses the root service broker
+    return getServiceBroker();
+  }
+
+  protected ComponentDescriptions findInitialComponentDescriptions() {
+    return null;
+  }
+
+  /**
+   * Set our "Object[]" args, called by {@link #launch}.
+   */
+  public void setParameter(Object obj) {
+    Object o = obj;
+    if (o instanceof Object[]) {
+      o = Arrays.asList((Object[]) o);
+    }
+    if (!(o instanceof List)) {
+      throw new RuntimeException(
+          "Expecting an Object[] or List, not "+
+          (o == null ? "null" : o.getClass().getName()));
+    }
+    params = (List) o;
+  }
+
+  /**
+   * This method initializes and loads the node.
+   */
+  public void load() {
+    super.load();
+
+    // take params
+    List args = new ArrayList();
+    if (params != null) {
+      args.addAll(params);
+      params = null;
+    }
+
+    // FIXME move this into AgentImpl, along with all other pre-AgentImpl 
+    // operations (loadSystemProperties, printVersion, etc).
+    //
+    // Our pre-AgentImpl methods need our -Ds, so we must load our "setProps"
+    // component very early.  This component is used by external containers to
+    // do
+    //   SystemProperties.overrideProperties(..)
+    // and to set its custom -Ds (e.g. nodeName).  These -Ds must be set before
+    // any use (get/set) of these properties, e.g. any calls to
+    //   .. = SystemProperties.getProperty(..)
+    // In particular, our Logger requires -Ds to initialize the log4j factory.
+    //
+    // Hence the following early-load hack:
+    for (int i = 0; i < args.size(); i++) {
+      Object o = args.get(i);
+      if (o instanceof Object[]) {
+        o = Arrays.asList((Object[]) o);
+      }
+      if (!(o instanceof List)) continue;
+      List l = (List) o;
+      if (l.size() != 4) continue;
+      if (!"Node.AgentManager.Agent.Component".equals(l.get(0))) continue;
+      if (!"HIGH".equals(l.get(1))) continue;
+      Object c = l.get(2);
+      if (c instanceof Class) {
+        c = ((Class) c).getName();
+      }
+      if (!"org.cougaar.core.node.SetPropertiesComponent".equals(c)) continue;
+      args.remove(i--);
+
+      ComponentDescription cd = 
+        new ComponentDescription(
+            "org.cougaar.core.node.SetPropertiesComponent",
+            "Node.Component",
+            "org.cougaar.core.node.SetPropertiesComponent",
+            null, //codebase
+            l.subList(3, l.size()),
+            null, //certificate
+            null, //lease
+            null, //policy
+            ComponentDescription.PRIORITY_HIGH);
+      add(cd);
+    }
+
     // convert any command-line args to System Properties
     loadSystemProperties();
     if (!setSystemProperties(args)) {
@@ -166,116 +285,21 @@ extends ContainerSupport
     // check for valid plugin jars
     maybeValidateJars();
 
-    // create the root service broker and binding site
-    final ServiceBroker rootsb = new ServiceBrokerSupport() {};
-    BindingSite rootbs = 
-      new BindingSite() {
-        public ServiceBroker getServiceBroker() { return rootsb; }
-        public void requestStop() { }
-      };
-
-    // import external container services, if any
-    importServices(rootsb, args);
-
-    // try block to ensure we catch all exceptions and exit gracefully
-    try {
-      Node myNode = new Node();
-      // this will call our "load()" method
-      BindingUtility.activate(myNode, rootbs, rootsb);
-      // done with our job... quietly finish.
-    } catch (Throwable e) {
-      System.out.println(
-          "Caught an exception at the highest try block."+
-          "  Exception is: " +
-          e );
-      e.printStackTrace();
-    }
+    // add the agent manager, which loads the node-agent
+    add(new ComponentDescription(
+          "org.cougaar.core.agent.AgentManager",
+          "Node.Component",
+          "org.cougaar.core.agent.AgentManager",
+          null,  //codebase
+          args,
+          null,  //certificate
+          null,  //lease
+          null,  //policy
+          ComponentDescription.PRIORITY_HIGH));
   }
 
   /**
-   * Import services passed in by our {@link #launch} args.
-   * <p>
-   * Examples of supported args[<i>index</i>] values:<pre>
-   *   // just like "rootsb.addService(clazz, sp)"
-   *   new Object[] { MyService.class, new ServiceProvider() {..} }
-   *
-   *   // use a boilerplate ServiceProvider service wrapper
-   *   new Object[] { MyService.class, new MyService() {..} }
-   *
-   *   // use reflection to avoid most classloader problems
-   *   new Object[] { "com.foo.MyService", new InvocationHandler() {..} }
-   * </pre>
-   */
-  public static void importServices(ServiceBroker rootsb, Object[] args) {
-    for (int i = 0; i < args.length; i++) {
-      // look for an Object[2]
-      Object oi = args[i];
-      if (oi instanceof String) continue;
-      if (!(oi instanceof Object[])) {
-        throw new RuntimeException(
-            "Expecting a String or Object[], not "+oi);
-      }
-      Object[] oa = (Object[]) oi;
-      if (oa.length != 2) {
-        throw new RuntimeException(
-            "Expecting an Object[2], not ["+oa.length+"]");
-      }
-      Object cl_obj = oa[0];
-      Object sv_obj = oa[1];
-
-      // get the service class
-      final Class clazz;
-      if (cl_obj instanceof Class) {
-        clazz = (Class) cl_obj;
-      } else if (cl_obj instanceof String) {
-        try {
-          clazz = Class.forName((String) cl_obj);
-        } catch (Exception e) {
-          throw new RuntimeException("Unknown classname "+cl_obj, e);
-        }
-      } else {
-        throw new RuntimeException(
-            "Expecting a Class or String, not "+cl_obj);
-      }
-
-      // get the service provider
-      ServiceProvider sp;
-      if (sv_obj instanceof ServiceProvider) {
-        sp = (ServiceProvider) sv_obj;
-      } else {
-        final Object service;
-        if (sv_obj instanceof InvocationHandler) {
-          // create a reflective proxy
-          service = 
-            Proxy.newProxyInstance(
-                rootsb.getClass().getClassLoader(),
-                new Class[] {clazz},
-                ((InvocationHandler) sv_obj));
-        } else {
-          // it's okay of the object doesn't implement "Service", since it
-          // might be implement in code that lacks our Service API.
-          service = sv_obj;
-        }
-
-        sp = new ServiceProvider() {
-          public Object getService(
-              ServiceBroker sb, Object requestor, Class serviceClass) {
-            return (clazz.isAssignableFrom(serviceClass) ? service : null);
-          }
-          public void releaseService(
-              ServiceBroker sb, Object requestor,
-              Class serviceClass, Object service) {
-          }
-        };
-      }
-
-      // add the service
-      rootsb.addService(clazz, sp);
-    }
-  }
-
-  /**
-   * Convert any command-line args to System Properties.
+   * Convert any command-line args into System Properties.
    * <p>
    * System properties are preferred, since it simplifies the
    * configuration to just a non-ordered Set of "-D" properties.  
@@ -298,10 +322,10 @@ extends ContainerSupport
    * <p>
    * @return false if node should exit
    */
-  private static boolean setSystemProperties(Object[] args) {
+  private static boolean setSystemProperties(List args) {
     // separate the args into "-D" properties and normal arguments
-    for (int i = 0; i < args.length; i++) {
-      Object oi = args[i];
+    for (int i = 0; i < args.size(); i++) {
+      Object oi = args.get(i);
       if (!(oi instanceof String)) continue; 
       String argi = (String) oi;
       if (argi.startsWith("-D")) {
@@ -315,21 +339,10 @@ extends ContainerSupport
         }
       } else if (argi.equals("-n")) {
         // old "-n node" pattern
-        String name = (String) args[++i];
+        String name = (String) args.get(++i);
         SystemProperties.setProperty("org.cougaar.node.name", name);
-        Logger logger = Logging.getLogger(Node.class);
-        if (logger.isInfoEnabled()) {
-          logger.info(
-              "Set node name to "+name+
-              "\nThe command line format \"-n "+name+"\" has been deprecated"+
-              "\nPlease use \"-Dorg.cougaar.node.name="+name+"\"");
-        }
       } else if (argi.equals("-c")) {
         // ignore
-        Logger logger = Logging.getLogger(Node.class);
-        if (logger.isInfoEnabled()) {
-          logger.info( "Ignoring unused command-line argument \"-c\"");
-        }
       } else {
         // some form of exit
         if (argi.equals("-version") || argi.equals("--version")) {
@@ -414,41 +427,6 @@ extends ContainerSupport
     }
   }
 
-  protected String specifyContainmentPoint() {
-    return INSERTION_POINT;
-  }
-
-  protected ServiceBroker createChildServiceBroker(BindingSite bs) {
-    // node uses the root service broker
-    return getServiceBroker();
-  }
-
-  protected ComponentDescriptions findInitialComponentDescriptions() {
-    return null;
-  }
-
-  /**
-   * This method provides the initialization of a Node.
-   */
-  public void load() {
-    super.load();
-
-    // prevent future changes to the underlying system properties map
-    SystemProperties.finalizeProperties();
-
-    // add the agent manager, which loads the node-agent
-    add(new ComponentDescription(
-          "org.cougaar.core.agent.AgentManager",
-          "Node.Component",
-          "org.cougaar.core.agent.AgentManager",
-          null,  //codebase
-          null,  //params
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_HIGH));
-  }
-
   private static void printVersion(boolean fullFormat) {
     String version = null;
     long buildTime = -1;
@@ -469,14 +447,6 @@ extends ContainerSupport
       repositoryTime = rtf.getLong(null);
     } catch (Exception e) {
       // Failed to get version info, reflection problem
-    }
-
-    Logger logger = Logging.getLogger(Node.class);
-    if (logger.isInfoEnabled()) {
-      logger.info(
-          "COUGAAR "+version+" "+buildTime+
-          " "+repositoryTag+" "+repositoryModified+
-          " "+repositoryTime);
     }
 
     if (!(fullFormat)) {
@@ -553,11 +523,6 @@ extends ContainerSupport
       Vector cache = new Vector();
       File myCertFile = new File(installpath + File.separatorChar + certPath );
 
-      Logger logger = Logging.getLogger(Node.class);
-      if (logger.isInfoEnabled()) {
-        logger.info("Using certificate from: "+myCertFile);
-      }
-
       java.security.cert.Certificate myCert = null;
       myCert = getAlpineCertificate(myCertFile);
       for (int i=0; i<files.length; i++) {
@@ -567,10 +532,6 @@ extends ContainerSupport
             installpath+File.separatorChar+
             jarSubdirectory+File.separatorChar+filename);
 
-        if (logger.isInfoEnabled()) {
-          logger.info("Testing Plugin jar "+f);
-        }
-      
         FileInputStream fis = new FileInputStream(f);
         JarInputStream jis = new  JarInputStream(fis);
         try {
