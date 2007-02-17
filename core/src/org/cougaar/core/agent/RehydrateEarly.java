@@ -81,6 +81,8 @@ implements Component
 
   private boolean rehydrated;
 
+  private boolean is_moving;
+
   private MobilityService mobilityService;
   private MobilityClient mobilityClient;
 
@@ -126,7 +128,17 @@ implements Component
 
   public void suspend() {
     super.suspend();
-    persist_blackboard();
+
+    if (is_moving) {
+      // only capture our mobile state if we're moving, as opposed to
+      // agent/node shutdown 
+      is_moving = false;
+      persist_blackboard();
+    }
+
+    if (psfa != null) {
+      psfa.suspend();
+    }
   }
 
   public void unload() {
@@ -356,12 +368,8 @@ implements Component
   }
 
   private void persist_blackboard() {
-    // suspending, so capture blackboard state as our
-    // persistenceObject.
-    //
-    // This is wasteful if we're not moving, so we could check
-    // the moveTargetNode and avoid this.  In practice we only
-    // suspend the agent if we're moving.
+    // suspending after "announce_move", so capture blackboard state as
+    // our mobile persistenceObject.
     BlackboardForAgent bb = (BlackboardForAgent)
       sb.getService(this, BlackboardForAgent.class, null);
     if (bb == null) {
@@ -372,17 +380,13 @@ implements Component
     persistenceObject = bb.getPersistenceObject();
     sb.releaseService(this, BlackboardForAgent.class, bb);
     bb = null;
-
-    if (psfa != null) {
-      psfa.suspend();
-    }
   }
 
   private void announce_move(MessageAddress destinationNode) {
+    is_moving = true;
+
     if (log.isInfoEnabled()) {
-      log.info(
-          "Moving agent from "+localNode+
-          " to "+destinationNode);
+      log.info("Moving agent from "+localNode+" to "+destinationNode);
     }
 
     // probably safe, but synchronize & copy anyways
