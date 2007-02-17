@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 2001-2004 BBNT Solutions, LLC
+ *  Copyright 2001-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -31,6 +31,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
@@ -67,6 +68,11 @@ public abstract class BlackboardClientComponent
   extends org.cougaar.util.GenericStateModelAdapter
   implements Component, BlackboardClient 
 {
+  private static final boolean SET_THREAD_NAME =
+    SystemProperties.getBoolean(
+        "org.cougaar.core.blackboard.client.setThreadName",
+        true);
+
   private Object parameter = null;
 
   protected MessageAddress agentId;
@@ -224,9 +230,12 @@ public abstract class BlackboardClientComponent
         // no need to "sync" when using "SyncTriggerModel"
         public void trigger() {
           Thread currentThread = Thread.currentThread();
-          String savedName = currentThread.getName();
-          if (compName == null) compName = getBlackboardClientName();
-          currentThread.setName(compName);
+          String savedName = null;
+          if (SET_THREAD_NAME) {
+            savedName = currentThread.getName();
+            if (compName == null) compName = getBlackboardClientName();
+            currentThread.setName(compName);
+          }
           awakened = watcher.clearSignal();
           try {
             if (didPrecycle) {
@@ -237,7 +246,9 @@ public abstract class BlackboardClientComponent
             }
           } finally {
             awakened = false;
-            currentThread.setName(savedName);
+            if (SET_THREAD_NAME) {
+              currentThread.setName(savedName);
+            }
           }
         }
         public String toString() {
