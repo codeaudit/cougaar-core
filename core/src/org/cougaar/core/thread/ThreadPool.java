@@ -47,6 +47,8 @@ class ThreadPool
 
 	private boolean in_use = false;
 
+        private boolean should_stop = false;
+
 	/** reference to our thread pool so we can return when we die **/
 	private ThreadPool pool;
   
@@ -125,9 +127,18 @@ class ThreadPool
 		    in_use = false; // thread is now reusable
 		    Reclaimer.push(last_schedulable); // release rights
 
+                    if (should_stop) {
+                      break;
+                    }
+
 		    try {
 			runLock.wait();       // suspend
-		    } catch (InterruptedException ie) {}
+		    } catch (InterruptedException ie) {
+                    }
+
+                    if (should_stop) {
+                        break;
+                    }
 		}
 	    }
 	}
@@ -153,6 +164,21 @@ class ThreadPool
 		}
 	    }
 	}
+
+        void stop_running() {
+	    synchronized (runLock) {
+                should_stop = true;
+                runLock.notify();
+            }
+            try {
+              join();
+            } catch (InterruptedException ie) {
+            }
+            synchronized (runLock) {
+                should_stop = false;
+                isStarted = false;
+            }
+        }
 
 	private SchedulableObject reclaim(boolean reuse) {
 	    SchedulableObject new_schedulable = schedulable.reclaim(reuse);
@@ -224,6 +250,10 @@ class ThreadPool
 	PooledThread candidate = null;
 
 	synchronized (this) {
+            if (pool == null) {
+                throw new RuntimeException("The ThreadPool has been stopped");
+            }
+
 	    for (int i=0; i<pool.length; i++) {
 		candidate = pool[i];
 		if (candidate == null) {
@@ -293,31 +323,49 @@ class ThreadPool
     }
 
     int iterateOverRunningThreads(ThreadStatusService.Body body) {
-	PooledThread thread = null;
-	int count = 0;
-	for (int i=0; i<pool.length; i++) {
-	    thread = pool[i];
-	    if (thread != null && thread.isRunning) {
-		try {
-		    SchedulableObject sched = thread.schedulable;
-		    // Even though thread.isRunning was true just
-		    // above, thread.schedulable could have become
-		    // null by now (since iterateOverRunningThreads
-		    // doesn't lock anything).
-		    if (sched != null) {
-			Scheduler scheduler = sched.getScheduler();
-			String scheduler_name = null;
-			if (scheduler != null)
-			    scheduler_name = scheduler.getName();
-			body.run(scheduler_name, sched);
-			count++;
-		    }
-		} catch (Throwable t) {
-		    logger.error("ThreadStatusService error in body", t);
-		}
-	    }
+        int count = 0;
+        PooledThread[] p = pool;
+        int n = (p == null ? 0 : p.length);
+        for (int i = 0; i < n; i++) {
+            PooledThread thread = p[i];
+            if (thread == null || thread.isRunning) {
+                continue;
+            }
+            try {
+                SchedulableObject sched = thread.schedulable;
+                // Even though thread.isRunning was true just
+                // above, thread.schedulable could have become
+                // null by now (since iterateOverRunningThreads
+                // doesn't lock anything).
+                if (sched != null) {
+                    Scheduler scheduler = sched.getScheduler();
+                    String scheduler_name = null;
+                    if (scheduler != null)
+                        scheduler_name = scheduler.getName();
+                    body.run(scheduler_name, sched);
+                    count++;
+                }
+            } catch (Throwable t) {
+                logger.error("ThreadStatusService error in body", t);
+            }
+        }
+        return count;
+    }
+
+    void stopAllThreads() {
+	synchronized (this) {
+            int n = (pool == null ? 0 : pool.length);
+	    for (int i = 0; i < n; i++) {
+		PooledThread thread = pool[i];
+		if (thread == null) {
+                    continue;
+                }
+                thread.in_use = true;
+                thread.stop_running();
+                pool[i] = null;
+            }
+            pool = null;
 	}
-	return count;
     }
 
 }

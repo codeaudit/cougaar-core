@@ -71,6 +71,7 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 
     private RogueThreadDetector rtd;
     private ServiceBroker sb;
+    private Timer timer;
 
     public TopPlugin() {
 	super();
@@ -107,13 +108,25 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	    // We can't use the ThreadService for the poller because it
 	    // may run out of pooled threads, which is what we are trying
 	    // to detect. 
-	    Timer timer = new Timer();
+	    timer = new Timer(true);
 	    timer.schedule(rtd, 0, sample_period);
 	}
 	if(test.equalsIgnoreCase("true")) {
 	    long lane = getParameter("lane", ThreadService.BEST_EFFORT_LANE);
 	    runTest((int) lane);
 	}
+    }
+
+    public void unload() {
+        if (rtd != null) {
+            rtd.cancel();
+            rtd = null;
+        }
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+        super.unload();
     }
 
     protected void dynamicParameterChanged(String name, String value)

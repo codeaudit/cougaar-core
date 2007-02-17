@@ -80,9 +80,9 @@ final class TreeNode
 
     static synchronized Timer timer() 
     {
-	if (timer == null && isActive) {
-      timer = new Timer(true);
-    }
+        if (timer == null && isActive) {
+            timer = new Timer(true);
+        }
 	return timer;
     }
 
@@ -154,8 +154,10 @@ final class TreeNode
 
     static void releaseTimer() {
       isActive = false;
-      timer.cancel();
-      timer = null;
+      if (timer != null) {
+          timer.cancel();
+          timer = null;
+      }
     }
 
 }

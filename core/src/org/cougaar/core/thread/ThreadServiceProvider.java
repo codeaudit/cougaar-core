@@ -57,18 +57,27 @@ public final class ThreadServiceProvider
     private static final String SERVICE_TYPE_PROPERTY = 
 	"org.cougaar.thread.service.type";
 
-    private static ThreadPool[] Pools;
-    private static int[] Lane_Sizes = new int[ThreadService.LANE_COUNT];
+    private static ThreadPool[] pools;
+    private static int[] lane_sizes = new int[ThreadService.LANE_COUNT];
 
     private static synchronized void makePools() 
     {
-	if (Pools != null) return;
+	if (pools != null) return;
 
-	Pools = new ThreadPool[ThreadService.LANE_COUNT];
+	pools = new ThreadPool[ThreadService.LANE_COUNT];
 	int initializationCount = 10; // could be a param
-	for (int i=0; i<Pools.length; i++)
-	    Pools[i] = new ThreadPool(Lane_Sizes[i], initializationCount,
+	for (int i=0; i<pools.length; i++)
+	    pools[i] = new ThreadPool(lane_sizes[i], initializationCount,
 				      "Pool-"+i);
+    }
+
+    private static synchronized void stopPools()
+    {
+        if (pools == null) return;
+	for (int i=0; i<pools.length; i++) {
+          pools[i].stopAllThreads();
+        }
+        pools = null;
     }
 
     static final boolean validateThreadStatusServiceClient(Object client)
@@ -187,15 +196,22 @@ public final class ThreadServiceProvider
      */
     public synchronized void unload() throws StateModelException {
       
-      if (threadServiceProvider != null) {
-        // Unload singleton ThreadServiceProvider
-        // and release associated timer.
-        threadServiceProvider.halt();
-        threadServiceProvider.unload();
-        threadServiceProvider = null;
-        
-        TreeNode.releaseTimer();
+      if (threadServiceProvider == null) {
+          // Unload hierarchical thread service and Timers
+          if (isRoot) {
+              TreeNode.releaseTimer();
+              Reclaimer.stopThread();
+              Starter.stopThread();
+              stopPools();
+          }
+      } else {
+          // Unload singleton ThreadServiceProvider and Timer
+          TreeNode.releaseTimer();
+          threadServiceProvider.halt();
+          threadServiceProvider.unload();
+          threadServiceProvider = null;
       }
+
       super.unload();
     }
 
@@ -214,19 +230,19 @@ public final class ThreadServiceProvider
 	} else if (key.equals("BestEffortAbsCapacity")) {
 	    lane_index = ThreadService.BEST_EFFORT_LANE;
 	    lane_max = Integer.parseInt(value);
-	    Lane_Sizes[lane_index] = lane_max;
+	    lane_sizes[lane_index] = lane_max;
 	} else if (key.equals("WillBlockAbsCapacity")) {
 	    lane_index = ThreadService.WILL_BLOCK_LANE;
 	    lane_max = Integer.parseInt(value);
-	    Lane_Sizes[lane_index] = lane_max;
+	    lane_sizes[lane_index] = lane_max;
 	} else if (key.equals("CpuIntenseAbsCapacity")) {
 	    lane_index = ThreadService.CPU_INTENSE_LANE;
 	    lane_max = Integer.parseInt(value);
-	    Lane_Sizes[lane_index] = lane_max;
+	    lane_sizes[lane_index] = lane_max;
 	} else if (key.equals("WellBehavedAbsCapacity")) {
 	    lane_index = ThreadService.WELL_BEHAVED_LANE;
 	    lane_max = Integer.parseInt(value);
-	    Lane_Sizes[lane_index] = lane_max;
+	    lane_sizes[lane_index] = lane_max;
 	} // add more later
     }
 
@@ -249,7 +265,7 @@ public final class ThreadServiceProvider
 	Scheduler scheduler =  new PropagatingScheduler(listenerProxy);
 
 	scheduler.setLane(lane);
-	scheduler.setAbsoluteMax(Lane_Sizes[lane]);
+	scheduler.setAbsoluteMax(lane_sizes[lane]);
 	return scheduler;
     }
 
@@ -266,7 +282,7 @@ public final class ThreadServiceProvider
 	
 
 	ThreadServiceProxy parentProxy = (ThreadServiceProxy) parent;
-	TreeNode node = new TreeNode(schedulers, Pools, name, parentProxy);
+	TreeNode node = new TreeNode(schedulers, pools, name, parentProxy);
 	proxy = new ThreadServiceProxy(node);
 	controlProxy = new ThreadControlServiceProxy(node);
 	listenerProxy.setTreeNode(node);

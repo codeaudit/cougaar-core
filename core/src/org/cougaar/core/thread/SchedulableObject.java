@@ -234,22 +234,41 @@ final class SchedulableObject implements Schedulable
 	return task;
     }
 
-    public synchronized void schedule(long delay) {
+    private Timer timer() {
 	Timer timer = scheduler.getTreeNode().timer();
-	timer.schedule(task(), delay);
+        if (timer == null) {
+	    Logger logger = Logging.getLogger(this);
+	    if (logger.isWarnEnabled()) {
+                logger.warn(
+                        "Ignoring timer.schedule(..) request,"+
+                        " the timer has been stopped");
+            }
+        }
+	return timer;
+    }
+
+    public synchronized void schedule(long delay) {
+	Timer timer = timer();
+        if (timer != null) {
+            timer.schedule(task(), delay);
+        }
     }
 
 
     public synchronized void schedule(long delay, long interval) 
     {
-	Timer timer = scheduler.getTreeNode().timer();
-	timer.schedule(task(), delay, interval);
+	Timer timer = timer();
+        if (timer != null) {
+            timer.schedule(task(), delay, interval);
+        }
     }
 
     public synchronized void scheduleAtFixedRate(long delay, long interval)
     {
-	Timer timer = scheduler.getTreeNode().timer();
-	timer.scheduleAtFixedRate(task(), delay, interval);
+	Timer timer = timer();
+        if (timer != null) {
+            timer.scheduleAtFixedRate(task(), delay, interval);
+        }
     }
 
 

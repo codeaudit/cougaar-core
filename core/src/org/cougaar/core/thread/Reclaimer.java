@@ -27,6 +27,8 @@
 package org.cougaar.core.thread;
 
 import org.cougaar.util.CircularQueue;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * This native Java thread helps the standard thread service scheduler
@@ -46,16 +48,40 @@ final class Reclaimer extends Thread
 	singleton.start();
     }
 
+    static void stopThread() {
+        Reclaimer instance = singleton;
+        if (instance == null) return;
+        singleton = null;
+
+        synchronized (instance.lock) {
+            instance.should_stop = true;
+	    instance.lock.notify();
+        }
+        try {
+            instance.join();
+        } catch (InterruptedException ie) {
+        }
+    }
+
     static void push(SchedulableObject schedulable) {
-	synchronized (singleton.lock) {
-	    singleton.queue.add(schedulable);
-	    singleton.lock.notify();
+        Reclaimer instance = singleton;
+        if (instance == null) {
+            Logger logger = Logging.getLogger(Reclaimer.class);
+            if (logger.isWarnEnabled()) {
+                logger.warn("Ignoring enqueue request on stopped thread");
+            }
+            return;
+        }
+	synchronized (instance.lock) {
+	    instance.queue.add(schedulable);
+	    instance.lock.notify();
 	}
     }
 
 
-    private CircularQueue queue;
-    private Object lock;
+    private final CircularQueue queue;
+    private final Object lock;
+    private boolean should_stop;
 
     private Reclaimer() {
 	super("Scheduler Reclaimer");
@@ -64,30 +90,25 @@ final class Reclaimer extends Thread
 	lock = new Object();
     }
 
-    private void dequeue() {
-	SchedulableObject schedulable = null;
-	while (true) {
-	    synchronized (lock) {
-		if (queue.isEmpty()) return;
-		schedulable = (SchedulableObject) queue.next();
-	    }
-	    schedulable.reclaimNotify();
-	}
-    }
-
     public void run() {
-	while (true) {
-	    dequeue();
-	    synchronized (lock) {
-		while (queue.isEmpty()) {
-		    try { 
-			lock.wait();
-			break;
-		    } catch (InterruptedException ex) {
-		    }
-		}
-	    }
-	}
+        while (true) {
+            // dequeue
+            SchedulableObject schedulable;
+            synchronized (lock) {
+                while (true) {
+                    if (should_stop) return;
+                    if (!queue.isEmpty()) break;
+                    try { 
+                        lock.wait();
+                    } catch (InterruptedException ex) {
+                    }
+                }
+                schedulable = (SchedulableObject) queue.next();
+            }
+
+            // reclaim
+	    schedulable.reclaimNotify();
+        }
     }
 
 }
