@@ -64,12 +64,7 @@ public abstract class ParameterizedPlugin extends ComponentPlugin
      */ 
     protected String getParameter(String key, String default_val) {
 	String value = parameters.getProperty(key);
-	if (value == null) 
-	    return default_val;
-	else 
-	    // TO BE DONE (find a better way to quote commas
-	    return value.replace(';',',');
-     
+        return (value == null ? default_val : value);
     }
 
     public long getParameter(String key, long defaultValue) {
