@@ -359,6 +359,19 @@ public class XMLConfigHandler extends DefaultHandler {
           "Already have an argument value buffer? "+argValueBuffer);
     }
     inArgument = true;
+
+    String name = atts.getValue("name");
+    if (name != null) {
+      if (name.indexOf('=') >= 0) {
+        throw new RuntimeException("Invalid '=' in attribute name: "+name);
+      }
+      argValueBuffer.append(name.trim());
+      argValueBuffer.append("=");
+    }
+    String value = atts.getValue("value");
+    if (value != null) {
+      argValueBuffer.append(value.trim());
+    }
   }
 
   private void endArgument()
