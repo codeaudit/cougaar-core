@@ -96,6 +96,9 @@ implements Component {
         }
       }
     }
+    if (myPath != null && myPath.startsWith("path=")) {
+      myPath = myPath.substring("path=".length());
+    }
   }
 
   /**
