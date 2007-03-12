@@ -27,9 +27,12 @@
 // TO BE DONE move to cougaar utilities package
 package org.cougaar.core.qos.metrics;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Properties;
+import java.util.Map;
 
 import org.cougaar.core.plugin.ComponentPlugin;
 
@@ -40,7 +43,7 @@ import org.cougaar.core.plugin.ComponentPlugin;
 
 public abstract class ParameterizedPlugin extends ComponentPlugin 
 {
-    private Properties parameters= new Properties();
+    private Map parameters = Collections.EMPTY_MAP;
 
     /**
      * Given a key, looks up parameter arg in the plugin's comma
@@ -61,10 +64,11 @@ public abstract class ParameterizedPlugin extends ComponentPlugin
      * @param key the string to be looked in argument list
      * @param default_val the default value
      * @return String value of key if it is not null else the default value
+     * @see #getParameterValues same as last value of getParameterValues list
      */ 
     protected String getParameter(String key, String default_val) {
-	String value = parameters.getProperty(key);
-        return (value == null ? default_val : value);
+        List l = (List) parameters.get(key);
+        return (l == null ? default_val : (String) l.get(l.size()-1));
     }
 
     public long getParameter(String key, long defaultValue) {
@@ -87,21 +91,67 @@ public abstract class ParameterizedPlugin extends ComponentPlugin
 	}
     }
 
-
-    public void setParameter(Object param) {
-	if (param instanceof List) {
-	    Iterator itr = ((List) param).iterator();
-	    while(itr.hasNext()) {
-		String property = (String) itr.next();
-		int sepr = property.indexOf('=');
-		if (sepr < 0) continue;
-		String key = property.substring(0, sepr);
-		String value = property.substring(++sepr);
-		parameters.setProperty(key, value);
-	    }
-	}
+    /**
+     * Get all parameters with the given key.
+     * <p>
+     * Input XML should look like:<pre>
+     *   &lt;argument&gt;foo=alpha&lt;/argument&gt;
+     *   &lt;argument&gt;foo=beta&lt;/argument&gt;
+     * </pre>
+     * The above example will be parsed as ["alpha", "beta"].
+     *
+     * @param key the string to be looked in argument list
+     * @return either null or an unmodifiable, non-empty List of Strings
+     */
+    //List<String>
+    public List getParameterValues(String key) {
+        return (List) parameters.get(key);
     }
 
+    /**
+     * Get all parameters.
+     * @return an unmodifiable Map of Strings to unmodifiable Lists of Strings
+     */
+    //Map<String,List<String>>
+    public Map getParameterMap() {
+        return parameters;
+    }
 
+    /** Called by plugin loader */
+    public void setParameter(Object param) {
+	if (!(param instanceof List)) return;
 
+        // parse
+        Map m = new HashMap();
+        List a = (List) param;
+        for (int i = 0, n = a.size(); i < n; i++) {
+            Object o = a.get(i);
+            if (!(o instanceof String)) continue;
+            String s = (String) o;
+            int sepr = s.indexOf('=');
+            if (sepr < 0) continue;
+            String key = s.substring(0, sepr);
+            String value = s.substring(sepr+1);
+            List l = (List) m.get(key);
+            if (l == null) {
+                l = new ArrayList();
+                m.put(key, l);
+            }
+            l.add(value);
+        }
+
+        // make unmodifiable
+        for (Iterator iter = m.entrySet().iterator(); iter.hasNext(); ) {
+            Map.Entry me = (Map.Entry) iter.next();
+            List l = (List) me.getValue();
+            l = (l.size() == 1 ? 
+                    Collections.singletonList(l.get(0)) :
+                    Collections.unmodifiableList(l));
+            me.setValue(l);
+        }
+        m = Collections.unmodifiableMap(m);
+
+        // save
+        this.parameters = m;
+    }
 }
