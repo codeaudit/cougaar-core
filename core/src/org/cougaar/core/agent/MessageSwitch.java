@@ -490,9 +490,11 @@ implements Component
     }
     try {
       if (messenger == null) {
-        throw new RuntimeException(
-            "MessageTransport unavailable. Message dropped.");
-      } 
+        if (log.isWarnEnabled()) {
+          log.warn("MessageTransport unavailable, dropped: "+message);
+        }
+        return;
+      }
       messenger.sendMessage(message);
     } catch (Exception ex) {
       if (log.isErrorEnabled()) {
