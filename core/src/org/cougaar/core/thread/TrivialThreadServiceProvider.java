@@ -70,9 +70,10 @@ public class TrivialThreadServiceProvider
     /**
      * @see org.cougaar.util.GenericStateModelAdapter#unload()
      */
-    public synchronized void unload() throws StateModelException {
-      super.unload();
-      TrivialThreadServiceProxy theProxy = (TrivialThreadServiceProxy)proxy;
+    public void unload() {
+      TreeNode.releaseTimer();
+
+      TrivialThreadServiceProxy theProxy = (TrivialThreadServiceProxy) proxy;
       theProxy.unload();
       proxy = null;
       statusProxy = null;
@@ -84,6 +85,9 @@ public class TrivialThreadServiceProvider
         mysb = null;
       }
 
+      TrivialThreadPool.pool().stopAllThreads();
+
+      super.unload();
     }
 
     ThreadService makeThreadServiceProxy()
@@ -102,6 +106,7 @@ public class TrivialThreadServiceProvider
 
     void makeServices(ServiceBroker the_sb)
     {
+        TrivialThreadPool.makePool();
 	proxy = makeThreadServiceProxy();
 	statusProxy = makeThreadStatusService();
 

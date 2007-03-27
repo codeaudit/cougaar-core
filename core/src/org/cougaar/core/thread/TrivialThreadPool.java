@@ -45,10 +45,15 @@ class TrivialThreadPool
     private static final boolean DAEMON =
         SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
-    private static TrivialThreadPool singleton = new TrivialThreadPool();
+    private static TrivialThreadPool singleton;
 
-    static TrivialThreadPool pool() 
-    {
+    static void makePool() {
+        if (singleton == null) {
+            singleton = new TrivialThreadPool();
+        }
+    }
+
+    static TrivialThreadPool pool() {
 	return singleton;
     }
 
@@ -72,8 +77,8 @@ class TrivialThreadPool
 	TrivialSchedulable schedulable;
 	Runnable body;
 	boolean in_use;
-	Object lock = new Object();
-	long start_time;
+	boolean should_stop;
+	final Object lock = new Object();
 
 	ThreadRunner() {
           this(true);
@@ -105,16 +110,30 @@ class TrivialThreadPool
 	public void run() {
 	    while (true) {
 		synchronized (lock) {
-		    start_time = System.currentTimeMillis();
 		    if (body != null) body.run();
 		    if (schedulable != null) schedulable.thread_stop();
 		    in_use = false;
-		    try { lock.wait(); }
-		    catch (InterruptedException ex) {} 
+                    if (should_stop) break;
+		    try { lock.wait(); } catch (InterruptedException ex) {} 
+                    if (should_stop) break;
 		}
 
 	    }
 	}
+
+        void stop_running() {
+	    synchronized (lock) {
+                should_stop = true;
+                lock.notify();
+            }
+            try {
+              join();
+            } catch (InterruptedException ie) {
+            }
+            synchronized (lock) {
+                should_stop = false;
+            }
+        }
     }
     
 
@@ -124,11 +143,13 @@ class TrivialThreadPool
 		     String name) 
     {
 	ThreadRunner result = null;
-	ThreadRunner candidate = null;
 
 	synchronized (this) {
-	    for (int i=0; i<pool.length; i++) {
-		candidate = pool[i];
+            if (pool == null) {
+                throw new RuntimeException("The ThreadPool has been stopped");
+            }
+	    for (int i = 0; i < pool.length; i++) {
+		ThreadRunner candidate = pool[i];
 		if (candidate == null) {
 		    result = new ThreadRunner();
 		    pool[i] = result;
@@ -144,7 +165,7 @@ class TrivialThreadPool
 	    if (result == null && list_pool != null) {
 		// Use the slow ArrayList.
 		for (int i=0; i<list_pool.size(); i++) {
-		    candidate = (ThreadRunner) list_pool.get(i);
+		    ThreadRunner candidate = (ThreadRunner) list_pool.get(i);
 		    if (!candidate.in_use) {
 			result = candidate;
 			result.in_use = true;
@@ -173,14 +194,15 @@ class TrivialThreadPool
     // ok.  If it isn't, the list could be copied.
     int iterateOverRunningThreads(ThreadStatusService.Body body) 
     {
-	ThreadRunner thread = null;
 	int count = 0;
-	for (int i=0; i<pool.length; i++) {
-	    thread = pool[i];
+        int n = (pool == null ? 0 : pool.length);
+	for (int i = 0; i < n; i++) {
+	    ThreadRunner thread = pool[i];
 	    count += runBody(thread, body);
 	}
 	if (list_pool != null) {
 	    for (int i=0, size=list_pool.size(); i<size; i++) {
+                ThreadRunner thread = null;
 		try {
 		    thread = (ThreadRunner) list_pool.get(i);
 		} catch (Exception ex) {
@@ -212,4 +234,19 @@ class TrivialThreadPool
 	return 0;
     }
 
+    void stopAllThreads() {
+	synchronized (this) {
+            int n = (pool == null ? 0 : pool.length);
+	    for (int i = 0; i < n; i++) {
+		ThreadRunner thread = pool[i];
+		if (thread == null) {
+                    continue;
+                }
+                thread.in_use = true;
+                thread.stop_running();
+                pool[i] = null;
+            }
+            pool = null;
+	}
+    }
 }
