@@ -29,10 +29,11 @@ package org.cougaar.core.relay;
 import java.util.Iterator;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.service.alarm.Alarm;
+import org.cougaar.core.agent.service.alarm.AlarmBase;
 import org.cougaar.core.blackboard.IncrementalSubscription;
+import org.cougaar.core.blackboard.TodoSubscription;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.core.plugin.PluginAlarm;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.UIDService;
@@ -100,7 +101,7 @@ public class PingSender extends ComponentPlugin {
   private boolean verbose;
 
   private IncrementalSubscription sub;
-  private MyAlarm alarm;
+  private TodoSubscription expiredAlarms;
 
   /** This method is called when the agent is created */
   public void load() {
@@ -127,6 +128,16 @@ public class PingSender extends ComponentPlugin {
 
   /** This method is called when the agent starts. */
   protected void setupSubscriptions() {
+
+    // Create a holder for alarms that have come due
+    //
+    // The "myAlarms" string is any arbitrary identifier, and would only be
+    // significant if we made more than one TodoSubscription instance.
+    if (delayMillis > 0) {
+      expiredAlarms = (TodoSubscription)
+        blackboard.subscribe(new TodoSubscription("myAlarms"));
+    }
+
     // Subscribe to all relays sent by our agent
     sub = (IncrementalSubscription) blackboard.subscribe(createPredicate());
 
@@ -144,17 +155,24 @@ public class PingSender extends ComponentPlugin {
   /** This method is called whenever a subscription changes. */
   protected void execute() {
     // Observe changed relays by looking at our subscription's change list
-    for (Iterator iter = sub.getChangedCollection().iterator();
-        iter.hasNext();
-        ) {
-      SimpleRelay relay = (SimpleRelay) iter.next();
-      handleResponse(relay);
+    if (sub.hasChanged()) {
+      for (Iterator iter = sub.getChangedCollection().iterator();
+          iter.hasNext();
+          ) {
+        SimpleRelay relay = (SimpleRelay) iter.next();
+        handleResponse(relay);
+      }
     }
 
     // If we're using a delay, check to see if it is time to send the
     // next ping iteration
-    if (delayMillis > 0 && alarm != null && alarm.hasExpired()) {
-      handleAlarm();
+    if (delayMillis > 0 && expiredAlarms.hasChanged()) {
+      for (Iterator iter = expiredAlarms.getAddedCollection().iterator();
+          iter.hasNext();
+          ) {
+        MyAlarm alarm = (MyAlarm) iter.next();
+        handleAlarm(alarm);
+      }
     }
   }
 
@@ -221,11 +239,10 @@ public class PingSender extends ComponentPlugin {
    * Wake up from an alarm to send our next relay iteration (only use if
    * delayMillis is greater than zero),
    */
-  private void handleAlarm() {
+  private void handleAlarm(MyAlarm alarm) {
     // Send our next relay iteration to the target
     SimpleRelay priorRelay = alarm.getPriorRelay();
     Object content = alarm.getContent();
-    alarm = null;
     sendNow(priorRelay, content);
   }
 
@@ -264,12 +281,12 @@ public class PingSender extends ComponentPlugin {
           (delayMillis/1000)+" seconds");
     }
     long futureTime = System.currentTimeMillis() + delayMillis;
-    alarm = new MyAlarm(priorRelay, content, futureTime);
+    Alarm alarm = new MyAlarm(priorRelay, content, futureTime);
     getAlarmService().addRealTimeAlarm(alarm);
   }
 
   /** An alarm that we use to wake us up after the delayMillis */
-  private class MyAlarm extends PluginAlarm {
+  private class MyAlarm extends AlarmBase {
     private SimpleRelay priorRelay;
     private Object content;
     public MyAlarm(SimpleRelay priorRelay, Object content, long futureTime) {
@@ -279,9 +296,9 @@ public class PingSender extends ComponentPlugin {
     }
     public SimpleRelay getPriorRelay() { return priorRelay; }
     public Object getContent() { return content; }
-    // Required method in our abstract alarm base class
-    protected BlackboardService getBlackboardService() {
-      return PingSender.this.getBlackboardService();
+    // Put this alarm on the "expiredAlarms" queue and request an "execute()"
+    public void onExpire() {
+      expiredAlarms.add(this);
     }
   }
 }
