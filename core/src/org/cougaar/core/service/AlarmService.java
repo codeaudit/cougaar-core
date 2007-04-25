@@ -32,13 +32,8 @@ import org.cougaar.core.component.Service;
 /**
  * This service provides access to the time-based alarm services
  * (real-time and execution-time).
- * <p>
- * Alarms typically wake a plugin for an "execute()" cycle, which
- * is implemented by {@link
- * org.cougaar.core.service.BlackboardService#signalClientActivity()}.
- * For an example alarm, see {@link
- * org.cougaar.core.plugin.PluginAlarm}.
  * 
+ * @see org.cougaar.core.agent.service.alarm.AlarmBase
  * @see org.cougaar.core.agent.service.alarm.ExecutionTimer
  * @see org.cougaar.core.agent.service.alarm.RealTimer 
  */

@@ -27,45 +27,29 @@
 package org.cougaar.core.plugin;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
+import org.cougaar.core.agent.service.alarm.AlarmBase;
 import org.cougaar.core.service.BlackboardService;
 
 /**
- * A standard {@link Alarm} implementation. 
+ * A standard {@link Alarm} implementation.
+ *
+ * @see org.cougaar.core.blackboard.TodoSubscription Also see the "todo"
+ * subscription pattern for handling expired alarms.
  */
-public abstract class PluginAlarm implements Alarm {
-  private long expirationTime;
-  private boolean expired = false;
+public abstract class PluginAlarm extends AlarmBase {
 
   /** Construct an alarm to expire */
-  public PluginAlarm(long time) {
-    expirationTime = time;
-  }
-
-  public long getExpirationTime() {
-    return expirationTime;
-  }
+  public PluginAlarm(long time) { super(time); }
 
   protected abstract BlackboardService getBlackboardService();
 
-  public synchronized void expire() {
-    if (!expired) {
-      expired = true;
-      BlackboardService bb = getBlackboardService();
-      if (bb != null) {
-        bb.signalClientActivity();
-      } else {
-        // No blackboard
-        // Possibly a left over alarm from a plugin that has terminated.
-      }
+  public final void onExpire() {
+    BlackboardService bb = getBlackboardService();
+    if (bb != null) {
+      bb.signalClientActivity();
+    } else {
+      // No blackboard
+      // Possibly a left over alarm from a plugin that has terminated.
     }
-  }
-  public synchronized boolean hasExpired() {
-    return expired;
-  }
-  
-  public synchronized boolean cancel() {
-    boolean was = expired;
-    expired = true;
-    return was;
   }
 }
