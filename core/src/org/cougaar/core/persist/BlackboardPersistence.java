@@ -227,12 +227,11 @@ public class BlackboardPersistence implements Persistence {
     for (Iterator iter = v.iterator(); iter.hasNext(); ) {
       // The next line is the source of bug 3595
       Envelope e = (Envelope) iter.next();
-      Envelope copy = null;
+      Envelope copy = e.newInstance();
       for (Iterator tuples = e.getAllTuples(); tuples.hasNext(); ) {
         EnvelopeTuple tuple = (EnvelopeTuple) tuples.next();
         Object o = tuple.getObject();
         if (isPersistable(o)) {
-          if (copy == null) copy = new Envelope();
           copy.addTuple(tuple);
         } else {
           if (logger.isDebugEnabled()) {
@@ -240,7 +239,7 @@ public class BlackboardPersistence implements Persistence {
           }
         }
       }
-      if (copy != null) result.add(copy);
+      result.add(copy);
     }
     return result;
   }

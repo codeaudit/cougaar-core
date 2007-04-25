@@ -59,8 +59,6 @@ import java.util.List;
  * </pre>
  */
 public class Envelope implements java.io.Serializable {
-  public Envelope() {
-  }
 
   /** a set of changes to make to a subscriber's data structures */
   private final List deltas = new ArrayList(5);
@@ -83,6 +81,13 @@ public class Envelope implements java.io.Serializable {
   public static final int BULK = 3;
 
   public static final int EVENT = 4;
+
+  public Envelope() { }
+
+  /** Create a copy with no deltas */
+  public Envelope newInstance() {
+    return new Envelope();
+  }
 
   public final EnvelopeTuple addObject(Object o) {
     if (o == null) throw new IllegalArgumentException("Null Object");

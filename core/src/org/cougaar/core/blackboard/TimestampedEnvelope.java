@@ -40,6 +40,17 @@ public class TimestampedEnvelope extends Envelope {
   private long openTime;
   private long closeTime;
 
+  public TimestampedEnvelope() {
+  }
+
+  public Envelope newInstance() {
+    TimestampedEnvelope ret = new TimestampedEnvelope();
+    ret.name = name;
+    ret.openTime = openTime;
+    ret.closeTime = closeTime;
+    return ret;
+  }
+
   public final void setName(String name) { 
     this.name = name; 
   }
