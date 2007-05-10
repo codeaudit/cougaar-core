@@ -220,7 +220,6 @@ public class TodoSubscription extends Subscription {
   /** For infrastructure use only */
   public void fill(Envelope envelope) {
     // we only care about rehydrated "pending envelopes"
-    System.out.println("TWRIGHT fill "+envelope.getClass().getName());
     apply(envelope);
   }
 
