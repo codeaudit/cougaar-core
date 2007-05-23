@@ -30,34 +30,41 @@ import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.Arguments;
 
 /**
- * An extended {@link Arguments} implementation that supports
- * system properties. 
+ * TODO modify wp code to use {@link Arguments} directly, since this
+ * is now a dumb wrapper.
  */
-public class Parameters extends Arguments {
+public class Parameters {
 
-  private final String prefix;
+  private final Arguments args;
 
   public Parameters(Object o) {
     this(o, null);
   }
-
   public Parameters(Object o, String prefix) {
-    super(o);
-    this.prefix = prefix;
+    this.args = new Arguments(o, prefix);
   }
 
+  // forward everything:
   public String getString(String key, String deflt) {
-    String value = super.getString(key, null);
-    if (value == null && prefix != null) {
-      value = SystemProperties.getProperty(prefix+key);
-    }
-    return (value == null ? deflt : value);
+    return args.getString(key, deflt);
+  }
+  public String getString(String key) {
+    return args.getString(key, null);
+  }
+  public boolean getBoolean(String key, boolean deflt) {
+    return args.getBoolean(key, deflt);
+  }
+  public int getInt(String key, int deflt) {
+    return args.getInt(key, deflt);
+  }
+  public long getLong(String key, long deflt) {
+    return args.getLong(key, deflt);
+  }
+  public double getDouble(String key, double deflt) {
+    return args.getDouble(key, deflt);
   }
 
   public String toString() {
-    return 
-      "(parameters"+
-      (prefix == null ? "" : (" prefix="+prefix))+
-      " "+super.toString()+")";
+    return args.toString();
   }
 }
