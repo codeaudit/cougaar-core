@@ -273,7 +273,6 @@ public final class ThreadServiceProvider
     {
 	listenerProxy = new ThreadListenerProxy(laneCount);
 
-	Class[] formals = { ThreadListenerProxy.class};
 	Object[] actuals = { listenerProxy };
 	Scheduler[] schedulers = new Scheduler[laneCount];
 	for (int i=0; i<schedulers.length; i++) {

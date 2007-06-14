@@ -26,9 +26,6 @@
 
 package org.cougaar.core.thread;
 
-import java.util.Iterator;
-import java.util.List;
-import java.util.RandomAccess;
 import java.util.TimerTask;
 
 import org.cougaar.core.component.ServiceBroker;

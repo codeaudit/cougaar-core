@@ -26,7 +26,7 @@
 
 package org.cougaar.core.thread;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This experimenatal extension of {@link Scheduler} is not currently used.
@@ -100,13 +100,13 @@ public class RightsPropagatingScheduler extends Scheduler
     // corresponding child.
     private int currentIndex = -1;
 
-    private SchedulableObject checkNextPending(ArrayList children) {
+    private SchedulableObject checkNextPending(List<TreeNode> children) {
 	SchedulableObject handoff = null;
 	if (currentIndex == -1) {
 	    handoff = super.getNextPending();
 	    currentIndex = children.size() == 0 ? -1 : 0;
 	} else {
-	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
+	    TreeNode child_node =children.get(currentIndex++);
 	    if (currentIndex == children.size()) currentIndex = -1;
 	    Scheduler child = child_node.getScheduler(getLane());
 	    handoff = child.getNextPending();
@@ -116,7 +116,7 @@ public class RightsPropagatingScheduler extends Scheduler
 
     SchedulableObject getNextPending() {
 	int initialIndex = currentIndex;
-	ArrayList children = getTreeNode().getChildren();
+	List<TreeNode> children = getTreeNode().getChildren();
 	SchedulableObject handoff = null;
 	// repeat-until
 	while (true) {

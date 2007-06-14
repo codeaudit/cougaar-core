@@ -70,7 +70,7 @@ class ThreadControlServiceProxy
 	node.getScheduler(lane).setMaxRunningThreadCount(count);
     }
 
-    public void setQueueComparator(Comparator comparator, int lane)
+    public void setQueueComparator(Comparator<Schedulable> comparator, int lane)
     {
 	validateLane(lane);
 	node.getScheduler(lane).setQueueComparator(comparator);
@@ -126,7 +126,7 @@ class ThreadControlServiceProxy
 	setMaxRunningThreadCount(count, node.getDefaultLane());
     }
 
-    public void setQueueComparator(Comparator comparator)
+    public void setQueueComparator(Comparator<Schedulable> comparator)
     {
 	setQueueComparator(comparator, node.getDefaultLane());
     }

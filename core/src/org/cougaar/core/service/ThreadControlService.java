@@ -30,6 +30,7 @@ import java.util.Comparator;
 
 import org.cougaar.core.component.Service;
 import org.cougaar.core.thread.RightsSelector;
+import org.cougaar.core.thread.Schedulable;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -39,7 +40,7 @@ public interface ThreadControlService extends Service
 {
     // General
     void setMaxRunningThreadCount(int count, int lane);
-    void setQueueComparator(Comparator comparator, int lane);
+    void setQueueComparator(Comparator<Schedulable> comparator, int lane);
     void setRightsSelector(RightsSelector selector, int lane);
     boolean setQualifier(UnaryPredicate predicate, int lane);
     boolean setChildQualifier(UnaryPredicate predicate, int lane);
@@ -57,7 +58,7 @@ public interface ThreadControlService extends Service
 
     // General
     void setMaxRunningThreadCount(int count);
-    void setQueueComparator(Comparator comparator);
+    void setQueueComparator(Comparator<Schedulable> comparator);
     void setRightsSelector(RightsSelector selector);
     boolean setQualifier(UnaryPredicate predicate);
     boolean setChildQualifier(UnaryPredicate predicate);

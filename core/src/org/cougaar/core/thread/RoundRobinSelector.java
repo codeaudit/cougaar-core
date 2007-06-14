@@ -26,7 +26,7 @@
 
 package org.cougaar.core.thread;
 
-import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This is the standard implementation of {@link RightsSelector}.  It
@@ -44,8 +44,7 @@ class RoundRobinSelector implements RightsSelector
 	this.scheduler = scheduler;
     }
 
-    private SchedulableObject checkNextPending(ArrayList children) 
-    {
+    private SchedulableObject checkNextPending(List<TreeNode> children) {
 	// Conceptually this should be synchronized on 'children'.
 	// Unfortunately the nature of what it's doing makes that
 	// impossible.  The result is that this code will in some
@@ -59,7 +58,7 @@ class RoundRobinSelector implements RightsSelector
 	    handoff = scheduler.popQueue();
 	    currentIndex = child_count == 0 ? -1 : 0;
 	} else {
-	    TreeNode child_node =(TreeNode) children.get(currentIndex++);
+	    TreeNode child_node =children.get(currentIndex++);
 	    if (currentIndex == child_count) currentIndex = -1;
 	    if (child_node == null) return null;
 
@@ -76,11 +75,13 @@ class RoundRobinSelector implements RightsSelector
 
     public SchedulableObject getNextPending() {
 	int initialIndex = currentIndex;
-	ArrayList children = scheduler.getTreeNode().getChildren();
+	List<TreeNode> children = scheduler.getTreeNode().getChildren();
 	SchedulableObject handoff = null;
 	do {
 	    handoff = checkNextPending(children);
-	    if (handoff != null) return handoff;
+	    if (handoff != null) {
+		return handoff;
+	    }
 	} while (currentIndex != initialIndex);
 	return null;
     }

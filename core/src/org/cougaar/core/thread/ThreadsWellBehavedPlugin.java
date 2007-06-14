@@ -47,7 +47,6 @@ public class ThreadsWellBehavedPlugin
     extends ParameterizedComponent // not really a Plugin
 {
     private ServiceBroker sb;
-    private int defaultLane;
 
     public ThreadsWellBehavedPlugin() {
 	super();

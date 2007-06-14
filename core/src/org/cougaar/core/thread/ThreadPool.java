@@ -193,13 +193,6 @@ class ThreadPool
 	}
     }
     
-
-
-    private static final String InitialPoolSizeProp =
-	"org.cougaar.thread.poolsize.initial";
-    private static final int InitialPoolSizeDefault = 10;
-
-
     /** The ThreadGroup of the pool - all threads in the pool must be
      * members of the same threadgroup.
      **/
@@ -210,7 +203,7 @@ class ThreadPool
 
     /** the actual pool **/
     private PooledThread pool[];
-    private ArrayList list_pool;
+    private List<PooledThread> list_pool;
     private Logger logger;
     private int index = 0;
 
@@ -227,7 +220,7 @@ class ThreadPool
 	    // make an ArrayList which will be used if the array runs
 	    // out.
 	    pool = new PooledThread[Math.max(initialSize, 100)];
-	    list_pool = new ArrayList(100);
+	    list_pool = new ArrayList<PooledThread>(100);
 	} else {
 	    if (initialSize > maximumSize) initialSize = maximumSize;
 	    pool = new PooledThread[maximumSize];
@@ -274,7 +267,7 @@ class ThreadPool
 		// Use the slow ArrayList.  This is only enabled if
 		// there's no thread limit.
                 for (int i = 0, n = list_pool.size(); i < n; i++) { 
-		    candidate = (PooledThread) list_pool.get(i);
+		    candidate = list_pool.get(i);
 		    if (!candidate.in_use) {
 			thread = candidate;
 			thread.in_use = true;

@@ -235,7 +235,7 @@ final class SchedulableObject implements Schedulable
     }
 
     private Timer timer() {
-	Timer timer = scheduler.getTreeNode().timer();
+	Timer timer = TreeNode.timer();
         if (timer == null) {
 	    Logger logger = Logging.getLogger(this);
 	    if (logger.isWarnEnabled()) {

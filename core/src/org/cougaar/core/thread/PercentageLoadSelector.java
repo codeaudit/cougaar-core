@@ -27,10 +27,11 @@
 package org.cougaar.core.thread;
 
 import java.io.FileInputStream;
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
 
@@ -48,100 +49,15 @@ import org.cougaar.util.PropertyParser;
  * contains percentage targets for the children.
  */
 public class PercentageLoadSelector
-    extends RoundRobinSelector
-    implements ThreadListener
-{
-    private class ConsumerRecord {
-	String name;
-	int outstanding;
-	long timestamp;
-	double accumulator;
-	long snapshot_timestamp;
-	double snapshot_accumulator;
-	double rate;
-	double targetPercentage;
+    	extends RoundRobinSelector
+    	implements ThreadListener {
 
-	ConsumerRecord(String name) {
-	    this.name = name;
-	    targetPercentage = 	
-		PropertyParser.getDouble(properties, name, .05);
-	    System.err.println(name+ " target=" +targetPercentage);
-	}
-
-
-	synchronized void snapshot() {
-	    long now = System.currentTimeMillis();
-	    rate = (accumulator-snapshot_accumulator)/
-		(now-snapshot_timestamp);
-	    snapshot_timestamp = now;
-	    snapshot_accumulator = accumulator;
-	    System.out.println(name+ " rate=" +rate);
-	}
-
-
-	double distance() {
-	    return (targetPercentage-rate)/targetPercentage;
-	}
-
-	synchronized void accumulate() {
-	    long now = System.currentTimeMillis();
-	    if (timestamp > 0) {
-		double deltaT = now - timestamp;
-		accumulator += deltaT * outstanding;
-	    } 
-	    timestamp = now;
-	}
-    }
-
-    private class SnapShotter implements Runnable {
-	public void run() {
-	    synchronized (records) {
-		Iterator itr = records.values().iterator();
-		while (itr.hasNext()) {
-		    ConsumerRecord rec = (ConsumerRecord) itr.next();
-		    rec.snapshot();
-		}
-	    }
-	    rankChildren();
-	}
-    }
-
-
-    private class DistanceComparator implements Comparator {
-	private int hashCompare(Object o1, Object o2) {
-	    if (o1.hashCode() < o2.hashCode())
-		return -1;
-	    else
-		return 1;
-	}
-
-	public int compare(Object o1, Object o2) {
-	    if (o1 == o2) return 0;
-
-	    Scheduler x = (Scheduler) o1;
-	    Scheduler y = (Scheduler) o2;
-	    double x_distance = getSchedulerDistance(x);
-	    double y_distance = getSchedulerDistance(y);
-			
-
-	    // Smaller distances are less preferable
-	    if (x_distance < y_distance)
-		return 1;
-	    else if (x_distance > y_distance) 
-		return -1;
-	    else 
-		return hashCompare(o1, o2);
-	}
-
-    }
-
-    private static final String TARGETS_PROP =
-	"org.cougaar.thread.targets";
-    private HashMap records = new HashMap();
+    private static final String TARGETS_PROP = "org.cougaar.thread.targets";
+    private Map<String,ConsumerRecord> records = new HashMap<String,ConsumerRecord>();
     private Properties properties = new Properties();
     private int total = 0;
-    private Comparator comparator;
-    private TreeSet orderedChildren;
+    private Comparator<Scheduler> comparator;
+    private TreeSet<Scheduler> orderedChildren;
 
 
     public PercentageLoadSelector(ServiceBroker sb) {
@@ -174,7 +90,7 @@ public class PercentageLoadSelector
     ConsumerRecord findRecord(String name) {
 	ConsumerRecord rec = null;
 	synchronized (records) {
-	    rec = (ConsumerRecord) records.get(name);
+	    rec = records.get(name);
 	    if (rec == null) {
 		rec = new ConsumerRecord(name);
 		records.put(name, rec);
@@ -184,21 +100,16 @@ public class PercentageLoadSelector
     }
 
 
-    public void threadQueued(Schedulable schedulable, 
-			     Object consumer) 
-    {
+    public void threadQueued(Schedulable schedulable, Object consumer)  {
     }
-    public void threadDequeued(Schedulable schedulable, 
-			       Object consumer)
-    {
+    
+    public void threadDequeued(Schedulable schedulable, Object consumer) {
     }
-    public void threadStarted(Schedulable schedulable, 
-			      Object consumer)
-    {
+    
+    public void threadStarted(Schedulable schedulable, Object consumer) {
     }
-    public void threadStopped(Schedulable schedulable, 
-			      Object consumer)
-    {
+    
+    public void threadStopped(Schedulable schedulable, Object consumer) {
     }
 
     public void rightGiven(String consumer) {
@@ -219,20 +130,20 @@ public class PercentageLoadSelector
 
     private double getSchedulerDistance(Scheduler scheduler) {
 	ConsumerRecord rec = findRecord(scheduler.getName());
-	if (rec != null)
+	if (rec != null) {
 	    return rec.distance();
-	else
+	} else {
 	    return 1;
+	}
     }
 
     // RightsSelector
 
     // Too inefficient to use but simple to write...
     private void rankChildren() {
-	TreeSet result = new TreeSet(comparator);
-        ArrayList children = scheduler.getTreeNode().getChildren();
-	for (int i = 0, n = children.size(); i < n; i++) {
-	    TreeNode child = (TreeNode) children.get(i);
+	TreeSet<Scheduler> result = new TreeSet<Scheduler>(comparator);
+        List<TreeNode> children = scheduler.getTreeNode().getChildren();
+	for (TreeNode child : children) {
 	    result.add(child.getScheduler(scheduler.getLane()));
 	}
 	result.add(scheduler);
@@ -245,28 +156,115 @@ public class PercentageLoadSelector
 	    return super.getNextPending();
 	}
 	// Choose the one with the largest distance()
-	Iterator itr = orderedChildren.iterator();
+	Iterator<Scheduler> itr = orderedChildren.iterator();
 	Scheduler next = null;
 	SchedulableObject handoff = null;
 	while(itr.hasNext()) {
-	    next = (Scheduler) itr.next();
+	    next = itr.next();
 	    // The list contains the scheduler itself as well as its
 	    // children, In the former case we can't call
 	    // getNextPending since that will recurse forever.  We
 	    // need the super method, conveniently available as
 	    // getNextPendingSuper.
-	    if (next == scheduler)
+	    if (next == scheduler) {
 		handoff = scheduler.popQueue();
-	    else
+	    } else {
 		handoff = next.getNextPending();
+	    }
 	    if (handoff != null) {
 		// If we're the parent of the Scheduler to which the
 		// handoff is given, increase the local count.
-		if (next != scheduler) scheduler.incrementRunCount(next);
+		if (next != scheduler) {
+		    scheduler.incrementRunCount(next);
+		}
 		return handoff;
 	    }
 	}
 	return null;
     }
+    
+    
+    private class SnapShotter implements Runnable {
+	public void run() {
+	    synchronized (records) {
+		Iterator itr = records.values().iterator();
+		while (itr.hasNext()) {
+		    ConsumerRecord rec = (ConsumerRecord) itr.next();
+		    rec.snapshot();
+		}
+	    }
+	    rankChildren();
+	}
+    }
+
+
+    private class DistanceComparator implements Comparator<Scheduler> {
+	private int hashCompare(Object o1, Object o2) {
+	    if (o1.hashCode() < o2.hashCode())
+		return -1;
+	    else
+		return 1;
+	}
+
+	public int compare(Scheduler o1, Scheduler o2) {
+	    if (o1 == o2) return 0;
+
+	    Scheduler x = o1;
+	    Scheduler y = o2;
+	    double x_distance = getSchedulerDistance(x);
+	    double y_distance = getSchedulerDistance(y);
+			
+
+	    // Smaller distances are less preferable
+	    if (x_distance < y_distance)
+		return 1;
+	    else if (x_distance > y_distance) 
+		return -1;
+	    else 
+		return hashCompare(o1, o2);
+	}
+
+    }
+
+    private class ConsumerRecord {
+	String name;
+	int outstanding;
+	long timestamp;
+	double accumulator;
+	long snapshot_timestamp;
+	double snapshot_accumulator;
+	double rate;
+	double targetPercentage;
+
+	ConsumerRecord(String name) {
+	    this.name = name;
+	    targetPercentage = 	
+		PropertyParser.getDouble(properties, name, .05);
+	    System.err.println(name+ " target=" +targetPercentage);
+	}
+
+	synchronized void snapshot() {
+	    long now = System.currentTimeMillis();
+	    rate = (accumulator-snapshot_accumulator)/
+		(now-snapshot_timestamp);
+	    snapshot_timestamp = now;
+	    snapshot_accumulator = accumulator;
+	    System.out.println(name+ " rate=" +rate);
+	}
+
+	double distance() {
+	    return (targetPercentage-rate)/targetPercentage;
+	}
+
+	synchronized void accumulate() {
+	    long now = System.currentTimeMillis();
+	    if (timestamp > 0) {
+		double deltaT = now - timestamp;
+		accumulator += deltaT * outstanding;
+	    } 
+	    timestamp = now;
+	}
+    }
+
 
 }

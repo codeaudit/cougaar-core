@@ -26,8 +26,6 @@
 
 package org.cougaar.core.thread;
 
-import java.util.Timer;
-
 import org.cougaar.core.service.ThreadService;
 
 /**

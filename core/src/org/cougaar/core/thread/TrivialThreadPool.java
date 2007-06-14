@@ -59,7 +59,7 @@ class TrivialThreadPool
 
     int anon_count = 0;
     ThreadRunner[] pool = new ThreadRunner[100];
-    ArrayList list_pool = new ArrayList();
+    List<ThreadRunner> list_pool = new ArrayList<ThreadRunner>();
     Logger logger = Logging.getLogger(getClass().getName());
 
     private TrivialThreadPool() {
@@ -165,7 +165,7 @@ class TrivialThreadPool
 	    if (result == null && list_pool != null) {
 		// Use the slow ArrayList.
 		for (int i=0; i<list_pool.size(); i++) {
-		    ThreadRunner candidate = (ThreadRunner) list_pool.get(i);
+		    ThreadRunner candidate = list_pool.get(i);
 		    if (!candidate.in_use) {
 			result = candidate;
 			result.in_use = true;
@@ -204,7 +204,7 @@ class TrivialThreadPool
 	    for (int i=0, size=list_pool.size(); i<size; i++) {
                 ThreadRunner thread = null;
 		try {
-		    thread = (ThreadRunner) list_pool.get(i);
+		    thread = list_pool.get(i);
 		} catch (Exception ex) {
 		    // list_pool size has changed - doesn't matter
 		    if (logger.isDebugEnabled())

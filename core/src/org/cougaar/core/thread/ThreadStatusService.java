@@ -26,8 +26,6 @@
 
 package org.cougaar.core.thread;
 
-import java.util.List;
-
 import org.cougaar.core.component.Service;
 
 /**

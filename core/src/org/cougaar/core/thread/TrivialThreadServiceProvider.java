@@ -26,16 +26,12 @@
 
 package org.cougaar.core.thread;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.StateModelException;
 
 /**
  * The ServiceProvider for the simple {@link ThreadService}s. The

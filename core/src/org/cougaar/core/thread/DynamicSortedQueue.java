@@ -28,6 +28,7 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.List;
 
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.UnaryPredicate;
@@ -41,22 +42,20 @@ import org.cougaar.util.UnaryPredicate;
  * Scheduler}s to hold {@link Schedulable}s that are not able to run
  * immediately.
  */
-public class DynamicSortedQueue
-{
-    private Comparator comparator;
-    private ArrayList store;
+public class DynamicSortedQueue<T extends Schedulable> {
+    private Comparator<T> comparator;
+    private final List<T> store;
     
     // Only used for the Scheduler's iterateOverQueuedThreads method,
     // so that it can read the elements without locking the thread
     // service or risking damage to the real queue.  DO NOT USE THIS
     // FOR ANY OTHER PURPOSE.
-    DynamicSortedQueue(DynamicSortedQueue queue)
-    {
-	this.store = new ArrayList(queue.store);
+    DynamicSortedQueue(DynamicSortedQueue<T> queue) {
+	this.store = new ArrayList<T>(queue.store);
     }
 
-    public DynamicSortedQueue(Comparator comparator) {
-	store = new ArrayList();
+    public DynamicSortedQueue(Comparator<T> comparator) {
+	store = new ArrayList<T>();
 	this.comparator = comparator;
     }
 
@@ -64,23 +63,22 @@ public class DynamicSortedQueue
     // unsafe otherwise.
     int processEach(ThreadStatusService.Body body, 
 		    String schedulerName,
-		    Logger logger) 
-    {
+		    Logger logger) {
 	int count = 0;
-	Object thing;
+	T thing;
 	for (int i = 0, n = store.size(); i < n; i++) {
 	    try {
 		thing = store.get(i);
 	    } catch (Exception ex) {
 		// This is an expected condition to end the loop
-		if (logger.isDebugEnabled())
+		if (logger.isDebugEnabled()) {
 		    logger.debug("queue size decreased during list operation");
+		}
 		break;
 	    }
 	    if (thing != null) {
 		try {
-		    SchedulableObject sched = (SchedulableObject) thing;
-		    long startTime = sched.getTimestamp();
+		    T sched = thing;
 		    body.run(schedulerName, sched);
 		    count++;
 		} catch (Throwable t) {
@@ -91,10 +89,10 @@ public class DynamicSortedQueue
 	return count;
     }
 
-    public ArrayList filter(UnaryPredicate predicate) {
-	ArrayList result = new ArrayList();
+    public List<T> filter(UnaryPredicate predicate) {
+	List<T> result = new ArrayList<T>();
 	for (int i = 0, n = store.size(); i < n; i++) {
-	    Object candidate = store.get(i);
+	    T candidate = store.get(i);
 	    if (!predicate.execute(candidate)) {
 		result.add(candidate);
 		store.remove(i);
@@ -109,12 +107,11 @@ public class DynamicSortedQueue
 	return "<DQ[" +store.size()+ "] " +store.toString()+ ">";
     }
 
-
-    public boolean contains(Object x) {
+    public boolean contains(T x) {
 	return store.contains(x);
     }
 
-    public void setComparator(Comparator comparator) {
+    public void setComparator(Comparator<T> comparator) {
 	this.comparator = comparator;
     }
 
@@ -122,14 +119,16 @@ public class DynamicSortedQueue
 	return store.size();
     }
 
-    public boolean add(Object x) {
-	if (store.contains(x)) return false;
+    public boolean add(T x) {
+	if (store.contains(x)) {
+	    return false;
+	}
 	store.add(x);
 	return true;
     }
 
 
-    public void remove(Object x) {
+    public void remove(T x) {
 	store.remove(x);
     }
 	    
@@ -138,21 +137,23 @@ public class DynamicSortedQueue
 	return store.isEmpty();
     }
 
-
-    public Object next() {
-	Object min = null;
+    public T next() {
+	T min = null;
 	for (int i = 0, n = store.size(); i < n; i++) {
-	    Object candidate = store.get(i);
+	    T candidate = store.get(i);
 	    if (min == null) {
 		min = candidate;
 	    } else {
 		int comp = comparator.compare(min, candidate);
-		if (comp > 0) min = candidate;
+		if (comp > 0) {
+		    min = candidate;
+		}
 	    }
 	}
-	if (min != null) store.remove(min);
+	if (min != null) {
+	    store.remove(min);
+	}
 	return min;
     }
-	    
 }
 

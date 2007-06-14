@@ -27,6 +27,7 @@
 package org.cougaar.core.thread;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.cougaar.core.service.ThreadListenerService;
 
@@ -35,119 +36,99 @@ import org.cougaar.core.service.ThreadListenerService;
  */
 final class ThreadListenerProxy implements ThreadListenerService
 {
-    private ArrayList[] listenersList;
+    private List<ThreadListener>[] listenersList;
     private TreeNode node;
 
-    ThreadListenerProxy(int laneCount) 
-    {
-	listenersList = new ArrayList[laneCount];
+    ThreadListenerProxy(int laneCount) {
+	listenersList = new List[laneCount];
 	for (int i=0; i<listenersList.length; i++)
-	    listenersList[i] = new ArrayList();
+	    listenersList[i] = new ArrayList<ThreadListener>();
     }
 		    
-    void setTreeNode(TreeNode node)
-    {
+    void setTreeNode(TreeNode node) {
 	this.node = node;
     }
 
-    ArrayList getListeners(SchedulableObject schedulable) 
-    {
+    List<ThreadListener> getListeners(SchedulableObject schedulable) {
 	return listenersList[schedulable.getLane()];
     }
 
-    ArrayList getListeners(Scheduler scheduler) 
-    {
+    List<ThreadListener> getListeners(Scheduler scheduler) {
 	return listenersList[scheduler.getLane()];
     }
 
-    synchronized void notifyQueued(SchedulableObject schedulable) 
-    {
+    synchronized void notifyQueued(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	ArrayList listeners = getListeners(schedulable);
-        for (int i = 0, n = listeners.size(); i < n; i++) {
-	    ThreadListener listener = (ThreadListener) listeners.get(i);
+	List<ThreadListener> listeners = getListeners(schedulable);
+        for (ThreadListener listener : listeners) {
 	    listener.threadQueued(schedulable, consumer);
 	}
     }
 
     synchronized void notifyDequeued(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	ArrayList listeners = getListeners(schedulable);
-	for (int i = 0, n = listeners.size(); i < n; i++) {
-	    ThreadListener listener = (ThreadListener) listeners.get(i);
+	List<ThreadListener> listeners = getListeners(schedulable);
+	for (ThreadListener listener : listeners) {
 	    listener.threadDequeued(schedulable, consumer);
 	}
     }
 
-    synchronized void notifyStart(SchedulableObject schedulable) 
-    {
+    synchronized void notifyStart(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	ArrayList listeners = getListeners(schedulable);
-	for (int i = 0, n = listeners.size(); i < n; i++) {
-	    ThreadListener listener = (ThreadListener) listeners.get(i);
+	List<ThreadListener> listeners = getListeners(schedulable);
+	for (ThreadListener listener : listeners) {
 	    listener.threadStarted(schedulable, consumer);
 	}
     }
 
-    synchronized void notifyEnd(SchedulableObject schedulable) 
-    {
+    synchronized void notifyEnd(SchedulableObject schedulable) {
 	Object consumer = schedulable.getConsumer();
-	ArrayList listeners = getListeners(schedulable);
-	for (int i = 0, n = listeners.size(); i < n; i++) {
-	    ThreadListener listener = (ThreadListener) listeners.get(i);
+	List<ThreadListener> listeners = getListeners(schedulable);
+	for (ThreadListener listener : listeners) {
 	    listener.threadStopped(schedulable, consumer);
 	}
     }
 
-    synchronized void notifyRightGiven(Scheduler scheduler) 
-    {
+    synchronized void notifyRightGiven(Scheduler scheduler) {
 	String id = scheduler.getName();
-	ArrayList listeners = getListeners(scheduler);
-	for (int i = 0, n = listeners.size(); i < n; i++) {
-	    ThreadListener listener = (ThreadListener) listeners.get(i);
+	List<ThreadListener> listeners = getListeners(scheduler);
+	for (ThreadListener listener : listeners) {
 	    listener.rightGiven(id);
 	}
     }
 
-    synchronized void notifyRightReturned(Scheduler scheduler) 
-    {
+    synchronized void notifyRightReturned(Scheduler scheduler) {
 	String id = scheduler.getName();
-	ArrayList listeners = getListeners(scheduler);
-	for (int i = 0, n = listeners.size(); i < n; i++) {
-	    ThreadListener listener = (ThreadListener) listeners.get(i);
+	List<ThreadListener> listeners = getListeners(scheduler);
+	for (ThreadListener listener : listeners) {
 	    listener.rightReturned(id);
 	}
     }
 
-
-
-
     public synchronized void addListener(ThreadListener listener,
-					 int lane) 
-    {
-	if (lane < 0 || lane >= listenersList.length)
+					 int lane) {
+	if (lane < 0 || lane >= listenersList.length) {
 	    throw new RuntimeException("Lane is out of range: " +lane);
+	}
 	listenersList[lane].add(listener);
     }
 
 
     public synchronized void removeListener(ThreadListener listener,
-					    int lane) 
-    {
-	if (lane < 0 || lane >= listenersList.length)
+					    int lane)  {
+	if (lane < 0 || lane >= listenersList.length) {
 	    throw new RuntimeException("Lane is out of range: " +lane);
+	}
 	listenersList[lane].remove(listener);
     }
 
 
-    public synchronized void addListener(ThreadListener listener) 
-    {
+    public synchronized void addListener(ThreadListener listener) {
 	listenersList[node.getDefaultLane()].add(listener);
     }
 
 
-    public synchronized void removeListener(ThreadListener listener) 
-    {
+    public synchronized void removeListener(ThreadListener listener) {
 	listenersList[node.getDefaultLane()].remove(listener);
     }
 

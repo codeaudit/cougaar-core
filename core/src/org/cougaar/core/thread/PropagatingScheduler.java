@@ -31,12 +31,10 @@ package org.cougaar.core.thread;
  * The standard hiearchical thread service implementation uses this
  * extension of {@link Scheduler} to handle the propagation of rights.
  */
-public class PropagatingScheduler extends Scheduler
-{
+public class PropagatingScheduler extends Scheduler {
     private RightsSelector selector;
 
-    public PropagatingScheduler(ThreadListenerProxy listenerProxy)
-    {
+    public PropagatingScheduler(ThreadListenerProxy listenerProxy) {
 	super(listenerProxy);
 
 	// Default selector
@@ -51,21 +49,27 @@ public class PropagatingScheduler extends Scheduler
     }
 
     boolean requestRights(Scheduler requestor) {
-	if (!allowRightFor(requestor)) return false;
+	if (!allowRightFor(requestor)) {
+	    return false;
+	}
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
 	    return super.requestRights(requestor);
 	} else {
 	    synchronized (this) {
-		if (!checkLocalRights()) return false;
+		if (!checkLocalRights()) {
+		    return false;
+		}
 		++rightsRequestCount;
 	    }
 	    Scheduler parent = parent_node.getScheduler(getLane());
 	    boolean ok = parent.requestRights(this);
 	    // If our parent gave us a right, increase our local count
 	    synchronized (this) {
-		if (ok) incrementRunCount(this);
+		if (ok) {
+		    incrementRunCount(this);
+		}
 		--rightsRequestCount;
 	    }
 	    return ok;
@@ -85,34 +89,8 @@ public class PropagatingScheduler extends Scheduler
 	    Scheduler parent = parent_node.getScheduler(getLane());
 	    parent.releaseRights(this);
 	}
-   }
-
-
-//     // The maxRunningThreads instance variable is irrelevant except at
-//     // the root scheduler.
-//     public void setMaxRunningThreadCount(int count) {
-// 	TreeNode parent_node = getTreeNode().getParent();
-// 	if (parent_node == null) {
-// 	    // This is the root
-// 	    super.setMaxRunningThreadCount(count);
-// 	} else {
-// 	    Scheduler parent = parent_node.getScheduler();
-// 	    parent.setMaxRunningThreadCount(count);
-// 	}
-//     }
-
-//     public int maxRunningThreadCount() {
-// 	TreeNode parent_node = getTreeNode().getParent();
-// 	if (parent_node == null) {
-// 	    // This is the root
-// 	    return super.maxRunningThreadCount();
-// 	} else {
-// 	    Scheduler parent = parent_node.getScheduler();
-// 	    return parent.maxRunningThreadCount();
-// 	}
-//     }
-
-
+    }
+    
     SchedulableObject getNextPending() {
 	return selector.getNextPending();
     }

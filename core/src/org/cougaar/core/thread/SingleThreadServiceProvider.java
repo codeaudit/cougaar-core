@@ -21,9 +21,6 @@
 
 package org.cougaar.core.thread;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import org.cougaar.core.service.ThreadService;
 
 /**
