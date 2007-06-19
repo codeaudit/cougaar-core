@@ -29,7 +29,8 @@ package org.cougaar.core.thread;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.Observable;
 import java.util.Observer;
 
@@ -138,7 +139,7 @@ public class AgentLoadSensorPlugin
     private static double capacity_mjips = 1.0; // ditto
 
     private int total;
-    private HashMap records = new HashMap();
+    private Map<String,ConsumerRecord> records = new HashMap<String,ConsumerRecord>();
     private ConsumerRecord nodeRecord;
 
     private LoggingService loggingService;
@@ -231,8 +232,7 @@ public class AgentLoadSensorPlugin
     // ServiceProvider
     public Object getService(ServiceBroker sb, 
 			     Object requestor, 
-			     Class serviceClass) 
-    {
+			     Class serviceClass) {
 	if (serviceClass == AgentLoadService.class) {
 	    return serviceImpl;
 	} else {
@@ -243,8 +243,7 @@ public class AgentLoadSensorPlugin
     public void releaseService(ServiceBroker sb, 
 			       Object requestor, 
 			       Class serviceClass, 
-			       Object service)
-    {
+			       Object service) {
     }
 
 
@@ -254,13 +253,12 @@ public class AgentLoadSensorPlugin
     }
 
 
-    private ArrayList snapshot() {
-	ArrayList result = new ArrayList();
+    private List<AgentLoadService.AgentLoad> snapshot() {
+	List<AgentLoadService.AgentLoad> result = 
+	    new ArrayList<AgentLoadService.AgentLoad>();
 	result.add(nodeRecord.snapshot());
 	synchronized (records) {
-	    Iterator itr = records.values().iterator();
-	    while (itr.hasNext()) {
-		ConsumerRecord record = (ConsumerRecord) itr.next();
+	    for (ConsumerRecord record : records.values()) {
 		result.add(record.snapshot());
 	    }
 	}
@@ -270,7 +268,7 @@ public class AgentLoadSensorPlugin
     private ConsumerRecord findRecord(String name) {
 	ConsumerRecord rec = null;
 	synchronized (records) {
-	    rec = (ConsumerRecord) records.get(name);
+	    rec = records.get(name);
 	    if (rec == null) {
 		rec = new ConsumerRecord(name);
 		records.put(name, rec);
@@ -283,16 +281,13 @@ public class AgentLoadSensorPlugin
 
     // ThreadListener
     public void threadQueued(Schedulable schedulable, 
-			     Object consumer) 
-    {
+			     Object consumer) {
     }
     public void threadDequeued(Schedulable schedulable, 
-			       Object consumer)
-    {
+			       Object consumer) {
     }
     public void threadStarted(Schedulable schedulable, 
-			      Object consumer)
-    {
+			      Object consumer){
     }
     public void threadStopped(Schedulable schedulable, 
 			      Object consumer)
@@ -317,9 +312,4 @@ public class AgentLoadSensorPlugin
 	    nodeRecord.decrementOutstanding();
 	}
    }
-
-
-
-
-
 }

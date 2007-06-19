@@ -28,6 +28,7 @@ package org.cougaar.core.thread;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.qos.metrics.Constants;
@@ -45,8 +46,7 @@ import org.cougaar.core.service.ThreadService;
  * it's watching the ThreadService for an Agent.
  */
 public class SchedulerWatcher
-    implements ThreadListener, Constants
-{
+    implements ThreadListener, Constants {
     private static final double CREDIBILITY = SECOND_MEAS_CREDIBILITY;
     private static final String PROVENANCE = "SchedulerWatcher";
 
@@ -170,7 +170,7 @@ public class SchedulerWatcher
     }
 
 
-    private HashMap records = new HashMap();
+    private Map<Object,ConsumerRecord> records = new HashMap<Object,ConsumerRecord>();
     private MetricsUpdateService metricsUpdateService;
 
 
@@ -193,7 +193,7 @@ public class SchedulerWatcher
     ConsumerRecord findRecord(Object consumer) {
 	ConsumerRecord rec = null;
 	synchronized (records) {
-	    rec = (ConsumerRecord) records.get(consumer);
+	    rec = records.get(consumer);
 	    if (rec == null) {
 		rec = new ConsumerRecord(consumer);
 		records.put(consumer, rec);
@@ -204,16 +204,14 @@ public class SchedulerWatcher
 
 
     public void threadQueued(Schedulable schedulable, 
-			     Object consumer) 
-    {
+			     Object consumer)  {
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	++rec.pending;
     }
 
     public void threadDequeued(Schedulable schedulable, 
-			       Object consumer)
-    {
+			       Object consumer) {
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	--rec.pending;
@@ -221,16 +219,14 @@ public class SchedulerWatcher
     }
 
     public void threadStarted(Schedulable schedulable, 
-			      Object consumer)
-    {
+			      Object consumer) {
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	++rec.outstanding;
     }
 
     public void threadStopped(Schedulable schedulable, 
-			      Object consumer)
-    {
+			      Object consumer) {
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	--rec.outstanding;
@@ -241,10 +237,5 @@ public class SchedulerWatcher
     }
 		
     public void rightReturned(String consumer) {
-   }
-
-
-
-
-
+    }
 }

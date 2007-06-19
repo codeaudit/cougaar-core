@@ -36,13 +36,13 @@ import org.cougaar.core.service.ThreadListenerService;
  */
 final class ThreadListenerProxy implements ThreadListenerService
 {
-    private List<ThreadListener>[] listenersList;
+    private List<List<ThreadListener>> listenersList;
     private TreeNode node;
 
     ThreadListenerProxy(int laneCount) {
-	listenersList = new List[laneCount];
-	for (int i=0; i<listenersList.length; i++)
-	    listenersList[i] = new ArrayList<ThreadListener>();
+	listenersList = new ArrayList<List<ThreadListener>>(laneCount);
+	for (int i=0; i<laneCount; i++)
+	    listenersList.add(new ArrayList<ThreadListener>());
     }
 		    
     void setTreeNode(TreeNode node) {
@@ -50,11 +50,11 @@ final class ThreadListenerProxy implements ThreadListenerService
     }
 
     List<ThreadListener> getListeners(SchedulableObject schedulable) {
-	return listenersList[schedulable.getLane()];
+	return listenersList.get(schedulable.getLane());
     }
 
     List<ThreadListener> getListeners(Scheduler scheduler) {
-	return listenersList[scheduler.getLane()];
+	return listenersList.get(scheduler.getLane());
     }
 
     synchronized void notifyQueued(SchedulableObject schedulable) {
@@ -107,29 +107,29 @@ final class ThreadListenerProxy implements ThreadListenerService
 
     public synchronized void addListener(ThreadListener listener,
 					 int lane) {
-	if (lane < 0 || lane >= listenersList.length) {
+	if (lane < 0 || lane >= listenersList.size()) {
 	    throw new RuntimeException("Lane is out of range: " +lane);
 	}
-	listenersList[lane].add(listener);
+	listenersList.get(lane).add(listener);
     }
 
 
     public synchronized void removeListener(ThreadListener listener,
 					    int lane)  {
-	if (lane < 0 || lane >= listenersList.length) {
+	if (lane < 0 || lane >= listenersList.size()) {
 	    throw new RuntimeException("Lane is out of range: " +lane);
 	}
-	listenersList[lane].remove(listener);
+	listenersList.get(lane).remove(listener);
     }
 
 
     public synchronized void addListener(ThreadListener listener) {
-	listenersList[node.getDefaultLane()].add(listener);
+	listenersList.get(node.getDefaultLane()).add(listener);
     }
 
 
     public synchronized void removeListener(ThreadListener listener) {
-	listenersList[node.getDefaultLane()].remove(listener);
+	listenersList.get(node.getDefaultLane()).remove(listener);
     }
 
 }

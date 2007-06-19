@@ -30,6 +30,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.RandomAccess;
 
 import org.cougaar.core.component.ServiceBroker;
@@ -118,15 +119,15 @@ public class AgentLoadRatePlugin
     private AgentLoadService agentLoadService;
     private MetricsUpdateService metricsUpdateService;
     private Schedulable schedulable;
-    private HashMap histories;
+    private Map<String,AgentLoadHistory> histories;
 
     public AgentLoadRatePlugin() {
-	histories = new HashMap();
+	histories = new HashMap<String,AgentLoadHistory>();
     }
 
     // Local
     AgentLoadHistory findOrMakeHistory(String agent) {
-	AgentLoadHistory history = (AgentLoadHistory) histories.get(agent);
+	AgentLoadHistory history = histories.get(agent);
 	if (history == null) {
 	    history = new AgentLoadHistory(agent);
 	    histories.put(agent, history);

@@ -49,16 +49,14 @@ import org.cougaar.core.servlet.ServletFrameset;
  * ThreadStatusService} to get its snapshot lists.  The access path is
  * <b>/threads/top</b>.
  */
-final class TopServlet extends ServletFrameset
-{
+final class TopServlet extends ServletFrameset {
 
     private static final long THRESHOLD = 1000;
     private ThreadStatusService statusService;
     private ThreadControlService controlService;
 
     private static class Record {
-	Record(String scheduler, Schedulable schedulable, boolean queued)
-	{
+	Record(String scheduler, Schedulable schedulable, boolean queued) {
 	    this.scheduler = scheduler;
 	    this.schedulable = schedulable;
 	    this.queued = queued;
@@ -75,16 +73,15 @@ final class TopServlet extends ServletFrameset
 
 
     // Higher times appear earlier in the list
-    private Comparator comparator = new Comparator() {
-	    public int compare(Object x, Object y) {
-		Record r = (Record) x;
-		Record s = (Record) y;
-		if (r.elapsed == s.elapsed)
+    private Comparator<Record> comparator = new Comparator<Record>() {
+	    public int compare(Record r, Record s) {
+		if (r.elapsed == s.elapsed) {
 		    return 0;
-		else if (r.elapsed < s.elapsed)
+		} else if (r.elapsed < s.elapsed) {
 		    return 1;
-		else
+		} else {
 		    return -1;
+		}
 	    }
 
 	    public boolean equals(Object x) {
@@ -94,8 +91,7 @@ final class TopServlet extends ServletFrameset
 
 
 
-    public TopServlet(ServiceBroker sb) 
-    {
+    public TopServlet(ServiceBroker sb)  {
 	super(sb);
 
 	NodeControlService ncs = (NodeControlService)
@@ -118,8 +114,7 @@ final class TopServlet extends ServletFrameset
     }
 
 
-    private void printHeaders(PrintWriter out) 
-    {
+    private void printHeaders(PrintWriter out) {
 	out.print("<tr>");
 	out.print("<th align=left><b>State</b></th>");
 	out.print("<th align=left><b>Blocking</b></th>");
@@ -131,8 +126,7 @@ final class TopServlet extends ServletFrameset
 	out.print("</tr>");
     }
 
-    private void printCell(String data, boolean queued, PrintWriter out) 
-    {
+    private void printCell(String data, boolean queued, PrintWriter out) {
 	out.print("<td>");
 	if (queued) out.print("<i>");
 	out.print(data);
@@ -140,8 +134,7 @@ final class TopServlet extends ServletFrameset
 	out.print("</td>");
     }
 
-    private void printCell(long data, boolean queued, PrintWriter out) 
-    {
+    private void printCell(long data, boolean queued, PrintWriter out) {
 	out.print("<td align=right>");
 	if (queued) out.print("<i>");
 	out.print(data);
@@ -151,8 +144,7 @@ final class TopServlet extends ServletFrameset
 
 
     private void printRecord(Record record,
-			     PrintWriter out) 
-    {
+			     PrintWriter out) {
 
 	if (record.elapsed > THRESHOLD) {
 	    out.print("<tr bgcolor=\"#ffeeee\">"); // pale-pink background
@@ -175,8 +167,7 @@ final class TopServlet extends ServletFrameset
 	out.print("</tr>");
     }
 
-    public void printBottomPage(HttpServletRequest request, PrintWriter out) 
-    {
+    public void printBottomPage(HttpServletRequest request, PrintWriter out) {
 	// lane key
 	out.print("Lane 0: Best Effort");
 	out.print("<br>Lane 1: Will Block");
@@ -184,8 +175,7 @@ final class TopServlet extends ServletFrameset
 	out.print("<br>Lane 3: Well Behaved");
     }
 
-    private void printSummary(List status, PrintWriter out) 
-    {
+    private void printSummary(List status, PrintWriter out) {
 	int running = 0;
 	int queued = 0;
 	int total = status.size();
@@ -227,19 +217,16 @@ final class TopServlet extends ServletFrameset
 
     // Implementations of ServletFrameset's abstract methods
 
-    public String getPath() 
-    {
+    public String getPath() {
 	return "/threads/top";
     }
 
-    public String getTitle() 
-    {
+    public String getTitle() {
 	return "Threads";
     }
 
-    public void printPage(HttpServletRequest request, PrintWriter out) 
-    {
-	final List status = new ArrayList();
+    public void printPage(HttpServletRequest request, PrintWriter out) {
+	final List<Record> status = new ArrayList<Record>();
 	ThreadStatusService.Body body = new ThreadStatusService.Body () {
 		public void run(String scheduler, Schedulable schedulable)
 		{
@@ -273,9 +260,7 @@ final class TopServlet extends ServletFrameset
 	out.print("<table>");
 	printHeaders(out);
 
-	Iterator itr = status.iterator();
-	while (itr.hasNext()) {
-	    Record record = (Record) itr.next();
+	for (Record record : status) {
 	    printRecord(record, out);
 	}
 	
