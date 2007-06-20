@@ -132,7 +132,7 @@ public class Scheduler {
 
     void setTreeNode(TreeNode treeNode) {
 	this.treeNode = treeNode;
-	printName = "<Scheduler " +treeNode.getName()+ ">";
+	printName = "<Scheduler " +treeNode.getName()+ " [" +lane+ "]>";
     }
 
 
