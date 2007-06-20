@@ -167,12 +167,12 @@ final class SchedulableObject implements Schedulable
     SchedulableObject reclaim(boolean reuse) {
 	// NB:  The Schedulable itself can never be the continuation
 	// of its own thread!
+	thread = null;
 	SchedulableObject continuation = scheduler.threadReclaimed(this, reuse);
 	if (continuation != null) {
 	    // thread is being continued, so handle restarts now
 	    boolean restart = false;
 	    synchronized (this) { 
-		thread = null;
 		if (reuse) restart = --start_count > 0;
 	    }
 	    // If start_count > 1, start() was called while the
@@ -204,6 +204,11 @@ final class SchedulableObject implements Schedulable
         synchronized (this) {
             start_count = 1; // forget any extra intervening start() calls
             queued = false;
+            if (thread != null) {
+        	Logger logger = Logging.getLogger(getClass()); 
+        	logger.error(this + " already has a thread!");
+        	return;
+            }
             thread = pool.getThread(this, name);
 	    timestamp = System.currentTimeMillis();
             thread.start_running();

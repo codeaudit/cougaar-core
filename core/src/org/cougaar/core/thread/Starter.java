@@ -39,15 +39,14 @@ import org.cougaar.util.log.Logging;
  * 
  * This is a singleton; there should never be more than one per Node.
  */
-final public class Starter extends Thread
-{
+final public class Starter extends Thread {
 
     // At least one thread must be a non-daemon thread, otherwise the JVM
     // will exit.  We'll mark this thread as our non-daemon "keep-alive".
     private static final boolean DAEMON =
         SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
-    public static Starter singleton;
+    static Starter singleton;
 
     static void startThread()  {
 	singleton = new Starter();
@@ -81,8 +80,6 @@ final public class Starter extends Thread
     private final CircularQueue queue;
     private final Object lock;
     private boolean should_stop;
-    private SchedulableObject schedulable;
-    private boolean wasWoken;
 
     private Starter() {
 	super("Scheduler Starter");
@@ -100,38 +97,30 @@ final public class Starter extends Thread
     
     private void add(SchedulableObject schedulable) {
 	synchronized (lock) {
+	    // Verify that the Schedulable isn't already on the
+	    // queue.  This is potentially expensive and in theory
+	    // should never happen.  But it does, so until we know
+	    // why, we need to check.
+	    if (queue.contains(schedulable)) {
+		Logger logger = Logging.getLogger(Starter.class);
+		logger.error(schedulable + " is already in the Starter queue");
+		// XXX: Figure out why this happens !!
+		return;
+	    }
 	    queue.add(schedulable);
 	    lock.notify();
 	}	
     }
     
-    public void wakeup() {
-	synchronized (lock) {
-	    wasWoken = true;
-	    lock.notifyAll();
-	}
-    }
-    
-    public SchedulableObject getLastSchedulable() {
-	return schedulable;
-    }
-    
-    public CircularQueue getQueue() {
-	return queue;
-    }
-    
     public void run() {
 	while (true) {
+	    SchedulableObject schedulable = null;
 	    synchronized (lock) {
 		while (true) {
 		    if (should_stop) return;
 		    if (!queue.isEmpty()) break;
 		    try { 
 			lock.wait();
-			if (wasWoken) {
-			    System.out.println("woken");
-			    wasWoken = false;
-			}
 		    } catch (InterruptedException ex) {
 		    }
 		}
@@ -140,5 +129,4 @@ final public class Starter extends Thread
 	    schedulable.getScheduler().startOrQueue(schedulable);
 	}
     }
-
 }

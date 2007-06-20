@@ -41,7 +41,7 @@ import org.cougaar.util.log.Logging;
 final class Reclaimer extends Thread
 {
 
-    private static Reclaimer singleton;
+    static Reclaimer singleton;
 
     static void startThread() {
 	singleton = new Reclaimer();
@@ -52,11 +52,7 @@ final class Reclaimer extends Thread
         Reclaimer instance = singleton;
         if (instance == null) return;
         singleton = null;
-
-        synchronized (instance.lock) {
-            instance.should_stop = true;
-	    instance.lock.notify();
-        }
+        instance.quit();
         try {
             instance.join();
         } catch (InterruptedException ie) {
@@ -72,10 +68,7 @@ final class Reclaimer extends Thread
             }
             return;
         }
-	synchronized (instance.lock) {
-	    instance.queue.add(schedulable);
-	    instance.lock.notify();
-	}
+        instance.add(schedulable);
     }
 
 
@@ -89,7 +82,30 @@ final class Reclaimer extends Thread
 	queue = new CircularQueue();
 	lock = new Object();
     }
-
+    private void quit() {
+	synchronized (lock) {
+	    should_stop = true;
+	    lock.notify();
+	}
+    }
+    
+    private void add(SchedulableObject schedulable) {
+	synchronized (lock) {
+	    // Verify that the Schedulable isn't already on the
+	    // queue.  This is potentially expensive and in theory
+	    // should never happen.  But it does, so until we know
+	    // why, we need to check.
+	    if (queue.contains(schedulable)) {
+		Logger logger = Logging.getLogger(Reclaimer.class);
+		logger.error(schedulable + " is already in the Reclaimer queue");
+		// XXX: Figure out why this happens !!
+		return;
+	    }
+	    queue.add(schedulable);
+	    lock.notify();
+	}	
+    }
+    
     public void run() {
         while (true) {
             // dequeue
