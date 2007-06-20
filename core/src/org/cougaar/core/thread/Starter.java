@@ -39,7 +39,7 @@ import org.cougaar.util.log.Logging;
  * 
  * This is a singleton; there should never be more than one per Node.
  */
-final class Starter extends Thread
+final public class Starter extends Thread
 {
 
     // At least one thread must be a non-daemon thread, otherwise the JVM
@@ -47,7 +47,7 @@ final class Starter extends Thread
     private static final boolean DAEMON =
         SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
-    private static Starter singleton;
+    public static Starter singleton;
 
     static void startThread()  {
 	singleton = new Starter();
@@ -58,11 +58,7 @@ final class Starter extends Thread
         Starter instance = singleton;
         if (instance == null) return;
         singleton = null;
-
-        synchronized (instance.lock) {
-            instance.should_stop = true;
-	    instance.lock.notify();
-        }
+        instance.quit();
         try {
             instance.join();
         } catch (InterruptedException ie) {
@@ -78,16 +74,15 @@ final class Starter extends Thread
             }
             return;
         }
-	synchronized (instance.lock) {
-	    instance.queue.add(schedulable);
-	    instance.lock.notify();
-	}
+        instance.add(schedulable);
     }
 
 
     private final CircularQueue queue;
     private final Object lock;
     private boolean should_stop;
+    private SchedulableObject schedulable;
+    private boolean wasWoken;
 
     private Starter() {
 	super("Scheduler Starter");
@@ -95,26 +90,55 @@ final class Starter extends Thread
 	queue = new CircularQueue();
 	lock = new Object();
     }
-
+    
+    private void quit() {
+	synchronized (lock) {
+	    should_stop = true;
+	    lock.notify();
+	}
+    }
+    
+    private void add(SchedulableObject schedulable) {
+	synchronized (lock) {
+	    queue.add(schedulable);
+	    lock.notify();
+	}	
+    }
+    
+    public void wakeup() {
+	synchronized (lock) {
+	    wasWoken = true;
+	    lock.notifyAll();
+	}
+    }
+    
+    public SchedulableObject getLastSchedulable() {
+	return schedulable;
+    }
+    
+    public CircularQueue getQueue() {
+	return queue;
+    }
+    
     public void run() {
-        while (true) {
-            // dequeue
-            SchedulableObject schedulable;
-            synchronized (lock) {
-                while (true) {
-                    if (should_stop) return;
-                    if (!queue.isEmpty()) break;
-                    try { 
-                        lock.wait();
-                    } catch (InterruptedException ex) {
-                    }
-                }
-                schedulable = (SchedulableObject) queue.next();
-            }
-
-            // start
-            schedulable.getScheduler().startOrQueue(schedulable);
-        }
+	while (true) {
+	    synchronized (lock) {
+		while (true) {
+		    if (should_stop) return;
+		    if (!queue.isEmpty()) break;
+		    try { 
+			lock.wait();
+			if (wasWoken) {
+			    System.out.println("woken");
+			    wasWoken = false;
+			}
+		    } catch (InterruptedException ex) {
+		    }
+		}
+		schedulable = (SchedulableObject) queue.next();
+	    }
+	    schedulable.getScheduler().startOrQueue(schedulable);
+	}
     }
 
 }
