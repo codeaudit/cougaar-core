@@ -28,13 +28,16 @@ package org.cougaar.core.thread;
 
 import java.util.List;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 /**
  * This is the standard implementation of {@link RightsSelector}.  It
  * uses a round-robin approach to offer rights equally among its
  * own {@link Scheduler}'s thread and those of its children.
  */
-class RoundRobinSelector implements RightsSelector
-{
+class RoundRobinSelector implements RightsSelector {
+    private static final Logger logger = Logging.getLogger(RoundRobinSelector.class);
     // Holds the next index of the round-robin selection.  A value of
     // -1 refers to the local queue, rather than any of the children.
     private int currentIndex = -1;
@@ -59,16 +62,25 @@ class RoundRobinSelector implements RightsSelector
 	    currentIndex = child_count == 0 ? -1 : 0;
 	} else {
 	    TreeNode child_node =children.get(currentIndex++);
-	    if (currentIndex == child_count) currentIndex = -1;
-	    if (child_node == null) return null;
+	    if (currentIndex == child_count){
+		currentIndex = -1;
+	    }
+	    if (child_node == null) {
+		logger.warn(scheduler + "has a null child");
+		return null;
+	    }
 
 	    Scheduler child = child_node.getScheduler(scheduler.getLane());
-	    if (!scheduler.allowRightFor(child)) return null;
+	    if (!scheduler.allowRightFor(child)) {
+		return null;
+	    }
 
 	    handoff = child.getNextPending();
 	    // We're the parent of the Scheduler to which the handoff
 	    // is given.  Increase the local count.
-	    if (handoff != null) scheduler.incrementRunCount(child);
+	    if (handoff != null) {
+		scheduler.incrementRunCount(child);
+	    }
 	}
 	return handoff;
     }
