@@ -109,10 +109,10 @@ public class Scheduler {
 	} catch (IndexOutOfBoundsException r) {
           // this may happen if pendingThreads was modified during the traversal
           if (_logger.isDebugEnabled()) {
-            _logger.debug("SortedQueue.processEach detected a collision", r);
+            _logger.debug(this+ ": SortedQueue.processEach detected a collision", r);
           }
         } catch (Throwable r) {
-            _logger.error("SortedQueue.processEach threw an uncaught exception", r);
+            _logger.error(this + ": SortedQueue.processEach threw an uncaught exception", r);
 	}
         return 0;
     }
@@ -269,8 +269,23 @@ public class Scheduler {
     synchronized void decrementRunCount(Scheduler consumer) {
 	--runningThreadCount;
 	if (runningThreadCount < 0) {
-	    System.out.println("###" +this+ " thread count is " +
-		    runningThreadCount);
+	    StringBuffer buf = new StringBuffer();
+	    buf.append(this.toString());
+	    buf.append(" thread count is ").append(Integer.toString(runningThreadCount));
+	    TreeNode node = getTreeNode();
+	    TreeNode parent = node.getParent();
+	    if (parent != null){
+		buf.append(" parent ").append(parent.getName());
+	    }
+	    List<TreeNode> children = node.getChildren();
+	    if (children != null && !children.isEmpty()) {
+		buf.append(" children");
+		for (TreeNode child : children) {
+		    buf.append(" " + child.getName());
+		}
+	    }
+	    logger.error(buf.toString());
+	    runningThreadCount = 0;
 	}
 	listenerProxy.notifyRightReturned(consumer);
     }
@@ -329,9 +344,11 @@ public class Scheduler {
 		handoff.thread_start();
 	    }
 	} else {
-// 	    System.err.println("Decreased thread count prevented handoff " 
-// 			       +runningThreadCount+ ">" 
-// 			       +maxRunningThreads);
+	    if (logger.isErrorEnabled()) {
+		logger.error("Decreased thread count prevented handoff " 
+			       +runningThreadCount+ ">" 
+			       +maxRunningThreads);
+	    }
 	}
     }
 
@@ -352,8 +369,8 @@ public class Scheduler {
 	    count = absoluteMax;
 	} else {
           if (_logger.isInfoEnabled()) {
-            _logger.info("Setting maxRunningThreadCount to "+requested_max+" from "+maxRunningThreads,
-                        new Throwable());
+            _logger.info(this+ ": Setting maxRunningThreadCount to "+requested_max+
+        	    " from "+maxRunningThreads);
           }
         }
 	int additionalThreads = count - maxRunningThreads;
