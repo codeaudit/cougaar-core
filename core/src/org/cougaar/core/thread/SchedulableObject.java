@@ -37,8 +37,7 @@ import java.util.TimerTask;
  * thread services use {@link TrivialSchedulable} instead.
  */
 
-final class SchedulableObject implements Schedulable
-{
+final class SchedulableObject implements Schedulable {
     private long timestamp;
     private Object consumer;
     private ThreadPool pool;
@@ -307,6 +306,11 @@ final class SchedulableObject implements Schedulable
             return true;
         }
 
+    }
+
+    // Used in logging
+    int getStartCount() {
+	return start_count;
     }
 
 }

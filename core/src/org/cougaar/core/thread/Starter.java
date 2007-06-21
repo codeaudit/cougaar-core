@@ -103,7 +103,8 @@ final public class Starter extends Thread {
 	    // why, we need to check.
 	    if (queue.contains(schedulable)) {
 		Logger logger = Logging.getLogger(Starter.class);
-		logger.error(schedulable + " is already in the Starter queue");
+		logger.error(schedulable + " is already in the Starter queue" +
+			" StartCount=" +schedulable.getStartCount());
 		// XXX: Figure out why this happens !!
 		return;
 	    }

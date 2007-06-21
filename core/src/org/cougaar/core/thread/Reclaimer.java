@@ -97,7 +97,8 @@ final class Reclaimer extends Thread
 	    // why, we need to check.
 	    if (queue.contains(schedulable)) {
 		Logger logger = Logging.getLogger(Reclaimer.class);
-		logger.error(schedulable + " is already in the Reclaimer queue");
+		logger.error(schedulable + " is already in the Reclaimer queue" +
+			" Start Count=" +schedulable.getStartCount());
 		// XXX: Figure out why this happens !!
 		return;
 	    }
