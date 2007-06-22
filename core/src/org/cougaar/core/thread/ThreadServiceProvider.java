@@ -163,8 +163,9 @@ public final class ThreadServiceProvider
         }
 
 	if (isRoot) {
-	    Starter.startThread();
-	    Reclaimer.startThread();
+	    /*Starter.startThread();
+	    Reclaimer.startThread();*/
+	    SchedulableStateChangeQueue.startThread();
 	    // use the root service broker
 	    NodeControlService ncs = (NodeControlService)
 		sb.getService(this, NodeControlService.class, null);
@@ -200,8 +201,7 @@ public final class ThreadServiceProvider
           // Unload hierarchical thread service and Timers
           if (isRoot) {
               TreeNode.releaseTimer();
-              Reclaimer.stopThread();
-              Starter.stopThread();
+              SchedulableStateChangeQueue.stopThread();
               stopPools();
           }
       } else {

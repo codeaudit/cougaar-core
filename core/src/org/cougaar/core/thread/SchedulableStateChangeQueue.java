@@ -26,35 +26,29 @@
 
 package org.cougaar.core.thread;
 
+import java.util.Iterator;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.CircularQueue;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
-/**
- * This native Java thread helps the standard thread service scheduler
- * to use its pool efficiently.  When a {@link Schedulable} has been
- * given the right to run, it's placed on the Starter for the actual
- * starting.  See also {@link Reclaimer}.
- * 
- * This is a singleton; there should never be more than one per Node.
- */
-final public class Starter extends Thread {
+final class SchedulableStateChangeQueue extends Thread {
 
     // At least one thread must be a non-daemon thread, otherwise the JVM
     // will exit.  We'll mark this thread as our non-daemon "keep-alive".
     private static final boolean DAEMON =
         SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
-    static Starter singleton;
+    static SchedulableStateChangeQueue singleton;
 
     static void startThread()  {
-	singleton = new Starter();
+	singleton = new SchedulableStateChangeQueue();
 	singleton.start();
     }
 
     static void stopThread() {
-        Starter instance = singleton;
+	SchedulableStateChangeQueue instance = singleton;
         if (instance == null) return;
         singleton = null;
         instance.quit();
@@ -63,17 +57,26 @@ final public class Starter extends Thread {
         } catch (InterruptedException ie) {
         }
     }
-
-    static void push(SchedulableObject schedulable) {
-        Starter instance = singleton;
+    
+    static void pushStart(SchedulableObject sched) {
+	push(sched, SchedulableLifecyle.Start);
+    }
+    
+    static void pushReclaim(SchedulableObject sched) {
+	push(sched, SchedulableLifecyle.Reclaim);
+    }
+    
+    private static void push(SchedulableObject schedulable, SchedulableLifecyle operation) {
+	SchedulableStateChangeQueue instance = singleton;
         if (instance == null) {
-            Logger logger = Logging.getLogger(Starter.class);
+            Logger logger = Logging.getLogger(SchedulableStateChangeQueue.class);
             if (logger.isWarnEnabled()) {
                 logger.warn("Ignoring enqueue request on stopped thread");
             }
             return;
         }
-        instance.add(schedulable);
+        // XXX: Creating a new queue entry every time is potentially expensive
+        instance.add(new QueueEntry(schedulable, operation));
     }
 
 
@@ -81,8 +84,8 @@ final public class Starter extends Thread {
     private final Object lock;
     private boolean should_stop;
 
-    private Starter() {
-	super("Scheduler Starter");
+    private SchedulableStateChangeQueue() {
+	super("Thread Wrangler");
 	setDaemon(DAEMON);
 	queue = new CircularQueue();
 	lock = new Object();
@@ -95,27 +98,32 @@ final public class Starter extends Thread {
 	}
     }
     
-    private void add(SchedulableObject schedulable) {
+    private void add(QueueEntry entry) {
 	synchronized (lock) {
 	    // Verify that the Schedulable isn't already on the
 	    // queue.  This is potentially expensive and in theory
 	    // should never happen.  But it does, so until we know
 	    // why, we need to check.
-	    if (queue.contains(schedulable)) {
-		Logger logger = Logging.getLogger(Starter.class);
-		logger.error(schedulable + " is already in the Starter queue" +
-			" StartCount=" +schedulable.getStartCount());
-		// XXX: Figure out why this happens !!
-		return;
+	    SchedulableObject schedulable = entry.schedulable;
+	    Iterator itr = queue.iterator();
+	    while (itr.hasNext()) {
+		QueueEntry e = (QueueEntry) itr.next();
+		if (e.schedulable == schedulable) {
+		    Logger logger = Logging.getLogger(SchedulableStateChangeQueue.class);
+		    logger.error(schedulable + " is already in the queue with "
+			    + e.operation +   ", new op is " + entry.operation);
+		    // XXX: Figure out why this happens !!
+		    return;
+		}
 	    }
-	    queue.add(schedulable);
+	    queue.add(entry);
 	    lock.notify();
 	}	
     }
     
     public void run() {
 	while (true) {
-	    SchedulableObject schedulable = null;
+	    QueueEntry entry = null;
 	    synchronized (lock) {
 		while (true) {
 		    if (should_stop) return;
@@ -125,9 +133,23 @@ final public class Starter extends Thread {
 		    } catch (InterruptedException ex) {
 		    }
 		}
-		schedulable = (SchedulableObject) queue.next();
+		entry = (QueueEntry) queue.next();
 	    }
-	    schedulable.getScheduler().startOrQueue(schedulable);
+	    entry.doWork();
+	}
+    }
+    
+    private static class QueueEntry {
+	final SchedulableObject schedulable;
+	final SchedulableLifecyle operation;
+	
+	QueueEntry(SchedulableObject schedulable, SchedulableLifecyle op) {
+	    this.schedulable = schedulable;
+	    this.operation = op;
+	}
+	
+	void doWork() {
+	    operation.doWork(schedulable);
 	}
     }
 }

@@ -58,8 +58,7 @@ final class SchedulableObject implements Schedulable {
                       Runnable runnable, 
                       String name,
                       Object consumer,
-		      int lane) 
-    {
+		      int lane) {
 	this.lane = lane;
         this.pool = treeNode.getPool(lane);
         this.scheduler = treeNode.getScheduler(lane);
@@ -77,14 +76,11 @@ final class SchedulableObject implements Schedulable {
 	this.start_count = 0;
     }
 
-
-    void run()
-    {
+    void run() {
 	runnable.run();
     }
 
-    public int getLane()
-    {
+    public int getLane() {
 	return lane;
     }
 
@@ -177,7 +173,9 @@ final class SchedulableObject implements Schedulable {
 	    // If start_count > 1, start() was called while the
 	    // Schedulable was running.  Now that it's finished,  start it
 	    // again. 
-	    if (restart) Starter.push(this);
+	    if (restart) {
+		SchedulableStateChangeQueue.pushStart(this);
+	    }
 	}
         return continuation;
     }
@@ -196,7 +194,11 @@ final class SchedulableObject implements Schedulable {
 	synchronized (this) {
 	    restart = --start_count > 0;
 	}
-        if (restart) Starter.push(this);
+        if (restart) {
+            // Queue this request instead of running immediately
+            // so that other Schedulables get a chance to run.
+            SchedulableStateChangeQueue.pushStart(this);
+        }
     }
 
     void thread_start() {
@@ -224,7 +226,7 @@ final class SchedulableObject implements Schedulable {
 
 	// We only get here if the Schedulable has not been
 	// cancelled  and if start_count has gone from 0 to 1.
-        Starter.push(this);
+        SchedulableStateChangeQueue.pushStart(this);;
     }
 
     
@@ -259,16 +261,14 @@ final class SchedulableObject implements Schedulable {
     }
 
 
-    public synchronized void schedule(long delay, long interval) 
-    {
+    public synchronized void schedule(long delay, long interval) {
 	Timer timer = timer();
         if (timer != null) {
             timer.schedule(task(), delay, interval);
         }
     }
 
-    public synchronized void scheduleAtFixedRate(long delay, long interval)
-    {
+    public synchronized void scheduleAtFixedRate(long delay, long interval) {
 	Timer timer = timer();
         if (timer != null) {
             timer.scheduleAtFixedRate(task(), delay, interval);
@@ -276,8 +276,7 @@ final class SchedulableObject implements Schedulable {
     }
 
 
-    public synchronized void cancelTimer() 
-    {
+    public synchronized void cancelTimer() {
 	if (task != null) task.cancel();
 	task = null;
     }
