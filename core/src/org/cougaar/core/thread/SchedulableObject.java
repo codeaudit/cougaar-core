@@ -187,6 +187,10 @@ final class SchedulableObject implements Schedulable {
 	    SchedulableStateChangeQueue.pushStart(this);
 	}
     }
+    
+    synchronized void addToReclaimer() {
+	SchedulableStateChangeQueue.pushReclaim(this);
+    }
 
     synchronized void thread_start() {
 	start_count = 1; // forget any extra intervening start() calls

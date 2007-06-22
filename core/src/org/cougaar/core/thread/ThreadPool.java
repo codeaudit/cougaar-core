@@ -85,9 +85,9 @@ class ThreadPool
 	}
 
 	public final void run() {
-	    SchedulableObject last_schedulable = null;
 	    while (true) {
 		synchronized (runLock) {
+		    SchedulableObject last_schedulable = null;
 		    long continuation_start = System.currentTimeMillis();
 		    int continuation_count = 0;
 		    while (schedulable != null) {
@@ -125,23 +125,22 @@ class ThreadPool
 		    }
 
 		    in_use = false; // thread is now reusable
-		    
-		    synchronized (last_schedulable) {
-			// release rights
-			SchedulableStateChangeQueue.pushReclaim(last_schedulable);
-		    }		    
+		    if (last_schedulable != null) {
+			last_schedulable.addToReclaimer();
+		    }
 		    if (should_stop) {
                       break;
                     }
-
 		    try {
 			runLock.wait();       // suspend
+			if (schedulable == null) {
+			    pool.logger.warn("Spurious wake up (no work)");
+			}
 		    } catch (InterruptedException ie) {
-                    }
-
-                    if (should_stop) {
-                        break;
-                    }
+		    }
+		    if (should_stop) {
+			break;
+		    }
 		}
 	    }
 	}
@@ -151,18 +150,21 @@ class ThreadPool
 	}
 
 	void start_running() 
-	    throws IllegalThreadStateException 
-	{
+	    throws IllegalThreadStateException {
 	    synchronized (runLock) {
-		if (isRunning) 
+		if (isRunning) {
 		    throw new IllegalThreadStateException("PooledThread already started: "+
 							  schedulable);
+		}
 		isRunning = true;
 
 		if (!isStarted) {
 		    isStarted=true;
 		    super.start();
 		} else {
+		    if (schedulable == null) {
+			pool.logger.warn(this + " was started with no work");
+		    }
 		    runLock.notify();     // resume
 		}
 	    }
