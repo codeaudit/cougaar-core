@@ -377,8 +377,8 @@ public class NodeApplet extends Applet {
       if (svc != null) {
         try {
           Class cl = svc.getClass();
-          Method m = cl.getMethod("shutdown", null);
-          m.invoke(svc, null);
+          Method m = cl.getMethod("shutdown", (Class[]) null);
+          m.invoke(svc, (Object[]) null);
         } catch (Exception e) {
           e.printStackTrace();
         }

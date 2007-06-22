@@ -242,7 +242,7 @@ implements BlackboardClient
 	if (cons != null) {
 	  // Make a new one of whatever it is and set OM value
 	  Comparable newThing = 
-	    (Comparable) cons.newInstance(new String[] {newValue});
+	    (Comparable) cons.newInstance((Object[]) new String[] {newValue});
 	  bbOM.setValue(newThing);
 	} else {
 	  out.println("<html><head></head><body><h2>ERROR - OperatingMode Not Changed</h2><br>" );
