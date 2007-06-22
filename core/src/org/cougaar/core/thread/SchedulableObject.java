@@ -39,12 +39,12 @@ import java.util.TimerTask;
 
 final class SchedulableObject implements Schedulable {
     private long timestamp;
-    private Object consumer;
-    private ThreadPool pool;
-    private Scheduler scheduler;
-    private ThreadPool.PooledThread thread;
-    private Runnable runnable;
-    private String name;
+    private final Object consumer;
+    private final ThreadPool pool;
+    private final Scheduler scheduler;
+    private final int lane;
+    private final Runnable runnable;
+    private final String name;
     private int start_count;
     private boolean cancelled;
     private boolean queued;
@@ -52,7 +52,7 @@ final class SchedulableObject implements Schedulable {
     private TimerTask task;
     private int blocking_type = SchedulableStatus.NOT_BLOCKING;
     private String blocking_excuse;
-    private int lane;
+    private ThreadPool.PooledThread thread;
 
     SchedulableObject(TreeNode treeNode, 
                       Runnable runnable, 
@@ -93,12 +93,12 @@ final class SchedulableObject implements Schedulable {
     }
 
 
-    void setBlocking(int type, String excuse) {
+    synchronized void setBlocking(int type, String excuse) {
 	blocking_type = type;
 	blocking_excuse = excuse;
     }
 
-    void clearBlocking() {
+    synchronized void clearBlocking() {
 	blocking_excuse = null;
 	blocking_type = SchedulableStatus.NOT_BLOCKING;
     }
@@ -121,7 +121,7 @@ final class SchedulableObject implements Schedulable {
         return timestamp;
     }
 
-    void setQueued(boolean flag) {
+    synchronized void setQueued(boolean flag) {
         queued = flag;
         if (flag) timestamp = System.currentTimeMillis();
     }
@@ -135,7 +135,7 @@ final class SchedulableObject implements Schedulable {
         return disqualified;
     }
 
-    void setDisqualified(boolean flag) {
+    synchronized void setDisqualified(boolean flag) {
         disqualified = flag;
         if (flag) queued = false;
     }
@@ -151,31 +151,18 @@ final class SchedulableObject implements Schedulable {
         scheduler.threadClaimed(this);
     }
 
-
-
-
-
-
     // This method runs after each pass through the body. Cf
     // reclaimNotify, which only runs when this Schedulable is the
     // last continuation for a given pooled thread.
     SchedulableObject reclaim(boolean reuse) {
 	// NB:  The Schedulable itself can never be the continuation
 	// of its own thread!
-	thread = null;
 	SchedulableObject continuation = scheduler.threadReclaimed(this, reuse);
-	if (continuation != null) {
-	    // thread is being continued, so handle restarts now
-	    boolean restart = false;
-	    synchronized (this) { 
-		if (reuse) restart = --start_count > 0;
-	    }
-	    // If start_count > 1, start() was called while the
-	    // Schedulable was running.  Now that it's finished,  start it
-	    // again. 
-	    if (restart) {
-		SchedulableStateChangeQueue.pushStart(this);
-	    }
+	if (continuation == this) {
+	    Logger logger = Logging.getLogger(getClass()); 
+	    logger.error(this + "  is its own continuation!");
+	} else if (continuation != null) {
+	    maybeRestart();
 	}
         return continuation;
     }
@@ -190,46 +177,42 @@ final class SchedulableObject implements Schedulable {
 	// The restart mechanism shouldn't be relevant unless the
 	// no continuation was found in the corresponding reclaim
 	// call. 
-	boolean restart = false;
-	synchronized (this) {
-	    restart = --start_count > 0;
+	maybeRestart();
+       
+    }
+
+    synchronized private void maybeRestart() {
+	thread = null;
+	if (--start_count > 0) {
+	    SchedulableStateChangeQueue.pushStart(this);
 	}
-        if (restart) {
-            // Queue this request instead of running immediately
-            // so that other Schedulables get a chance to run.
-            SchedulableStateChangeQueue.pushStart(this);
-        }
     }
 
-    void thread_start() {
-        synchronized (this) {
-            start_count = 1; // forget any extra intervening start() calls
-            queued = false;
-            if (thread != null) {
-        	Logger logger = Logging.getLogger(getClass()); 
-        	logger.error(this + " already has a thread!");
-        	return;
-            }
-            thread = pool.getThread(this, name);
-	    timestamp = System.currentTimeMillis();
-            thread.start_running();
-        }
+    synchronized void thread_start() {
+	start_count = 1; // forget any extra intervening start() calls
+	queued = false;
+	if (thread != null) {
+	    Logger logger = Logging.getLogger(getClass()); 
+	    logger.error(this + " already has a thread!");
+	    return;
+	}
+	thread = pool.getThread(this, name);
+	timestamp = System.currentTimeMillis();
+	thread.start_running();
     }
 
-    public void start() {
-        synchronized (this) {
-	    // If the Schedulable has been cancelled, or has already
-	    // been asked to start, there's nothing further to do.
-            if (cancelled) return;
-            if (++start_count > 1) return;
-        }
+    synchronized public void start() {
+	// If the Schedulable has been cancelled, or has already
+	// been asked to start, there's nothing further to do.
+	if (cancelled) return;
+	if (++start_count > 1) return;
 
 	// We only get here if the Schedulable has not been
 	// cancelled  and if start_count has gone from 0 to 1.
-        SchedulableStateChangeQueue.pushStart(this);;
+	SchedulableStateChangeQueue.pushStart(this);;
     }
 
-    
+    // All callers should be synchronized on this
     private TimerTask task() {
 	cancelTimer();
 	task = new TimerTask() {
@@ -253,7 +236,7 @@ final class SchedulableObject implements Schedulable {
 	return timer;
     }
 
-    public synchronized void schedule(long delay) {
+    synchronized public void schedule(long delay) {
 	Timer timer = timer();
         if (timer != null) {
             timer.schedule(task(), delay);
@@ -261,14 +244,14 @@ final class SchedulableObject implements Schedulable {
     }
 
 
-    public synchronized void schedule(long delay, long interval) {
+    synchronized public void schedule(long delay, long interval) {
 	Timer timer = timer();
         if (timer != null) {
             timer.schedule(task(), delay, interval);
         }
     }
 
-    public synchronized void scheduleAtFixedRate(long delay, long interval) {
+    synchronized public void scheduleAtFixedRate(long delay, long interval) {
 	Timer timer = timer();
         if (timer != null) {
             timer.scheduleAtFixedRate(task(), delay, interval);
@@ -276,12 +259,12 @@ final class SchedulableObject implements Schedulable {
     }
 
 
-    public synchronized void cancelTimer() {
+    synchronized public void cancelTimer() {
 	if (task != null) task.cancel();
 	task = null;
     }
 
-    public synchronized int getState() {
+    synchronized public int getState() {
         // Later add a 'disqualified' state
         if (queued)
             return CougaarThread.THREAD_PENDING;
@@ -291,20 +274,17 @@ final class SchedulableObject implements Schedulable {
             return CougaarThread.THREAD_DORMANT;
     }
 
-    public boolean cancel() {
-        synchronized (this) {
-	    cancelTimer();
-            cancelled = true;
-	    start_count = 0;
-            if (thread != null) {
-                // Currently running. 
-                return false;
-            } 
-            if (queued) scheduler.dequeue(this);
-            queued = false;
-            return true;
-        }
-
+    synchronized public boolean cancel() {
+	cancelTimer();
+	cancelled = true;
+	start_count = 0;
+	if (thread != null) {
+	    // Currently running. 
+	    return false;
+	} 
+	if (queued) scheduler.dequeue(this);
+	queued = false;
+	return true;
     }
 
     // Used in logging

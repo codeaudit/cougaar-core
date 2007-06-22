@@ -126,10 +126,11 @@ class ThreadPool
 
 		    in_use = false; // thread is now reusable
 		    
-		    // release rights
-		    SchedulableStateChangeQueue.pushReclaim(last_schedulable);
-
-                    if (should_stop) {
+		    synchronized (last_schedulable) {
+			// release rights
+			SchedulableStateChangeQueue.pushReclaim(last_schedulable);
+		    }		    
+		    if (should_stop) {
                       break;
                     }
 
