@@ -55,15 +55,17 @@ import org.cougaar.util.GenericStateModel;
  */
 public class AgentImpl extends Agent {
 
+  private static final String DEFAULT_BOOTSTRAP_CLASSNAME =
+    "org.cougaar.core.agent.Bootstrap";
+
   // from "setParameter(..)", cleared in "load()"
   private List params;
 
-  // this agent's address
-  private MessageAddress localAgent;
+  private String agentName;
 
   /** Alias for getMessageAddress, required by Agent superclass */
   public MessageAddress getAgentIdentifier() {
-    return localAgent;
+    return MessageAddress.getMessageAddress(agentName);
   }
 
   /**
@@ -107,21 +109,14 @@ public class AgentImpl extends Agent {
     // take parameters
     List p = params;
     params = null;
+    int pn = (p == null ? 0 : p.size());
 
-    // first parameter is our agent name
-    Object p0 = (p == null || p.isEmpty() ? null : p.get(0));
-    if (p0 instanceof String) {
-      p0 = MessageAddress.getMessageAddress((String) p0);
-    }
-    if (!(p0 instanceof MessageAddress)) {
-      throw new RuntimeException(
-          "Expecting an agent name as parameter[0], not "+
-          (p0 == null ? "null" : p0.getClass().getName()));
-    }
-    this.localAgent = (MessageAddress) p0;
+    // first parameter is our bootstrap (typically just our agent name)
+    ComponentDescription bootstrap_desc = 
+      (pn > 0 ? getBootstrapDescription(p.get(0)) : null);
 
     // the remaining parameters are external components
-    List ext = p.subList(1, p.size());
+    List ext = (pn > 1 ? p.subList(1, pn) : null);
 
     add_agent_state_model_service();
     add_agent_containment_service();
@@ -129,16 +124,14 @@ public class AgentImpl extends Agent {
 
     List l = new LinkedList();
 
-    ServiceProvider sp = add_agent_component_list_service(l);
-
-    add_agent_identification_service(localAgent);
+    ServiceProvider sp = add_agent_bootstrap_service(l);
 
     add_external_components(ext);
 
     // start with a bootstrap component, which must use our
     // AgentBootstrapService to add more components that we
     // will load
-    l.add(getBootstrapDescription());
+    l.add(bootstrap_desc);
 
     while (!l.isEmpty()) {
       Object o = l.get(0);
@@ -150,27 +143,74 @@ public class AgentImpl extends Agent {
     }
 
     // done loading
-    revoke_agent_component_list_service(sp);
+    revoke_agent_bootstrap_service(sp);
+
+    // get our agent's name for our deprecated "getAgentIdentifier()" method
+    record_agent_name(bootstrap_desc);
   }
 
-  private ComponentDescription getBootstrapDescription() {
-    String classname = getBootstrapClass();
-    return
-      new ComponentDescription(
-          classname,
-          "Node.AgentManager.Agent.Component",
-          classname,
-          null,  //codebase
-          null,  //params
-          null,  //certificate
-          null,  //lease
-          null,  //policy
-          ComponentDescription.PRIORITY_HIGH);
+  private List parse_external_components(Object obj) {
+    Object o = obj;
+    if (o instanceof Object[]) {
+      o = Arrays.asList((Object[]) o);
+    }
+    if (o != null && !(o instanceof List)) {
+      o = Collections.singletonList(o);
+    }
+    return (List) o;
   }
-  private String getBootstrapClass() {
-    // FIXME add a system property
-    return "org.cougaar.core.agent.Bootstrap";
+
+  private ComponentDescription getBootstrapDescription(Object o) {
+    if (o instanceof ComponentDescription) {
+      // explicit comp-desc
+      return (ComponentDescription) o;
+    }
+
+    // parse bootstrap classname and parameters
+    String name = extractAgentName(o);
+    String classname = DEFAULT_BOOTSTRAP_CLASSNAME;
+    List parameters = Collections.singletonList(name);
+    if (o instanceof List && ((List) o).size() > 1)  {
+      List l = (List) o;
+      classname = (String) l.get(1);
+      if (l.size() > 2) {
+        parameters = new ArrayList(l.size());
+        parameters.add(name);
+        parameters.addAll(l.subList(2, l.size()));
+        parameters = Collections.unmodifiableList(parameters);
+      }
+    }
+
+    // create bootstrap descriptor
+    return new ComponentDescription(
+        classname,
+        "Node.AgentManager.Agent.Component",
+        classname,
+        null,  //codebase
+        parameters,
+        null,  //certificate
+        null,  //lease
+        null,  //policy
+        ComponentDescription.PRIORITY_HIGH);
   }
+
+  private static String extractAgentName(Object obj) {
+    Object o = obj;
+    if (o instanceof List) {
+      List l = (List) o;
+      if (!l.isEmpty()) {
+        o = l.get(0);
+      }
+    }
+    if (o instanceof String) {
+      return (String) o;
+    } else if (o instanceof MessageAddress) {
+      return ((MessageAddress) o).getAddress();
+    } else {
+      return null;
+    }
+  }
+
 
   private ServiceProvider add_agent_state_model_service() {
     final GenericStateModel agentModel = this;
@@ -222,7 +262,7 @@ public class AgentImpl extends Agent {
     return add_service(clazz, service);
   }
 
-  private ServiceProvider add_agent_component_list_service(
+  private ServiceProvider add_agent_bootstrap_service(
       final List l) {
     Class clazz = AgentBootstrapService.class;
     Service service =
@@ -237,25 +277,22 @@ public class AgentImpl extends Agent {
     return add_service(clazz, service);
   }
 
-  private void revoke_agent_component_list_service(
+  private void revoke_agent_bootstrap_service(
       ServiceProvider sp) {
     Class clazz = AgentBootstrapService.class;
     revoke_service(clazz, sp);
   }
 
-  private void add_agent_identification_service(
-      final MessageAddress addr) {
-    Class clazz = AgentIdentificationService.class;
-    Service service =
-      new AgentIdentificationService() {
-        public MessageAddress getMessageAddress() {
-          return addr;
-        }
-        public String getName() {
-          return addr.getAddress();
-        }
-      };
-    add_service(clazz, service);
+  private void record_agent_name(ComponentDescription bootstrap_desc) {
+    ServiceBroker csb = getChildServiceBroker();
+    AgentIdentificationService ais = (AgentIdentificationService)
+      csb.getService(this, AgentIdentificationService.class, null);
+    if (ais == null) {
+      this.agentName = extractAgentName(bootstrap_desc);
+    } else {
+      this.agentName = ais.getMessageAddress().getAddress();
+      csb.releaseService(this, AgentIdentificationService.class, ais);
+    }
   }
 
   //

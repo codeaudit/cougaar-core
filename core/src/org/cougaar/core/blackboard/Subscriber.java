@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -65,6 +65,10 @@ import org.cougaar.util.CallerTracker;
  * @property org.cougaar.core.blackboard.timestamp
  * Set to true to enable EnvelopeMetrics and TimestampSubscriptions
  * (defaults to false).
+ *
+ * @property org.cougaar.core.blackboard.trackPublishers
+ * Set to true to enable PublisherSubscriptions
+ * (defaults to false).
  */
 public class Subscriber {
   private static final Logger logger = Logging.getLogger(Subscriber.class);
@@ -78,7 +82,8 @@ public class Subscriber {
     SystemProperties.getBoolean("org.cougaar.core.blackboard.debug");
 
   private static final boolean enableTimestamps = 
-    SystemProperties.getBoolean("org.cougaar.core.blackboard.timestamp");
+    SystemProperties.getBoolean("org.cougaar.core.blackboard.timestamp") ||
+    SystemProperties.getBoolean("org.cougaar.core.blackboard.trackPublishers");
 
   private BlackboardClient theClient = null;
   private Distributor theDistributor = null;

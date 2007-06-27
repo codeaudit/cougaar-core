@@ -26,29 +26,15 @@
 
 package org.cougaar.core.node;
 
-import java.io.ByteArrayInputStream;
-import java.io.DataInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FilenameFilter;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.net.URL;
-import java.security.cert.Certificate;
-import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
-import java.util.Vector;
-import java.util.jar.JarEntry;
-import java.util.jar.JarInputStream;
 import org.cougaar.bootstrap.Bootstrapper;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.BindingSite;
@@ -66,7 +52,7 @@ import org.cougaar.util.Configuration;
  * containing the {@link #main} method. 
  * <p>
  * Usage:<pre>
- *    <tt>java [props] org.cougaar.core.node.Node [props] [-help]</tt>
+ *    <tt>java [props] org.cougaar.core.node.Node [props] [--help]</tt>
  * </pre> where the "props" are "-D" System Properties, such as:<pre>
  *    "-Dorg.cougaar.node.name=NAME" -- name of the Node
  * </pre>
@@ -108,20 +94,16 @@ import org.cougaar.util.Configuration;
  *
  * @property org.cougaar.install.path
  *   The <em>base</em> path for finding jar and configuration files.
- *
- * @property org.cougaar.validate.jars
- *   If <em>true</em>, will check the certificates on the 
- *   (<em>org.cougaar.install.path</em>+"/plugin/*.jar") files.
- *   Defaults to <em>false</em>.
- *
- * @property org.cougaar.security.certificate
- *   The path of the <em>org.cougaar.install.path</em> for finding
- *   the <em>org.cougaar.validate.jars</em> certificates.
  */
 public class Node
 extends ContainerSupport
 {
   public static final String INSERTION_POINT = "Node";
+
+  private static final String FILENAME_PROP = "org.cougaar.filename";
+  private static final String EXPTID_PROP = "org.cougaar.experiment.id";
+  public static final String INITIALIZER_PROP =
+      "org.cougaar.core.node.InitializationComponent";
 
   private List params;
 
@@ -229,51 +211,14 @@ extends ContainerSupport
       params = null;
     }
 
-    // FIXME move this into AgentImpl, along with all other pre-AgentImpl 
-    // operations (loadSystemProperties, printVersion, etc).
-    //
-    // Our pre-AgentImpl methods need our -Ds, so we must load our "setProps"
-    // component very early.  This component is used by external containers to
-    // do
-    //   SystemProperties.overrideProperties(..)
-    // and to set its custom -Ds (e.g. nodeName).  These -Ds must be set before
-    // any use (get/set) of these properties, e.g. any calls to
-    //   .. = SystemProperties.getProperty(..)
-    // In particular, our Logger requires -Ds to initialize the log4j factory.
-    //
-    // Hence the following early-load hack:
-    for (int i = 0; i < args.size(); i++) {
-      Object o = args.get(i);
-      if (o instanceof Object[]) {
-        o = Arrays.asList((Object[]) o);
-      }
-      if (!(o instanceof List)) continue;
-      List l = (List) o;
-      if (l.size() != 4) continue;
-      if (!"Node.AgentManager.Agent.Component".equals(l.get(0))) continue;
-      if (!"HIGH".equals(l.get(1))) continue;
-      Object c = l.get(2);
-      if (c instanceof Class) {
-        c = ((Class) c).getName();
-      }
-      if (!"org.cougaar.core.node.SetPropertiesComponent".equals(c)) continue;
-      args.remove(i--);
-
-      ComponentDescription cd = 
-        new ComponentDescription(
-            "org.cougaar.core.node.SetPropertiesComponent",
-            "Node.Component",
-            "org.cougaar.core.node.SetPropertiesComponent",
-            null, //codebase
-            l.subList(3, l.size()),
-            null, //certificate
-            null, //lease
-            null, //policy
-            ComponentDescription.PRIORITY_HIGH);
-      add(cd);
+    // set any externally-defined system properties:
+    //   1) from a "SetPropertiesComponent" (e.g. see NodeApplet)
+    //   2) from a local ".properties" file (deprecated)
+    //   3) from the command line (also checks for "--help")
+    ComponentDescription set_props_desc = getPropertiesDescription(args);
+    if (set_props_desc != null) {
+      add(set_props_desc);
     }
-
-    // convert any command-line args to System Properties
     loadSystemProperties();
     if (!setSystemProperties(args)) {
       return; // must be "--help"
@@ -282,8 +227,11 @@ extends ContainerSupport
     // display the version info
     printVersion(true);
 
-    // check for valid plugin jars
-    maybeValidateJars();
+    // add the component initializer service (i.e. configuration service)
+    ComponentDescription init_desc = getInitializerDescription();
+    if (init_desc != null) {
+      add(init_desc);
+    }
 
     // add the agent manager, which loads the node-agent
     add(new ComponentDescription(
@@ -296,6 +244,157 @@ extends ContainerSupport
           null,  //lease
           null,  //policy
           ComponentDescription.PRIORITY_HIGH));
+  }
+
+  /** Get and remove the {@link SetPropertiesComponent} from the list. */
+  private static ComponentDescription getPropertiesDescription(List l) {
+    // We must set our -Ds very early on, before any call to 
+    //   SystemProperties.get*"
+    // so we load this component here.
+    //
+    // In particular, we must set our -Ds before we attempt to access any
+    // properties in this class (e.g. in "printVersion") or our Logger.
+    //
+    // Long-term we should probably remove this component and have the external
+    // container call an equivalent library method.
+    List props_params = null;
+    for (int i = 0; i < l.size(); i++) {
+      Object o = l.get(i);
+      if (o instanceof Object[]) {
+        o = Arrays.asList((Object[]) o);
+      }
+      if (!(o instanceof List)) continue;
+      List p = (List) o;
+      if (p.size() != 4) continue;
+      if (!"Node.AgentManager.Agent.Component".equals(p.get(0))) continue;
+      if (!"HIGH".equals(p.get(1))) continue;
+      Object c = p.get(2);
+      if (c instanceof Class) {
+        c = ((Class) c).getName();
+      }
+      if (!"org.cougaar.core.node.SetPropertiesComponent".equals(c)) continue;
+      l.remove(i--);
+
+      props_params = p.subList(3, p.size());
+    }
+
+    if (props_params == null) return null;
+    return new ComponentDescription(
+        "org.cougaar.core.node.SetPropertiesComponent",
+        "Node.Component",
+        "org.cougaar.core.node.SetPropertiesComponent",
+        null, //codebase
+        props_params,
+        null, //certificate
+        null, //lease
+        null, //policy
+        ComponentDescription.PRIORITY_HIGH);
+  }
+
+  /** Get the {@link ComponentInitializerService} component description. */
+  private ComponentDescription getInitializerDescription() {
+    // The ComponentInitializerService defines our configuration.
+    //
+    // We must load this component before or very early on in the AgentManager,
+    // since the AgentManager requires this service to find the Agent-level
+    // binders and configure the node-agent.
+    //
+    // We load this service in the Node, since its ServiceBroker is above the
+    // "root" AgentManager's ServiceBroker.  This allows a node-agent component
+    // to override the "root" implementation of this service, as illustrated
+    // in ConfiguratorBase.
+    //
+    // We plan to refactor the initializer design.  For future reference,
+    // here's a sketch of the proposed design:
+    //
+    //   - The Node (or higher-level external container) will define an
+    //       a) ApplicationConfigurationService (== XML parser), and an
+    //       b) EnvironmentConfigurationService (== XSL template)
+    //
+    //   - The ComponentInitializationService (CIS) will use the above
+    //     services, and will be relatively trivial.
+    //
+    //   - The ApplicationConfigurationService (ACS) will be analogous to our
+    //     current XMLConfigHandler.  It will provide the agent's application-
+    //     specific component list and the name of its environment-specific
+    //     template.  The API will be:
+    //       AppStruct get(String agentName, Map appOptions);
+    //     where:
+    //       class AppStruct {
+    //         String agentName;
+    //         String envName;    // e.g. "SimpleAgent.xsl"
+    //         Map envOptions;    // usually null
+    //         List appCompDescs; // e.g. domain-specific plugins
+    //       }
+    //     A null agentName will return the node-agent's entry.
+    //     The appOptions will usually be null, but may be used in the future,
+    //       (e.g. to support a high-level role-based agent configuration).
+    //     The returned envOptions will typically be null, except for special
+    //     cases where options must be passed from the application XML to
+    //     the environment XSL, e.g.:
+    //       1) The WP Server marker component
+    //       2) The list of local agents, for the AgentLoader
+    //     It will also be used to support per-agent template options, e.g.:
+    //       <agent ...>
+    //         <env_option name="servlets" value="false"/>
+    //         ...
+    //       </agent>
+    //
+    //   - The EnvironmentConfigurationService (ECS) will be analogous to our
+    //     current XSLTransformer.  It will interpret an XSL file with
+    //     name=value options to compute the list of infrastructure components.
+    //     The API will be:
+    //       EnvStruct get(String envName, Map envOptions);
+    //     where:
+    //       class EnvStruct {
+    //         List envCompDescs; // e.g. "StandardBlackboard", etc.
+    //       }
+    //     Usually the envOptions will be null and will default to our XSL
+    //       -Dorg.cougaar.society.xsl.param.$name=$value
+    //     map entries.
+    //     The envName will be an XSL filename, e.g.
+    //       SimpleAgent.xsl
+    //     The XSL template will be applied against an empty in-memory XML
+    //     file.  Instead of inlining the application XML components, the XSL
+    //     template will inline "cutpoint" marker components, e.g.:
+    //       <component class="cutpoint" name="HIGH" insertionpoint="..."/>
+    //
+    //   - The CIS implementation will lookup an agent's AppStruct in the ACS,
+    //     then it's EnvStruct in the ECS, then insert the appCompDescs in
+    //     between the matching cutpoints in the envCompDescs.  This merged
+    //     result defines the complete agent's configuration and will be
+    //     cached.
+    //
+    // The above design will allow "addAgent(...)" to specify the list of
+    // appCompDescs but still apply the template.  The ConfiguratorBase will
+    // be replaced by a new ACS implementation.
+    String classname = SystemProperties.getProperty(INITIALIZER_PROP);
+    if (classname == null) {
+      // get initializer, defaults to XML
+      classname =
+        (SystemProperties.getProperty(FILENAME_PROP) != null ? "File" :
+         SystemProperties.getProperty(EXPTID_PROP) != null ? "DB" :
+         "XML");
+      SystemProperties.setProperty(INITIALIZER_PROP, classname);
+    }
+    if (classname.equals("null")) return null;
+    if (classname.indexOf(".") < 0) {
+      // if full class name not specified, intuit it
+      classname =
+        "org.cougaar.core.node." +
+        classname +
+        "ComponentInitializerServiceComponent";
+    }
+    return new ComponentDescription(
+        classname,
+        Node.INSERTION_POINT + ".Component",
+        classname,
+        null, //codebase
+        null, //params
+        null, //certificate
+        null, //lease
+        null, //policy
+        ComponentDescription.PRIORITY_HIGH);
   }
 
   /**
@@ -485,170 +584,5 @@ extends ContainerSupport
       String osv = SystemProperties.getProperty("os.version");
       System.out.println("OS: "+os+" ("+osv+")");
     }
-  }
-
-  //
-  // old jar validation
-  // will likely be removed/refactored in the future
-  //
-
-  private static void maybeValidateJars() {
-    // check for valid plugin jars
-    boolean validateJars = SystemProperties.getBoolean("org.cougaar.validate.jars");
-    if (validateJars) {
-      // validate
-      if (validatePluginJarsByStream()) {
-        // validation succeeded
-      } else {
-        throw new RuntimeException(
-          "Error!  Found unsigned jars in plugin directory!");
-      }
-    } else {
-      // not validating
-    }
-  }
-
-  /** Returns true if all plugin jars are signed, else false */
-  private static boolean validatePluginJarsByStream() {
-    String jarSubdirectory = "plugins";
-    String installpath = SystemProperties.getProperty("org.cougaar.install.path");
-    String defaultCertPath = "configs" + File.separatorChar + "common"
-      + File.separatorChar + "alpcertfile.cer";
-
-    String certPath = SystemProperties.getProperty("org.cougaar.security.certificate",
-        defaultCertPath);
-
-    try{
-      String files[] = searchForJars(jarSubdirectory, installpath);
-      Vector cache = new Vector();
-      File myCertFile = new File(installpath + File.separatorChar + certPath );
-
-      java.security.cert.Certificate myCert = null;
-      myCert = getAlpineCertificate(myCertFile);
-      for (int i=0; i<files.length; i++) {
-        String filename = files[i];
-
-        File f = new File(
-            installpath+File.separatorChar+
-            jarSubdirectory+File.separatorChar+filename);
-
-        FileInputStream fis = new FileInputStream(f);
-        JarInputStream jis = new  JarInputStream(fis);
-        try {
-          JarEntry je=null;
-          while (null != (je = jis.getNextJarEntry())) {
-            cache.addElement(je);
-          }
-        } catch( IOException ioex ) {
-          // silent
-        }
-
-        //
-        // According to documentation -
-        // certificates apparently are not valid until end/stream
-        // reached -- hence
-        // cache/then de-reference Certificates to be really sure.
-        //
-        Enumeration en = cache.elements();
-        long sumUnsigned=0;
-        long sumSigned=0;
-        long sumMatchCerts=0;
-        long sumUnMatchedCerts=0;
-        while (en.hasMoreElements()) {
-          JarEntry je = (JarEntry)en.nextElement();
-          java.security.cert.Certificate[] certs = je.getCertificates();
-          if (certs == null) {
-            //  directories are unsigned -- so if jars contain
-            //  directory hierarchy structures (ala packages)
-            //  these will show up.
-            sumUnsigned++;
-            //System.out.println("Unsigned Klass:" + je.getName());
-          } else {
-            int len = certs.length;
-            boolean anymatch = false;
-            for (int j = 0; j < len; j++) {
-              java.security.cert.Certificate cc = certs[j];
-              if (cc.equals(myCert)) {
-                anymatch = true; 
-              }
-            }
-            if (anymatch) {
-              sumMatchCerts++;
-            } else {
-              sumUnMatchedCerts++;
-            }
-            sumSigned++;
-          }
-          //System.out.println(""+  je.getName() +" certs=" + certs);
-        }
-        System.out.print(
-            "        sigs:(" + sumUnsigned + "," + sumSigned + ")");
-        if (sumSigned == 0) {
-          System.out.println("...JAR FILE IS UNSIGNED.");
-        } else {
-          System.out.println("...JAR FILE IS SIGNED.");
-        }
-
-        System.out.print(
-            "        alpcerts:(" +
-            sumMatchCerts + "," + sumUnMatchedCerts + ")");
-        if ((sumUnMatchedCerts == 0) && (sumMatchCerts > 0)) {
-          System.out.println("...ALPINE CERTIFIED.");
-        } else {
-          System.out.println("...NOT ALPINE CERTIFIED.");
-        }
-
-        /// CRASH THE PARTY IF PLUGINS ARE UNSIGNED...
-        if ((sumSigned == 0) || (sumMatchCerts == 0)) {
-          return false;
-        }
-      }
-    }catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    return true;
-  }
-
-  /** look for jar files in org.cougaar.install.path/subdir */
-  private static String[] searchForJars(String subdir, String installpath)
-  {
-    String[] files = new String[0];
-    File d = new File(installpath+File.separatorChar+subdir);
-    //System.out.println("Searching for plugin jars in directory: " + d.toString());
-    if (d.exists() && d.isDirectory()) {
-      files = d.list(
-          new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-              return (name.endsWith(".jar") ||
-                name.endsWith(".zip"));
-              }
-            }
-          );
-    }
-    return files;
-  }
-
-  private static java.security.cert.Certificate getAlpineCertificate(
-      File myCertFile) {
-
-    java.security.cert.Certificate cert = null;
-    try {
-      FileInputStream fis = new FileInputStream(myCertFile);
-      DataInputStream dis = new DataInputStream(fis);
-
-      CertificateFactory cf = CertificateFactory.getInstance("X.509");
-
-      byte[] bytes = new byte[dis.available()];
-      dis.readFully(bytes);
-      ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-
-      while (bais.available() > 0) {
-        cert = cf.generateCertificate(bais);
-        //System.out.println(cert.toString());
-      }
-    } catch (Exception ex ) {
-      ex.printStackTrace();
-    }
-    return cert;
   }
 }

@@ -72,10 +72,13 @@ public class AgentManager
     implements AgentContainer {
   public static final String INSERTION_POINT = "Node.AgentManager";
 
-  private static final String FILENAME_PROP = "org.cougaar.filename";
-  private static final String EXPTID_PROP = "org.cougaar.experiment.id";
-  public static final String INITIALIZER_PROP =
-      "org.cougaar.core.node.InitializationComponent";
+  private static final String AGENT_CLASSNAME =
+    "org.cougaar.core.agent.AgentImpl";
+  private static final String AGENT_INSERTION_POINT =
+    Agent.INSERTION_POINT;
+  private static final String BOOTSTRAP_CLASSNAME =
+    "org.cougaar.core.agent.Bootstrap";
+
   private static final String NODE_AGENT_CLASSNAME_PROPERTY =
       "org.cougaar.core.node.classname";
 
@@ -107,8 +110,6 @@ public class AgentManager
     add_node_identification_service(nodeName);
 
     add_node_control_service();
-
-    add(getInitializerDescription());
 
     addAll(getAgentBinderDescriptions(nodeName));
 
@@ -220,6 +221,10 @@ public class AgentManager
             return AgentManager.this.getComponents();
           }
 
+          public void addAgent(MessageAddress agentId) {
+            AgentManager.this.addAgent(agentId);
+          }
+
           public void addAgent(MessageAddress agentId, StateTuple tuple) {
             AgentManager.this.addAgent(agentId, tuple);
           }
@@ -254,26 +259,6 @@ public class AgentManager
     nodeControlSP = add_service(clazz, service);
   }
 
-  private ComponentDescription getInitializerDescription() {
-    // we need the ComponentInitializerService for to read the
-    // agent binder descriptions in "getAgentBinderDescriptions",
-    // so we must load it here.
-    //
-    // Ideally we'd do this within each agent, but that's not
-    // possible if we must support agent binders.
-    String classname = getComponentInitializerClass();
-    return
-        new ComponentDescription(classname,
-            AgentManager.INSERTION_POINT + ".Component",
-            classname,
-            null, //codebase
-            null, //params
-            null, //certificate
-            null, //lease
-            null, //policy
-            ComponentDescription.PRIORITY_COMPONENT);
-  }
-
   private List getAgentBinderDescriptions(String nodeName) {
     ServiceBroker csb = getChildServiceBroker();
     ComponentDescriptions cds;
@@ -301,7 +286,8 @@ public class AgentManager
 
   private ComponentDescription getNodeAgentDescription(
       String nodeName, List external_components) {
-    String classname = SystemProperties.getProperty(NODE_AGENT_CLASSNAME_PROPERTY,
+    String classname = SystemProperties.getProperty(
+        NODE_AGENT_CLASSNAME_PROPERTY,
         "org.cougaar.core.agent.AgentImpl");
     List params = new ArrayList(1);
     params.add(nodeName);
@@ -319,65 +305,6 @@ public class AgentManager
             null, //policy
             ComponentDescription.PRIORITY_COMPONENT);
     return desc;
-  }
-
-  private String getComponentInitializerClass() {
-    String component = SystemProperties.getProperty(INITIALIZER_PROP);
-    if (component == null) {
-      component = getDefaultComponentInitializerClass();
-      SystemProperties.setProperty(INITIALIZER_PROP, component);
-    }
-    // if full class name not specified, intuit it
-    if (component.indexOf(".") < 0) {
-      // build up the name, full name was not specified.
-      component =
-          "org.cougaar.core.node." +
-          component +
-          "ComponentInitializerServiceComponent";
-    }
-    Logger logger = Logging.getLogger(AgentManager.class);
-    if (logger.isInfoEnabled()) {
-      logger.info("Will intialize components from " + component);
-    }
-    return component;
-  }
-
-  private String getDefaultComponentInitializerClass() {
-    // figure out whether to use Files or CSMART DB for component
-    // initalization (since it's not explicitly specified by
-    // a -D argument)
-    //
-    // This will use the CSMART DB (advertising the DBInitializerService)
-    // if the experiment_id system property was set, and some other
-    // initializer was not selected.  Otherwise, INI files are used
-    // (and no DBInitializerService is provided) however, users may
-    // specify, for example, an XML initializer
-    String filename = SystemProperties.getProperty(FILENAME_PROP);
-    String expt = SystemProperties.getProperty(EXPTID_PROP);
-    Logger logger = Logging.getLogger(AgentManager.class);
-    if ((filename == null) && (expt == null)) {
-      // use the default "name.ini"
-      if (logger.isWarnEnabled()) {
-        logger.warn("Defaulting to DEPRECATED INI File based Initialization.");
-        logger.warn("Got no filename or experimentId! Using default File");
-      }
-      return "File";
-    }
-    if (filename == null) {
-      // use the experiment ID to read from the DB
-      if (logger.isWarnEnabled()) {
-        logger.warn("Got no filename, using exptID " + expt);
-      }
-      return "DB";
-    }
-    if (expt == null) {
-      // use the filename provided
-      if (logger.isWarnEnabled()) {
-        logger.warn("Defaulting to DEPRECATED INI File based Initialization.");
-        logger.warn("Got no exptID, using given filename " + filename);
-      }
-    }
-    return "File";
   }
 
   //
@@ -477,14 +404,48 @@ public class AgentManager
     return cid;
   }
 
+  public void addAgent(MessageAddress agentId) {
+    _addAgent(agentId, null);
+  }
   public void addAgent(MessageAddress agentId, StateTuple tuple) {
+    _addAgent(agentId, tuple);
+  }
+
+  private void _addAgent(MessageAddress agentId, Object o) {
     if (containsAgent(agentId)) {
       // agent already exists
       throw new RuntimeException("Agent " + agentId + " already exists");
     }
-    
+
+    ComponentDescription desc;
+    if (o instanceof StateTuple) {
+      StateTuple tuple = (StateTuple) o;
+      if (tuple.getState() != null) {
+        // no longer supported!
+        throw new UnsupportedOperationException("State must be null");
+      }
+      desc = tuple.getComponentDescription();
+    } else {
+      Object parameter;
+      if (o == null) {
+        parameter = agentId;
+      } else {
+        throw new RuntimeException("Invalid type: "+o);
+      }
+      desc = new ComponentDescription(
+          AGENT_CLASSNAME,
+          AGENT_INSERTION_POINT,
+          AGENT_CLASSNAME,
+          null,  // codebase
+          parameter,
+          null,  // certificate
+          null,  // lease
+          null,  // policy
+          ComponentDescription.PRIORITY_COMPONENT);
+    }
+
     // add the agent
-    if (!add(tuple)) {
+    if (!add(desc)) {
       throw new RuntimeException("Agent " + agentId + " returned \"false\"");
     }
 

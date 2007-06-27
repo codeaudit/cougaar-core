@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 2001-2004 BBNT Solutions, LLC
+ *  Copyright 2001-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -660,17 +660,24 @@ extends ContainerSupport
   private void addDomain(List descs, String domainName, 
                          String className) {
     // Unique?
+    ComponentDescription found_desc = null;
     for (int i = 0, n = descs.size(); i < n; i++) {
-      ComponentDescription cd =
-        (ComponentDescription) descs.get(i);
-      if (domainName.equals(cd.getName())) {
-        if (loggingService.isWarnEnabled()) {
-          loggingService.warn(
-              "Domain \""+domainName+"\" multiply defined!  "+
-              cd.getClassname()+" and "+className);
+      ComponentDescription cd = (ComponentDescription) descs.get(i);
+      if (cd != null && (cd.getParameter() instanceof List)) {
+        List l = (List) cd.getParameter();
+        if (l.size() > 0 && domainName.equals(l.get(0))) {
+          found_desc = cd;
+          break;
         }
-        return;
       }
+    }
+    if (found_desc != null) {
+      if (loggingService.isWarnEnabled()) {
+        loggingService.warn(
+            "Domain \""+domainName+"\" multiply defined!  "+
+            found_desc.getClassname()+" and "+className);
+      }
+      return;
     }
 
     // pass the domain-name as a parameter
@@ -679,7 +686,7 @@ extends ContainerSupport
 
     ComponentDescription desc = 
       new ComponentDescription(
-          domainName,
+          className+"("+domainName+")",
           CONTAINMENT_POINT+".Domain",
           className,
           null,  // codebase

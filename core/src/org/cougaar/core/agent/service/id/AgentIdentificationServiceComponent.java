@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -37,7 +37,6 @@ import org.cougaar.util.GenericStateModelAdapter;
 
 /**
  * This component advertises the AgentIdentificationService.
- * @deprecated AgentImpl does this now. 
  */
 public final class AgentIdentificationServiceComponent 
 extends GenericStateModelAdapter
@@ -54,16 +53,9 @@ implements Component
   }
 
   public void setParameter(Object o) {
-    if (o instanceof MessageAddress) {
-      addr = (MessageAddress) o;
-    } else if (o instanceof String) {
-      addr = MessageAddress.getMessageAddress((String) o);
-    } else if (o instanceof List) {
-      List l = (List)o;
-      if (l.size() > 0) {
-        setParameter(l.get(0));
-      }
-    }
+    List l = (List) o;
+    String name = (String) l.get(0);
+    this.addr = MessageAddress.getMessageAddress(name);
   }
 
   public void load() {

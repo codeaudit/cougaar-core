@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -24,36 +24,26 @@
  * </copyright>
  */
 
-package org.cougaar.core.blackboard;
-
-import java.util.Collection;
-import java.util.List;
+package org.cougaar.core.util;
 
 /**
- * An {@link EnvelopeTuple} indicating that an object on the
- * blackboard has been modified.
+ * A proxy class for a strongly reachable object, similar to the reference
+ * types in <code>java.lang.ref</code>.
+ * <p>
+ * This class is simply used for objects that can be GC'ed when the client
+ * is done processing the referent.  It's like a SoftReference, which is
+ * clearly marked and can be passed around in unmodifable collections, except
+ * that we want to control when it can be GC'ed.
+ * <p>
+ * Ideally this class would be in java/lang/ref and would extend Reference,
+ * if only for symmetry.
  */
-public class ChangeEnvelopeTuple extends EnvelopeTuple {
-  private final Object object;
-  public Object getObject() { return object; }
-  private final List changes;
+public final class StrongReference {
+  private Object referent;
 
-  // perhaps at some point we should complain if we aren't told what the
-  // changes are...
-  public ChangeEnvelopeTuple(Object o, List changes) {
-    if (o == null) throw new IllegalArgumentException("Object is null");
-    object = o;
-    this.changes = changes;
-  }
+  public StrongReference(Object referent) { this.referent = referent; }
 
-  public final int getAction() { return Envelope.CHANGE; }
-  public final boolean isChange() { return true; }
+  public Object get() { return referent; }
 
-  // useful for Logic Providers.
-  public Collection getChangeReports() { return changes; }
-
-  boolean applyToSubscription(Subscription s, boolean isVisible) {
-    return s.conditionalChange(object, changes, isVisible);
-  }
-
+  public void clear() { referent = null; }
 }

@@ -32,7 +32,6 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.SortedSet;
-import java.util.TimeZone;
 import java.util.TreeSet;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
@@ -185,7 +184,6 @@ public class DeletionPlugin extends ComponentPlugin {
   protected static final SimpleDateFormat deletionTimeFormat;
   static {
     deletionTimeFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
-    deletionTimeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
   protected static UnaryPredicate truePredicate = new UnaryPredicate() {
     public boolean execute(Object o) {

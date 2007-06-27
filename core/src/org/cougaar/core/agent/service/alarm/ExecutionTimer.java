@@ -32,7 +32,6 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-import java.util.TimeZone;
 
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.log.Logger;
@@ -114,9 +113,9 @@ import org.cougaar.util.log.Logging;
  * 
  * @property org.cougaar.core.agent.startTime The date to use as the
  * start of execution for demonstration purposes.  Accepts date/time
- * in the form of <em>MM/dd/yyy H:mm:ss</em> where the time sequence
- * is optional.  If the time is not given, then it defaults to midnight
- * on the specified date. 
+ * in the form of <em>MM/dd/yyy_H:mm:ss</em>, <em>MM/dd/yyy H:mm:ss</em>,
+ * or <em>MM/dd/yyy</em>.  The time sequence is optional and defaults to
+ * midnight on the specified date. 
  * agentStartTime must be in GMT.  Note that if society.startTime is
  * not fully specified, a multi-node society can have significant 
  * natural-time clock skew across the members.
@@ -485,9 +484,16 @@ public class ExecutionTimer extends Timer {
 
       if (value != null) {
         try {
-          DateFormat f = (new SimpleDateFormat("MM/dd/yyy H:mm:ss"));
-          f.setTimeZone(TimeZone.getTimeZone("GMT"));
-          time = f.parse(value).getTime();
+          DateFormat f;
+          try {
+            // try full date with "_" separator
+            f = (new SimpleDateFormat("MM/dd/yyy_H:mm:ss"));
+            time = f.parse(value).getTime();
+          } catch (ParseException e1) {
+            // try full date with " " separator
+            f = (new SimpleDateFormat("MM/dd/yyy H:mm:ss"));
+            time = f.parse(value).getTime();
+          }
           // get midnight of specified date
           Calendar c = f.getCalendar();
           c.setTimeInMillis(time);
@@ -500,7 +506,6 @@ public class ExecutionTimer extends Timer {
           // try with just the date
           try {
             DateFormat f = (new SimpleDateFormat("MM/dd/yyy"));
-            f.setTimeZone(TimeZone.getTimeZone("GMT"));
             time = f.parse(value).getTime();
           } catch (ParseException e1) {
 	    if (logger.isDebugEnabled())

@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
 
 /**
  * A file lock.
@@ -44,7 +43,6 @@ public class FileMutex {
   private static final SimpleDateFormat uniqueNameFormat;
   static {
     uniqueNameFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
-    uniqueNameFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
   private File uniqueFile;

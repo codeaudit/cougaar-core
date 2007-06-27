@@ -368,7 +368,7 @@ public class NodeApplet extends Applet {
     paintHandler.paint(superPaintHandler, g);
   }
 
-  private class NodeControlSupport {
+  public static class NodeControlSupport {
     private Object svc;
     public void setService(Class cl, Object svc) {
       this.svc = svc;

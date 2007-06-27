@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -52,7 +52,6 @@ import java.util.Set;
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.adaptivity.OMCRangeList;
 import org.cougaar.core.agent.ClusterContextTable;
-import org.cougaar.core.blackboard.BulkEnvelopeTuple;
 import org.cougaar.core.blackboard.Envelope;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.blackboard.PersistenceEnvelope;
@@ -975,7 +974,7 @@ public class PersistenceServiceComponent
     if (logger.isDetailEnabled()) logger.detail(clientId + ": addEnvelopeTuple " + tuple);
     switch (tuple.getAction()) {
     case Envelope.BULK:
-      Collection collection = ((BulkEnvelopeTuple) tuple).getCollection();
+      Collection collection = (Collection) tuple.getObject();
       for (Iterator iter2 = collection.iterator(); iter2.hasNext(); ) {
         addObjectToPersist(iter2.next(), true, clientId);
       }

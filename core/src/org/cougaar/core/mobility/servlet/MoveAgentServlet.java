@@ -745,7 +745,7 @@ implements BlackboardClient
 
   // odd BlackboardClient method:
   public String getBlackboardClientName() {
-    return toString();
+    return getPath();
   }
 
   // odd BlackboardClient method:

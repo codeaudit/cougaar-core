@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 2002-2004 BBNT Solutions, LLC
+ *  Copyright 2002-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -106,8 +106,8 @@ extends AdvertiseBase
 
     servletService = (ServletService)
       sb.getService(this, ServletService.class, null);
-    if (servletService == null) {
-      throw new RuntimeException("Unable to obtain ServletService");
+    if (servletService == null && log.isWarnEnabled()) {
+      log.warn("Unable to obtain ServletService");
     }
     configService = (ConfigService)
       sb.getService(configClient, ConfigService.class, null);
@@ -142,6 +142,9 @@ extends AdvertiseBase
     int port = uri.getPort();
     String scheme = uri.getScheme();
     boolean isHttp = "http".equals(scheme);
+    if (servletService == null) {
+      return null;
+    }
     int localport = 
       (isHttp ?
        servletService.getHttpPort() :

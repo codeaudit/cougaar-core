@@ -181,14 +181,15 @@ final class SchedulableObject implements Schedulable {
        
     }
 
-    synchronized private void maybeRestart() {
-	thread = null;
-	if (--start_count > 0) {
-	    SchedulableStateChangeQueue.pushStart(this);
-	}
+    private void maybeRestart() {
+        synchronized (this) {
+            thread = null;
+            if (--start_count <= 0) return;
+        }
+	SchedulableStateChangeQueue.pushStart(this);
     }
     
-    synchronized void addToReclaimer() {
+    void addToReclaimer() {
 	SchedulableStateChangeQueue.pushReclaim(this);
     }
 
@@ -205,11 +206,13 @@ final class SchedulableObject implements Schedulable {
 	thread.start_running();
     }
 
-    synchronized public void start() {
-	// If the Schedulable has been cancelled, or has already
-	// been asked to start, there's nothing further to do.
-	if (cancelled) return;
-	if (++start_count > 1) return;
+    public void start() {
+        synchronized (this) {
+	    // If the Schedulable has been cancelled, or has already
+	    // been asked to start, there's nothing further to do.
+	    if (cancelled) return;
+	    if (++start_count > 1) return;
+        }
 
 	// We only get here if the Schedulable has not been
 	// cancelled  and if start_count has gone from 0 to 1.

@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -91,22 +91,34 @@ public class Envelope implements java.io.Serializable {
 
   public final EnvelopeTuple addObject(Object o) {
     if (o == null) throw new IllegalArgumentException("Null Object");
-    EnvelopeTuple t = new AddEnvelopeTuple(o);
-    deltas.add(t);
-    return t;
-  }
-  public final EnvelopeTuple removeObject(Object o) {
-    if (o == null) throw new IllegalArgumentException("Null Object");
-    EnvelopeTuple t = new RemoveEnvelopeTuple(o);
+    EnvelopeTuple t = newAddEnvelopeTuple(o);
     deltas.add(t);
     return t;
   }
   public final EnvelopeTuple changeObject(Object o, List changes) {
     if (o == null) throw new IllegalArgumentException("Null Object");
-    EnvelopeTuple t = new ChangeEnvelopeTuple(o, changes);
+    EnvelopeTuple t = newChangeEnvelopeTuple(o, changes);
     deltas.add(t);
     return t;
   }
+  public final EnvelopeTuple removeObject(Object o) {
+    if (o == null) throw new IllegalArgumentException("Null Object");
+    EnvelopeTuple t = newRemoveEnvelopeTuple(o);
+    deltas.add(t);
+    return t;
+  }
+
+  // only allow package-local subclass overrides for these:
+  AddEnvelopeTuple newAddEnvelopeTuple(Object o) {
+    return new AddEnvelopeTuple(o);
+  }
+  ChangeEnvelopeTuple newChangeEnvelopeTuple(Object o, List changes) {
+    return new ChangeEnvelopeTuple(o, changes);
+  }
+  RemoveEnvelopeTuple newRemoveEnvelopeTuple(Object o) {
+    return new RemoveEnvelopeTuple(o);
+  }
+
   public final void addTuple(EnvelopeTuple t) {
     deltas.add(t);
   }

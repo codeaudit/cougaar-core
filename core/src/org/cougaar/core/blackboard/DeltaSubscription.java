@@ -40,6 +40,9 @@ import org.cougaar.util.UnaryPredicate;
 /** 
  * A subscription that only tracks add/change/remove deltas.
  * <p>
+ * See {@link CollectionSubscription} for a system property that identifies
+ * subscriptions that could potentially be changed to DeltaSubscriptions.
+ * <p>
  * We subclass {@link IncrementalSubscription} to both reuse code and to make
  * it easy for existing plugins to switch over to this class.  For example, the
  * plugin won't need to change its field declaration from:<pre>

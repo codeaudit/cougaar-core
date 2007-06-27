@@ -647,20 +647,34 @@ implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLo
       Relay.Source rs = (Relay.Source) en.nextElement();
       Set targets = rs.getTargets();
       if (targets != null && !targets.isEmpty()) {
-        Set oldTranslation = new HashSet();
-        Set newTranslation = new HashSet();
+        Set oldTranslation = Collections.EMPTY_SET;
+        Set newTranslation = Collections.EMPTY_SET;
         for (Iterator i = targets.iterator(); i.hasNext(); ) {
           Object o = i.next();
           if (o instanceof AttributeBasedAddress) {
             AttributeBasedAddress aba = (AttributeBasedAddress) o;
-            ABATranslation abaTranslation = rootplan.getABATranslation(aba);
-            if (abaTranslation != null) {
-              oldTranslation.addAll(abaTranslation.getOldTranslation());
-              newTranslation.addAll(abaTranslation.getCurrentTranslation());
+            if (communities.contains(aba.getCommunityName())) {
+              ABATranslation abaTranslation = rootplan.getABATranslation(aba);
+              if (abaTranslation != null) {
+                Collection oldC = abaTranslation.getOldTranslation();
+                if (oldC != null && !oldC.isEmpty()) {
+                  if (oldTranslation.isEmpty()) {
+                    oldTranslation = new HashSet();
+                  }
+                  oldTranslation.addAll(oldC);
+                }
+                Collection newC = abaTranslation.getCurrentTranslation();
+                if (newC != null && !newC.isEmpty()) {
+                  if (newTranslation.isEmpty()) {
+                    newTranslation = new HashSet();
+                  }
+                  newTranslation.addAll(newC);
+                }
+              }
             }
           }
         }
-        if (!newTranslation.isEmpty() || !oldTranslation.isEmpty()) {
+        if (!newTranslation.equals(oldTranslation)) {
           Set adds = new HashSet(newTranslation);
           Set removes = new HashSet(oldTranslation);
           adds.removeAll(oldTranslation);

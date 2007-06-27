@@ -31,7 +31,7 @@ package org.cougaar.core.blackboard;
  * An {@link EnvelopeTuple} indicating that an object has been added
  * to the blackboard.
  */
-final class AddEnvelopeTuple extends EnvelopeTuple {
+class AddEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
   public Object getObject() { return object; }
   public AddEnvelopeTuple(Object o) {

@@ -186,11 +186,12 @@ public class Blackboard extends Subscriber
   }
 
   /** is the object non-null? */
-  private static final UnaryPredicate anythingP = new UnaryPredicate() {
+  private static final UnaryPredicate anythingP = new AnythingPredicate();
+  private static final class AnythingPredicate implements UnaryPredicate {
     public boolean execute(Object o) {
       return (o != null);
     }
-  };
+  }
 
   public Blackboard(
       MessageSwitchService msgSwitch, ServiceBroker sb, Object state) {

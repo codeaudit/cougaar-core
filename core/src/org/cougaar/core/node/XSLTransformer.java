@@ -26,6 +26,9 @@
 
 package org.cougaar.core.node;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -667,7 +670,20 @@ public class XSLTransformer {
 
         // ConfigFinder:
         public InputStream open(String aURL) throws IOException {
-          return configFinder.open(aURL);
+          try {
+            return configFinder.open(aURL);
+          } catch (FileNotFoundException fnfe) {
+            // look for exact filename, e.g. "c:\test.xml"
+            try {
+              File f = (new File(aURL));
+              if (f.isFile()) {
+                return new FileInputStream(f);
+              }
+            } catch (Exception e) {
+              // ignore, throw original exception
+            }
+            throw fnfe;
+          }
         }
 
         // EntityResolver:

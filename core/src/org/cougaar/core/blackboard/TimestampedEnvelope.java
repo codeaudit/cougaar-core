@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -26,6 +26,10 @@
 
 package org.cougaar.core.blackboard;
 
+import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
+import org.cougaar.util.StackElements;
 
 /**
  * An envelope that records the subscriber name, time of
@@ -35,6 +39,9 @@ package org.cougaar.core.blackboard;
  *    for these Envelopes to be used.
  */
 public class TimestampedEnvelope extends Envelope {
+
+  // weakly cache "publishAdd" stacks
+  private static final Map stacks = new WeakHashMap();
 
   private String name;
   private long openTime;
@@ -53,6 +60,29 @@ public class TimestampedEnvelope extends Envelope {
 
   public final void setName(String name) { 
     this.name = name; 
+  }
+
+  AddEnvelopeTuple newAddEnvelopeTuple(Object o) {
+    return new Add(o, captureStack());
+  }
+  ChangeEnvelopeTuple newChangeEnvelopeTuple(Object o, List changes) {
+    return new Change(o, changes, captureStack());
+  }
+  RemoveEnvelopeTuple newRemoveEnvelopeTuple(Object o) {
+    return new Remove(o, captureStack());
+  }
+
+  private static StackElements captureStack() {
+    StackElements se = new StackElements(new Throwable());
+    synchronized (stacks) {
+      StackElements cached_se = (StackElements) stacks.get(se);
+      if (cached_se == null) {
+        stacks.put(se, se);
+      } else {
+        se = cached_se;
+      }
+    }
+    return se;
   }
 
   public final void setTransactionOpenTime(long openTime) { 
@@ -83,6 +113,9 @@ public class TimestampedEnvelope extends Envelope {
    */
   public final long getTransactionCloseTime() { return closeTime; }
 
+  // package-private subscription needs to see this
+  boolean get_isVisible() { return isVisible(); }
+
   public String toString() {
     return 
       super.toString()+
@@ -91,5 +124,30 @@ public class TimestampedEnvelope extends Envelope {
       name+", "+
       openTime+" + "+
       (closeTime-openTime)+")";
+  }
+
+  private static final class Add extends AddEnvelopeTuple {
+    private StackElements se;
+    public Add(Object o, StackElements se) {
+      super(o);
+      this.se = se;
+    }
+    public StackElements getStack() { return se; }
+  }
+  private static final class Change extends ChangeEnvelopeTuple {
+    private StackElements se;
+    public Change(Object o, List changes, StackElements se) {
+      super(o, changes);
+      this.se = se;
+    }
+    public StackElements getStack() { return se; }
+  }
+  private static final class Remove extends RemoveEnvelopeTuple {
+    private StackElements se;
+    public Remove(Object o, StackElements se) {
+      super(o);
+      this.se = se;
+    }
+    public StackElements getStack() { return se; }
   }
 }

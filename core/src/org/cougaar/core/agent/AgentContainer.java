@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -78,9 +78,11 @@ public interface AgentContainer {
 
   /**
    * Add a new agent to the local node.
-   *
-   * @throws RuntimeException if the agent already exists, or 
-   *    the agent can't be loaded.
+   */
+  void addAgent(MessageAddress agentId);
+
+  /**
+   * <i>deprecated</i>, use one of the above "addAgent" method.
    */
   void addAgent(MessageAddress agentId, StateTuple tuple);
 

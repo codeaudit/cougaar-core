@@ -161,8 +161,8 @@ implements Component
     o = null;
 
     find_local_incarnation();
-    load_internal_register_with_mts();
     load_create_message_switch();
+    load_internal_register_with_mts();
     resume_resend_unsent_messages();
     load_add_message_switch_service();
     load_add_outgoing_traffic_watcher();
@@ -231,6 +231,10 @@ implements Component
     }
   }
 
+  private void load_create_message_switch() {
+    msi = new MessageSwitchImpl(log);
+  }
+
   private void load_internal_register_with_mts() {
     // register with the message transport
     if (log.isInfoEnabled()) {
@@ -263,10 +267,6 @@ implements Component
     }
 
     messenger.registerClient(mtsClientAdapter);
-  }
-
-  private void load_create_message_switch() {
-    msi = new MessageSwitchImpl(log);
   }
 
   private void load_add_message_switch_service() {

@@ -26,17 +26,20 @@
 
 package org.cougaar.core.agent;
 
-import java.net.URL;
+import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.util.GenericStateModelAdapter;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * This component is the first component added to an agent, and
@@ -53,9 +56,29 @@ extends GenericStateModelAdapter
 implements Component
 {
 
-  private static final int HIGH      = ComponentDescription.PRIORITY_HIGH;
+  private static final String AGENT_IP = "Node.AgentManager.Agent";
+  private static final String AGENT_IP_PREFIX = AGENT_IP+".";
+
+  private String agentName;
 
   private ServiceBroker sb;
+
+  public void setParameter(Object x) {
+    Object o = x;
+    if (o instanceof List) {
+      List l = (List) o;
+      if (!l.isEmpty()) {
+        o = l.get(0);
+      }
+    }
+    if (o instanceof String) {
+      agentName = (String) o;
+    } else if (o instanceof MessageAddress) {
+      agentName = ((MessageAddress) o).getAddress();
+    } else {
+      throw new IllegalArgumentException("Invalid agent parameter: "+o);
+    }
+  }
 
   public void setServiceBroker(ServiceBroker sb) {
     this.sb = sb;
@@ -63,98 +86,58 @@ implements Component
 
   public void load() {
     super.load();
-
-    MessageAddress localAgent = find_local_agent();
-    MessageAddress localNode = find_local_node();
-
-    boolean isNode = 
-      (localAgent == null ||
-       localAgent.equals(localNode));
-
-    List l = getInitialComponents(isNode);
-
+    List l = getInitialComponents();
     overrideComponentList(l);
   }
 
-  private static final ComponentDescription NODE_CONTROL_BLOCKER =
-    new ComponentDescription(
-        "org.cougaar.core.agent.NodeControlBlocker",
-        "Node.AgentManager.Agent.Component",
-        "org.cougaar.core.agent.NodeControlBlocker",
-        null, null, null, null, null,
-        HIGH);
-
-  private static final ComponentDescription LOGGING_SERVICE =
-    new ComponentDescription(
-        "org.cougaar.core.node.LoggingServiceComponent",
-        "Node.AgentManager.Agent.Component",
-        "org.cougaar.core.node.LoggingServiceComponent",
-        null, null, null, null, null,
-        HIGH);
-
-  private static final ComponentDescription QUIESCENCE_REPORT =
-    new ComponentDescription(
-        "org.cougaar.core.node.QuiescenceReportComponent",
-        "Node.AgentManager.Agent.Component",
-        "org.cougaar.core.node.QuiescenceReportComponent",
-        null, null, null, null, null,
-        HIGH);
-
-  private static final ComponentDescription BEGIN_LOGGER =
-    new ComponentDescription(
-          "org.cougaar.core.agent.BeginLogger",
-          "Node.AgentManager.Agent.Component",
-          "org.cougaar.core.agent.BeginLogger",
-          null, null, null, null, null,
-          HIGH);
-
-  private static final ComponentDescription PERSISTENCE =
-    new ComponentDescription(
-          "org.cougaar.core.persist.PersistenceServiceComponent",
-          "Node.AgentManager.Agent.Component",
-          "org.cougaar.core.persist.PersistenceServiceComponent",
-          null, null, null, null, null,
-          HIGH);
-
-  private static final ComponentDescription REGISTER_CONTEXT =
-    new ComponentDescription(
-          "org.cougaar.core.agent.RegisterContext",
-          "Node.AgentManager.Agent.Component",
-          "org.cougaar.core.agent.RegisterContext",
-          null, null, null, null, null,
-          HIGH);
-
-  private static final ComponentDescription REHYDRATE_EARLY =
-    new ComponentDescription(
-          "org.cougaar.core.agent.RehydrateEarly",
-          "Node.AgentManager.Agent.Component",
-          "org.cougaar.core.agent.RehydrateEarly",
-          null, null, null, null, null,
-          HIGH);
-
-  private static final ComponentDescription FIND_COMPONENTS_EARLY =
-    new ComponentDescription(
-          "org.cougaar.core.agent.FindComponentsEarly",
-          "Node.AgentManager.Agent.Component",
-          "org.cougaar.core.agent.FindComponentsEarly",
-          null, null, null, null, null,
-          HIGH);
-
-  private static List getInitialComponents(boolean isNode) {
+  private List getInitialComponents() {
     List l = new ArrayList();
 
-    l.add(NODE_CONTROL_BLOCKER);
-
-    l.add(LOGGING_SERVICE);
-    if (isNode) {
-      l.add(QUIESCENCE_REPORT);
+    // query comp-init service
+    boolean includesDefaultComponents = true;
+    ComponentInitializerService cis = (ComponentInitializerService)
+      sb.getService(this, ComponentInitializerService.class, null);
+    try {
+      includesDefaultComponents = cis.includesDefaultComponents();
+      ComponentDescription[] descs =
+        cis.getComponentDescriptions(agentName, Agent.INSERTION_POINT);
+      if (descs != null) {
+        l.addAll(Arrays.asList(descs));
+      }
+    } catch (ComponentInitializerService.InitializerException cise) {
+      Logger log = Logging.getLogger(this.getClass());
+      if (log.isInfoEnabled()) {
+        log.info("\nUnable to add "+agentName+"'s components", cise);
+      }
+    } finally {
+      sb.releaseService(this, ComponentInitializerService.class, cis);
     }
 
-    l.add(BEGIN_LOGGER);
-    l.add(PERSISTENCE);
-    l.add(REGISTER_CONTEXT);
-    l.add(REHYDRATE_EARLY);
-    l.add(FIND_COMPONENTS_EARLY);
+    if (!includesDefaultComponents) {
+      // In the past we had a "DefaultComponents" class that hard-coded the XSL
+      // template components for non-XML configurations, e.g. INIs and DBs.
+      //
+      // That was a mess and has long been deprecated.
+      //
+      // The proposed solution is outlined in Node comments on how the
+      // ComponentInitializerService should be refactored.  The agent
+      // configuration will be split into two services:
+      //   a) an application configuration (XML, INI, DB, ...)
+      //   b) an environment configuration (XSL template, ...)
+      // All application configuration formats will be able to use the existing
+      // XSL templates.
+      Logger log = Logging.getLogger(this.getClass());
+      log.error("Unable to find default components for "+agentName);
+    }
+
+    if (!l.isEmpty()) {
+      // pass the agentName to first component
+      //
+      // This is a hack, as noted below in the "setAgentName" method.
+      ComponentDescription c0 = (ComponentDescription) l.get(0);
+      ComponentDescription new_c0 = setAgentName(c0, agentName);
+      l.set(0, new_c0);
+    }
 
     return l;
   }
@@ -172,27 +155,50 @@ implements Component
     abs = null;
   }
 
-  private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    if (ais == null) {
-      return null;
+  // modify a component description with the specified $AGENT_NAME
+  //
+  // This could be enhanced to support arbitrary parameters, not just
+  // our first "agentName" parameter.  However, this should be the
+  // ComponentInitializerService's job, not the Bootstrap's job.
+  //
+  // In fact, this agent name should be a expressed as a per-agent "envOption",
+  // as described in the "future design ideas" in the Node class.  That
+  // approach would correctly pass this agentName as an XSL template parameter,
+  // which would make it accessable anywhere in the template.
+  //
+  // More generally, the "addAgent(...)" method should support arbitrary
+  // "envOptions" and support an in-memory configuration.
+  private static ComponentDescription setAgentName(
+      ComponentDescription desc, String agentName) {
+    // see if the first param matches "$AGENT_NAME"
+    boolean matches = false;
+    Object o = desc.getParameter();
+    if (o instanceof List) {
+      List l = (List) o;
+      if (l.size() > 0) {
+        Object v = l.get(0);
+        if (v.equals("$AGENT_NAME")) {
+          matches = true;
+        }
+      }
     }
-    MessageAddress ret = ais.getMessageAddress();
-    sb.releaseService(
-        this, AgentIdentificationService.class, ais);
-    return ret;
-  }
+    if (!matches) return desc;
 
-  private MessageAddress find_local_node() {
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
-    if (nis == null) {
-      return null;
-    }
-    MessageAddress ret = nis.getMessageAddress();
-    sb.releaseService(
-        this, NodeIdentificationService.class, nis);
-    return ret;
+    // replace the first param with our agent name
+    List l2 = new ArrayList((List) o);
+    l2.set(0, agentName);
+    l2 = Collections.unmodifiableList(l2);
+
+    // return the modified desc
+    return new ComponentDescription(
+        desc.getName(),
+        desc.getInsertionPoint(),
+        desc.getClassname(),
+        desc.getCodebase(),
+        l2, // new params
+        desc.getCertificate(),
+        desc.getLeaseRequested(),
+        desc.getPolicy(),
+        desc.getPriority());
   }
 }

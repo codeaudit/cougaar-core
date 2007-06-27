@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 2001-2004 BBNT Solutions, LLC
+ *  Copyright 2001-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -28,6 +28,8 @@ package org.cougaar.core.mobility;
 
 import java.io.Serializable;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.component.ComponentDescription;
@@ -37,9 +39,8 @@ import org.cougaar.core.mts.MessageAddress;
  * A ticket requesting agent creation.
  */
 public final class AddTicket extends AbstractTicket implements java.io.Serializable {
-
   private static final String DEFAULT_AGENT_CLASSNAME =
-    "org.cougaar.core.agent.SimpleAgent";
+    "org.cougaar.core.agent.AgentImpl";
   private static final String AGENT_INSERTION_POINT =
     Agent.INSERTION_POINT;
 
@@ -54,14 +55,24 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
   // FIXME maybe add security tags here
 
   /**
-   * Add an agent with address <code>mobileAgent</code> to node
-   * <code>destNode</code>.
-   * <p>
-   * If the desc is null then "SimpleAgent" is assumed.
-   * <p>
-   * The <code>id</code> should be obtained from the MobilityFactory
-   * "createTicketIdentifier()".
+   * Add an agent on a remote node.
+   *
+   * @param id ticket-id from the MobilityFactory
+   * @param mobileAgent agent to add
+   * @param destNode target node, or null for the local node
    */
+  public AddTicket(
+      Object id,
+      MessageAddress mobileAgent,
+      MessageAddress destNode) {
+    this.id = id;
+    this.mobileAgent = validateAgentAddr(mobileAgent);
+    this.destNode = destNode;
+    this.desc = createAgentDesc(mobileAgent);
+    this.state = null;
+  }
+
+  /** @deprecated */
   public AddTicket(
       Object id,
       MessageAddress mobileAgent,
@@ -69,40 +80,10 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
       ComponentDescription desc,
       Object state) {
     this.id = id;
-    this.mobileAgent = mobileAgent;
+    this.mobileAgent = validateAgentAddr(mobileAgent);
     this.destNode = destNode;
-    if (mobileAgent == null) {
-      throw new IllegalArgumentException(
-          "Must specify an agent to add");
-    }
-    if (desc == null) {
-      desc =
-        new ComponentDescription(
-            DEFAULT_AGENT_CLASSNAME,
-            AGENT_INSERTION_POINT,
-            DEFAULT_AGENT_CLASSNAME,
-            null,  // codebase
-            mobileAgent,
-            null,  // certificate
-            null,  // lease
-            null,  // policy
-            ComponentDescription.PRIORITY_COMPONENT);
-    } else {
-      // validate the component description
-      assertIsValid(
-          mobileAgent,
-          desc);
-    }
-    this.desc = desc;
+    this.desc = validateAgentDesc(mobileAgent, desc);
     this.state = state;
-  }
-
-  /** Equivalent to "AddTicket(id, mobileAgent, destNode, null, null)" */
-  public AddTicket(
-      Object id,
-      MessageAddress mobileAgent,
-      MessageAddress destNode) {
-    this(id, mobileAgent, destNode, null, null);
   }
 
   /**
@@ -154,9 +135,32 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
     return state;
   }
 
-  private static void assertIsValid(
-      MessageAddress mobileAgent,
-      ComponentDescription desc) {
+  private static ComponentDescription createAgentDesc(Object param) {
+    return new ComponentDescription(
+        DEFAULT_AGENT_CLASSNAME,
+        AGENT_INSERTION_POINT,
+        DEFAULT_AGENT_CLASSNAME,
+        null,  // codebase
+        param,
+        null,  // certificate
+        null,  // lease
+        null,  // policy
+        ComponentDescription.PRIORITY_COMPONENT);
+  }
+
+  private static MessageAddress validateAgentAddr(
+      MessageAddress mobileAgent) {
+    if (mobileAgent == null) {
+      throw new IllegalArgumentException("Must specify an agent to add");
+    }
+    return mobileAgent;
+  }
+
+  private static ComponentDescription validateAgentDesc(
+      MessageAddress mobileAgent, ComponentDescription desc) {
+    if (desc == null) {
+      return createAgentDesc(mobileAgent);
+    }
     // check the insertion point
     String ip = desc.getInsertionPoint();
     if (!ip.equals(AGENT_INSERTION_POINT)) {
@@ -194,6 +198,7 @@ public final class AddTicket extends AbstractTicket implements java.io.Serializa
     }
     // let the remote node check the class type, since it
     // may be a class that we don't have in our local jars.
+    return desc;
   }
 
   public int hashCode() {

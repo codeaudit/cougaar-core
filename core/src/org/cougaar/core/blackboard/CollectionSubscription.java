@@ -26,6 +26,7 @@
 
 package org.cougaar.core.blackboard;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;
@@ -35,6 +36,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.DynamicUnaryPredicate;
 import org.cougaar.util.Empty;
 import org.cougaar.util.Enumerator;
@@ -45,27 +47,55 @@ import org.cougaar.util.UnaryPredicate;
  * Collection} of blackboard objects matching the filter
  * predicate, plus {@link ChangeReport}s for the objects changed
  * since the last transaction. 
+ *
+ * @property org.cougaar.core.blackboard.trackUnusedCollections
+ * Periodically log all CollectionSubscriptions that never use their
+ * "real" backing collection and could likely be replaced with
+ * DeltaSubscriptions, which would reduce the memory footprint.
+ * (defaults to false)
  */
 public class CollectionSubscription 
   extends Subscription 
   implements Collection
 {
 
+  private static final boolean TRACK_UNUSED_COLLECTIONS =
+    SystemProperties.getBoolean(
+        "org.cougaar.core.blackboard.trackUnusedCollections");
+
   /** The actual (delegate) Container */
   protected Collection real;
-  private boolean hasDynamicPredicate;
-  private HashMap changeMap = new HashMap(13);
+  private final boolean hasDynamicPredicate;
+  private final HashMap changeMap = new HashMap(13);
+  private boolean usedReal;
+
+  private static final ObjectTracker USE_TRACKER;
+  static {
+    ObjectTracker u = null;
+    if (TRACK_UNUSED_COLLECTIONS) {
+      u = new ObjectTracker();
+      int period = 30*1000;
+      String[] ignored_classes = new String[] {
+        "org.cougaar.core.blackboard.",
+        "org.cougaar.planning.plugin.legacy.PluginAdapter",
+      };
+      u.startThread(period, ignored_classes);
+    }
+    USE_TRACKER = u;
+  }
 
   public CollectionSubscription(UnaryPredicate p, Collection c) {
     super(p);
     real = c;
     hasDynamicPredicate = (p instanceof DynamicUnaryPredicate);
+    recordCreation();
   }
 
   public CollectionSubscription(UnaryPredicate p) {
     super(p);
     real = new HashSet(13);
     hasDynamicPredicate = (p instanceof DynamicUnaryPredicate);
+    recordCreation();
   }
 
   /**
@@ -77,7 +107,7 @@ public class CollectionSubscription
    * @return the subscription's collection -- use <code>this</code>
    * instead.
    */
-  public Collection getCollection() { return real; }
+  public Collection getCollection() { recordUse(); return real; }
 
   /**
    * Return the set of {@link ChangeReport}s for publishChanges made
@@ -106,21 +136,21 @@ public class CollectionSubscription
   //
 
   /** @return the subscription size */
-  public int size() { return real.size(); }
+  public int size() { recordUse(); return real.size(); }
   /** @return {@link #size} == 0 */
-  public boolean isEmpty() { return real.isEmpty(); }
+  public boolean isEmpty() { recordUse(); return real.isEmpty(); }
   /** @return an Iterator of the subscription contents */
-  public Iterator iterator() { return real.iterator(); }
+  public Iterator iterator() { recordUse(); return real.iterator(); }
   /** @return true of the subscription contains the object */
-  public boolean contains(Object o) { return real.contains(o); }
+  public boolean contains(Object o) { recordUse(); return real.contains(o); }
   /** @return true of the subscription contains all the objects */
   public boolean containsAll(Collection c) {
-    return real.containsAll(c);
+    recordUse(); return real.containsAll(c);
   }
   /** @return an array of the subscription contents */
-  public Object[] toArray() { return real.toArray(); }
+  public Object[] toArray() { recordUse(); return real.toArray(); }
   /** @return an array of the subscription contents */
-  public Object[] toArray(Object[] a) { return real.toArray(a); }
+  public Object[] toArray(Object[] a) { recordUse(); return real.toArray(a); }
 
   // semi-bogus collection methods:
 
@@ -128,32 +158,32 @@ public class CollectionSubscription
    * Use {@link org.cougaar.core.service.BlackboardService#publishAdd} instead.
    * Add an object to the backing collection, <i>not</i> the blackboard. 
    */
-  public boolean add(Object o) { return real.add(o); }
+  public boolean add(Object o) { recordUse(); return real.add(o); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishAdd} instead.
    * Add objects to the backing collection, <i>not</i> the blackboard. 
    */
-  public boolean addAll(Collection c) { return real.addAll(c); }
+  public boolean addAll(Collection c) { recordUse(); return real.addAll(c); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
    * Clear the backing collection, <i>not</i> the blackboard. 
    */
-  public void clear() { real.clear(); }
+  public void clear() { recordUse(); real.clear(); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
    * Remove an object from the backing collection, <i>not</i> the blackboard. 
    */
-  public boolean remove(Object o) { return real.remove(o); }
+  public boolean remove(Object o) { recordUse(); return real.remove(o); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
    * Remove objects from the backing collection, <i>not</i> the blackboard. 
    */ 
-  public boolean removeAll(Collection c) { return real.removeAll(c); }
+  public boolean removeAll(Collection c) { recordUse(); return real.removeAll(c); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
    * Retain objects in the backing collection, <i>not</i> the blackboard. 
    */
-  public boolean retainAll(Collection c) { return real.retainAll(c); }
+  public boolean retainAll(Collection c) { recordUse(); return real.retainAll(c); }
 
   public boolean equals(Object o) { return (this == o); }
 
@@ -161,11 +191,12 @@ public class CollectionSubscription
 
   /** @return an enumeration of the subscription objects */
   public Enumeration elements() { 
-    return new Enumerator(real);
+    recordUse(); return new Enumerator(real);
   }
   
   /** @return the first object in the collection. */
   public Object first() {
+    recordUse();
     Iterator i = real.iterator();
     return (i.hasNext())?(i.next()):null;
   }
@@ -270,5 +301,20 @@ public class CollectionSubscription
   protected void resetChanges() {
     super.resetChanges();       // propagate reset
     changeMap.clear();
+  }
+
+  private void recordCreation() {
+    if (TRACK_UNUSED_COLLECTIONS) {
+      USE_TRACKER.add(this);
+      if (hasDynamicPredicate || (this instanceof DeltaSubscription)) {
+        recordUse();
+      }
+    }
+  }
+  private void recordUse() {
+    if (TRACK_UNUSED_COLLECTIONS && !usedReal) {
+      usedReal = true;
+      USE_TRACKER.remove(this);
+    }
   }
 }

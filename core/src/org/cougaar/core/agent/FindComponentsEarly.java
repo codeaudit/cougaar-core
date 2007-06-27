@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -27,24 +27,17 @@
 package org.cougaar.core.agent;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.StateTuple;
-import org.cougaar.core.logging.LoggingServiceWithPrefix;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.node.ComponentInitializerService;
-import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceService;
 import org.cougaar.core.persist.RehydrationData;
-import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.GenericStateModel; // inlined
 import org.cougaar.util.GenericStateModelAdapter;
@@ -52,8 +45,7 @@ import org.cougaar.util.GenericStateModelAdapter;
 /**
  * This component registers with persistence as the component
  * model tracker and finds the agent's component descriptions
- * in either a rehydrated persistence snapshot or the agent's
- * configuration file ({@link ComponentInitializerService}).
+ * in the rehydrated persistence snapshot.
  *
  * @see FindComponentsLoadService 
  */
@@ -63,10 +55,6 @@ implements Component
 {
 
   private ServiceBroker sb;
-
-  private MessageAddress localAgent;
-  private MessageAddress localNode;
-  private boolean isNode;
 
   private LoggingService log;
 
@@ -85,13 +73,8 @@ implements Component
   public void load() {
     super.load();
 
-    localAgent = find_local_agent();
-    localNode = find_local_node();
-    isNode = 
-      (localAgent == null ||
-       localAgent.equals(localNode));
-
-    get_logger();
+    log = (LoggingService)
+      sb.getService(this, LoggingService.class, null);
 
     register_persistence();
 
@@ -125,37 +108,6 @@ implements Component
     unregister_persistence();
   }
 
-  private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    if (ais == null) {
-      return null;
-    }
-    MessageAddress ret = ais.getMessageAddress();
-    sb.releaseService(
-        this, AgentIdentificationService.class, ais);
-    return ret;
-  }
-
-  private MessageAddress find_local_node() {
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
-    if (nis == null) {
-      return null;
-    }
-    MessageAddress ret = nis.getMessageAddress();
-    sb.releaseService(
-        this, NodeIdentificationService.class, nis);
-    return ret;
-  }
-
-  private void get_logger() {
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
-    String prefix = localAgent+": ";
-    log = LoggingServiceWithPrefix.add(log, prefix);
-  }
-
   private void load_early() {
     if (log.isDebugEnabled()) {
       log.debug(
@@ -186,9 +138,6 @@ implements Component
           "No persistence data found, loading component descriptions"+
           " from the initializer service");
     }
-    l = readDescsFromConfig();
-    overrideComponentList(l);
-    // leave foundDescs as false, for use in "load_late()"
   }
 
   private void load_late() {
@@ -316,46 +265,6 @@ implements Component
     return o;
   }
 
-  private List readDescsFromConfig() {
-    List l = new ArrayList();
-
-    // get ".ini" descriptions
-    ComponentInitializerService cis = (ComponentInitializerService)
-      sb.getService(this, ComponentInitializerService.class, null);
-    boolean includesDefaultComponents = 
-      cis.includesDefaultComponents();
-    try {
-      ComponentDescription[] descs =
-        cis.getComponentDescriptions(
-            localAgent.toString(),
-            Agent.INSERTION_POINT);
-      int n = (descs == null ? 0 : descs.length);
-      for (int i = 0; i < n; i++) {
-        l.add(descs[i]);
-      }
-    } catch (ComponentInitializerService.InitializerException cise) {
-      if (log.isInfoEnabled()) {
-        log.info("\nUnable to add "+localAgent+"'s components", cise);
-      }
-    } finally {
-      sb.releaseService(this, ComponentInitializerService.class, cis);
-    }
-
-    if (!includesDefaultComponents) {
-      // backwards compatibility for non-XML configs!
-      //
-      // convert to component descriptions, for priority-based sorting
-      ComponentDescriptions descs = new ComponentDescriptions(l);
-
-      // add hard-coded "template" components and convert into
-      // sorted list
-      l = DefaultComponents.getHardCodedComponents(descs, isNode);
-    }
-
-    // return list of ComponentDescriptions and StateTuples
-    return l;
-  }
-
   private void overrideComponentList(List l) {
     if (log.isDebugEnabled()) {
       log.debug("overrideComponentList("+l+")");
@@ -422,7 +331,7 @@ implements Component
     }
 
     // convert to list
-    List l = DefaultComponents.flattenComponents(descs);
+    List l = flattenComponents(descs);
 
     if (log.isDebugEnabled()) {
       log.debug("Flattened to list: "+l);
@@ -480,6 +389,39 @@ implements Component
     }
     if (log.isDetailEnabled()) {
       log.detail("trimmed list["+i+".."+n+"] to "+ret);
+    }
+    return ret;
+  }
+
+  private static List flattenComponents(ComponentDescriptions descs) {
+    List l = new ArrayList();
+    l.addAll(findComponents(descs, ComponentDescription.PRIORITY_HIGH));
+    l.addAll(findComponents(descs, ComponentDescription.PRIORITY_INTERNAL));
+    l.addAll(findComponents(descs, ComponentDescription.PRIORITY_BINDER));
+    l.addAll(findComponents(descs, ComponentDescription.PRIORITY_COMPONENT));
+    l.addAll(findComponents(descs, ComponentDescription.PRIORITY_LOW));
+    return l;
+  }
+  private static List findComponents(
+      ComponentDescriptions descs, int priority) {
+    return findComponents(descs, "Node.AgentManager.Agent.", priority);
+  }
+  private static List findComponents(
+      ComponentDescriptions descs, String containmentPoint, int priority) {
+    List ret = new ArrayList();
+    if (descs == null) return ret;
+    List pcd = descs.selectComponentDescriptions(priority);
+    if (pcd == null) return ret;
+    for (Object o : pcd) {
+      ComponentDescription cd =
+        ((o instanceof StateTuple) ?
+         (((StateTuple) o).getComponentDescription()) :
+         ((ComponentDescription) o));
+      String ip = cd.getInsertionPoint();
+      if (ip.startsWith(containmentPoint) &&
+          ip.indexOf(".", containmentPoint.length()+1) < 0) {
+        ret.add(o);
+      }
     }
     return ret;
   }

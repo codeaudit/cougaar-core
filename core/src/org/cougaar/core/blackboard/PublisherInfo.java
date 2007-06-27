@@ -26,22 +26,50 @@
 
 package org.cougaar.core.blackboard;
 
+import java.io.Serializable;
+import java.util.Set;
 import org.cougaar.util.StackElements;
 
 /**
- * A container for a tranaction's add/change/remove of a single
- * object.
+ * A data structure returned by {@link PublisherSubscription}.
  */
-public abstract class EnvelopeTuple implements java.io.Serializable {
-  public abstract int getAction();
-  abstract public Object getObject();
-  public boolean isAdd() { return false; }
-  public boolean isRemove() { return false; }
-  public boolean isChange() { return false; }
-  public boolean isBulk() { return false; }
-  public boolean isEvent() { return false; }
+public final class PublisherInfo implements Serializable {
 
-  public StackElements getStack() { return null; }
+  private final String publisher;
+  private final StackElements add_stack;
+  private final Set change_stacks;
 
-  abstract boolean applyToSubscription(Subscription s, boolean isVisible);
+  public PublisherInfo(
+      String publisher,
+      StackElements add_stack,
+      Set change_stacks) {
+    this.publisher = publisher;
+    this.add_stack = add_stack;
+    this.change_stacks = change_stacks;
+  }
+
+  /**
+   * @return the plugin that published the object.
+   */
+  public String getPublisher() { return publisher; }
+
+  /**
+   * @return the stack where the publishAdd occurred.
+   */
+  public StackElements getAddStack() { return add_stack; }
+
+  /**
+   * @return an ordered set of unique stacks where the object
+   * was publishChanged, or null if it was never changed.
+   */
+  public Set getChangeStacks() { return change_stacks; }
+
+  public String toString() {
+    return 
+      "(publisherInfo "+
+      "\n  publisher="+publisher+
+      "\n  add_stack="+(add_stack != null)+
+      "\n  change_stacks="+(change_stacks == null ? 0 : change_stacks.size())+
+      ")";
+  }
 }

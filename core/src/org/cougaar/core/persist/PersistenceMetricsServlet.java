@@ -31,7 +31,6 @@ import java.io.PrintWriter;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
-import java.util.TimeZone;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -59,7 +58,6 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
   private static SimpleDateFormat dateFormat;
   static {
     dateFormat = new SimpleDateFormat("MMM-dd-yyyy HH:mm:ss");
-    dateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
   }
 
   private ServletService servletService = null;
@@ -199,7 +197,7 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
       out.println("  </form>");
       out.println("  <table border=1>");
       out.println("   <tr>");
-      out.println("    <td><A href=\"?" + getSortParams(rev, sort, "time") + "\">Time (GMT)</a></td>");
+      out.println("    <td><A href=\"?" + getSortParams(rev, sort, "time") + "\">Time</a></td>");
       out.println("    <td><A href=\"?" + getSortParams(rev, sort, "media") + "\">Media</a></td>");
       out.println("    <td><A href=\"?" + getSortParams(rev, sort, "type") + "\">Type</a></td>");
       out.println("    <td><A href=\"?" + getSortParams(rev, sort, "id") + "\">Id</a></td>");

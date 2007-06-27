@@ -51,15 +51,13 @@ implements RootPlan, XPlan, SupportsDelayedLPActions
   private Blackboard blackboard;
 
   /** is this a UniqueObject? */
-  private static final UnaryPredicate uniqueObjectP = new UnaryPredicate() {
+  private static final UnaryPredicate uniqueObjectP =
+    new UniqueObjectPredicate();
+  private static final class UniqueObjectPredicate implements UnaryPredicate {
     public boolean execute(Object o) {
-      if (o instanceof UniqueObject) {
-        UniqueObject uo = (UniqueObject) o;
-        return (uo.getUID() != null);
-      }
-      return false;
+      return (o instanceof UniqueObject) && (((UniqueObject) o).getUID() != null);
     }
-  };
+  }
 
   /** Private container for UniqueObject lookup.  */
   private UniqueObjectSet uniqueObjectSet = new UniqueObjectSet();

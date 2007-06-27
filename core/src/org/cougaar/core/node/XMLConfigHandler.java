@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -60,9 +60,12 @@ public class XMLConfigHandler extends DefaultHandler {
   private final Map currentComponent = new HashMap(11);
   private final CharArrayWriter argValueBuffer = new CharArrayWriter();
 
+  private boolean processedNode;
+
   private boolean thisNode;
   private boolean thisAgent;
   private List currentList;
+  private String currentNode;
   private String currentAgent;
   private boolean inArgument;
 
@@ -216,47 +219,64 @@ public class XMLConfigHandler extends DefaultHandler {
 
   private void startNode(Attributes atts)
     throws SAXException {
+    if (processedNode) {
+      return;
+    }
 
-    String name = Strings.intern(atts.getValue("name"));
+    String name = getValue(atts, "name");
 
-    thisNode = 
-      (nodename == null ||
+    boolean anyName = (name == null || name.equals("*"));
+    boolean anyNode = (nodename == null || nodename.equals("*"));
+    boolean anyAgent = (agentname == null || agentname.equals("*"));
+
+    thisNode =
+      (anyName ||
+       anyNode ||
        nodename.equals(name));
 
     thisAgent =
-      (agentname == null ||
+      (anyName ||
+       anyAgent ||
        agentname.equals(name));
 
     if (!thisNode || !thisAgent) {
       if (logger.isDebugEnabled()) {
         logger.debug("skipping node "+name);
       }
+      currentNode = null;
       currentAgent = null;
       return;
     }
 
-    if (logger.isInfoEnabled()) {
-      logger.info("starting node "+name);
-    }
+    processedNode = true;
 
     // make a new place for the node's components
-    currentAgent = name;
-    currentList = (List) agents.get(name);
+    currentNode = 
+      (anyName ?
+       (anyNode ? null : nodename) :
+       name);
+    currentAgent = currentNode;
+    currentList = (List) agents.get(currentNode);
     if (currentList == null) {
       currentList = new ArrayList(1);
-      agents.put(name, currentList);
+      agents.put(currentNode, currentList);
+    }
+
+    if (logger.isInfoEnabled()) {
+      logger.info("starting node "+currentNode);
     }
   }
 
   private void endNode()
     throws SAXException {
     if (thisNode) {
+      if (logger.isInfoEnabled()) {
+        logger.info("finished node "+currentNode);
+      }
       thisNode = false;
+      currentNode = null;
       currentAgent = null;
       currentList = null;
-      if (logger.isInfoEnabled()) {
-        logger.info("finished node "+nodename);
-      }
     } else {
       if (logger.isDebugEnabled()) {
         logger.debug("skipped node");
@@ -267,14 +287,21 @@ public class XMLConfigHandler extends DefaultHandler {
   private void startAgent(Attributes atts)
     throws SAXException {
 
-    if (!thisNode && nodename != null) {
-      return;
+    if (!thisNode) {
+      boolean anyNode = (nodename == null || nodename.equals("*"));
+      if (!anyNode) {
+        return;
+      }
     }
 
-    String name = Strings.intern(atts.getValue("name"));
+    String name = getValue(atts, "name");
+
+    boolean anyName = (name == null || name.equals("*"));
+    boolean anyAgent = (agentname == null || agentname.equals("*"));
 
     thisAgent = 
-      (agentname == null ||
+      (anyName ||
+       anyAgent ||
        agentname.equals(name));
 
     if (!thisAgent) {
@@ -285,16 +312,19 @@ public class XMLConfigHandler extends DefaultHandler {
       return;
     }
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("starting agent "+name);
-    }
-
     // make a new place for the agent's components
-    currentAgent = name;
-    currentList = (List) agents.get(name);
+    currentAgent =
+      (anyName ?
+       (anyAgent ? null : agentname) :
+       name);
+    currentList = (List) agents.get(currentAgent);
     if (currentList == null) {
       currentList = new ArrayList(1);
-      agents.put(name, currentList);
+      agents.put(currentAgent, currentList);
+    }
+
+    if (logger.isDebugEnabled()) {
+      logger.debug("starting agent "+currentAgent);
     }
   }
 
@@ -306,8 +336,8 @@ public class XMLConfigHandler extends DefaultHandler {
       }
       thisAgent = false;
       // restore name to node's name
-      currentAgent = nodename;
-      currentList = (List) agents.get(currentAgent);
+      currentAgent = currentNode;
+      currentList = (List) agents.get(currentNode);
     } else {
       if (logger.isDebugEnabled()) {
         logger.debug("skipped agent");
@@ -328,10 +358,10 @@ public class XMLConfigHandler extends DefaultHandler {
           currentComponent);
     }
 
-    currentComponent.put("name", Strings.intern(atts.getValue("name")));
-    currentComponent.put("class", Strings.intern(atts.getValue("class")));
-    currentComponent.put("priority", Strings.intern(atts.getValue("priority")));
-    currentComponent.put("insertionpoint", Strings.intern(atts.getValue("insertionpoint")));
+    currentComponent.put("name", getValue(atts, "name"));
+    currentComponent.put("class", getValue(atts, "class"));
+    currentComponent.put("priority", getValue(atts, "priority"));
+    currentComponent.put("insertionpoint", getValue(atts, "insertionpoint"));
   }
 
   private void endComponent()
@@ -394,6 +424,18 @@ public class XMLConfigHandler extends DefaultHandler {
   }
 
   // utility methods:
+
+  private static String getValue(Attributes atts, String qName) {
+    String ret = atts.getValue(qName);
+    if (ret == null) {
+      return null;
+    }
+    ret = ret.trim();
+    if (ret.length() == 0) {
+      return null;
+    }
+    return Strings.intern(ret);
+  }
 
   private static ComponentDescription makeComponentDesc(
       Map componentProps) {

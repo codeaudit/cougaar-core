@@ -1,7 +1,7 @@
 /*
  * <copyright>
  *  
- *  Copyright 1997-2004 BBNT Solutions, LLC
+ *  Copyright 1997-2007 BBNT Solutions, LLC
  *  under sponsorship of the Defense Advanced Research Projects
  *  Agency (DARPA).
  * 
@@ -68,7 +68,8 @@ implements Component
     NodeControlService ncs = (NodeControlService)
       sb.getService(this, NodeControlService.class, null);
     if (ncs == null) {
-      throw new RuntimeException("Unable to obtain NodeControlService");
+      // not in the node agent
+      return;
     }
     rootsb = ncs.getRootServiceBroker();
     agentContainer = ncs.getRootContainer();
@@ -120,9 +121,11 @@ implements Component
   public void unload() {
     super.unload();
 
-    rootsb.revokeService(QuiescenceReportService.class, qrsp);
-    // Need to cleanup tasks performed in separate thread.
-    qrsp.revokeService();
-    qrsp = null;
+    if (qrsp != null) {
+      rootsb.revokeService(QuiescenceReportService.class, qrsp);
+      // Need to cleanup tasks performed in separate thread.
+      qrsp.revokeService();
+      qrsp = null;
+    }
   }
 }

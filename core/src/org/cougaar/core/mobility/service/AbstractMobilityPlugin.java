@@ -71,12 +71,13 @@ public abstract class AbstractMobilityPlugin
   extends ComponentPlugin 
 {
 
-  private static final UnaryPredicate CONTROL_PRED =
-    new UnaryPredicate() {
-	public boolean execute(Object o) {
-	  return (o instanceof AgentControl);
-	}
-      };
+  private static final UnaryPredicate AGENT_CONTROL_PRED = 
+    new AgentControlPredicate();
+  private static final class AgentControlPredicate implements UnaryPredicate {
+    public boolean execute(Object o) {
+      return (o instanceof AgentControl);
+    }
+  }
   
   protected MessageAddress agentId;
   protected MessageAddress nodeId;
@@ -261,7 +262,7 @@ public abstract class AbstractMobilityPlugin
   protected void setupSubscriptions() {
     // subscribe to control requests that we'll execute
     controlSub = (IncrementalSubscription)
-      blackboard.subscribe(CONTROL_PRED);
+      blackboard.subscribe(AGENT_CONTROL_PRED);
     
     if (isNode) {
       if (blackboard.didRehydrate()) {

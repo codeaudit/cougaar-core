@@ -1238,14 +1238,19 @@ final class Distributor {
                      new Throwable());
       }
     }
-    synchronized (distributorLock) { // this was distributorLock, which appears wrong
+    boolean persistWanted = false;
+    synchronized (distributorLock) {
       try {
         blackboard.startTransaction();
         blackboard.invokeABAChangeLPs(communities);
+        Envelope envelope =
+          blackboard.receiveMessages(Collections.EMPTY_LIST);
+        persistWanted = distribute(envelope, blackboard.getClient(), true);
       } finally {
         blackboard.stopTransaction();
       }
     }
+    if (persistWanted) maybeSetPersistPending();
   }
 
   /**
