@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<psf version="2.0">
+	<!-- Includes the converted Java projects,as well as base 
+		(runtime CIP and documentation) -->
+	<provider id="org.eclipse.team.cvs.core.cvsnature">
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/util,base,base"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/util,bootstrap,bootstrap"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/core,core,core"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/build,build,build"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/mts,mtsstd,mtsstd"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/tutorials,ping,ping"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/qos,qos,qos"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/qos,quo,quo"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/tutorials,tools,tools"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/util,util,util"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/webserver,webserver,webserver"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/webserver,webtomcat,webtomcat"/>
+	</provider>
+</psf>
