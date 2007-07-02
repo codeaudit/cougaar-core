@@ -162,7 +162,7 @@ final class SchedulableObject implements Schedulable {
 	    Logger logger = Logging.getLogger(getClass()); 
 	    logger.error(this + "  is its own continuation!");
 	} else if (continuation != null) {
-	    maybeRestart();
+	    end();
 	}
         return continuation;
     }
@@ -177,18 +177,21 @@ final class SchedulableObject implements Schedulable {
 	// The restart mechanism shouldn't be relevant unless the
 	// no continuation was found in the corresponding reclaim
 	// call. 
-	maybeRestart();
+	end();
        
     }
 
-    private void maybeRestart() {
+    private void end() {
         synchronized (this) {
             thread = null;
-            if (--start_count <= 0) return;
+            if (--start_count > 0) {
+        	// Restart 
+        	SchedulableStateChangeQueue.pushStart(this);
+            }
         }
-	SchedulableStateChangeQueue.pushStart(this);
     }
     
+    // This method is not synchronized by design.
     void addToReclaimer() {
 	SchedulableStateChangeQueue.pushReclaim(this);
     }
@@ -210,13 +213,11 @@ final class SchedulableObject implements Schedulable {
         synchronized (this) {
 	    // If the Schedulable has been cancelled, or has already
 	    // been asked to start, there's nothing further to do.
-	    if (cancelled) return;
-	    if (++start_count > 1) return;
+            // Otherwise, submit a request to be started
+            if (!cancelled && ++start_count == 1) {
+        	SchedulableStateChangeQueue.pushStart(this);;
+            }
         }
-
-	// We only get here if the Schedulable has not been
-	// cancelled  and if start_count has gone from 0 to 1.
-	SchedulableStateChangeQueue.pushStart(this);;
     }
 
     // All callers should be synchronized on this
