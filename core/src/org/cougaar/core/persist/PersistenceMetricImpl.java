@@ -36,12 +36,15 @@ public class PersistenceMetricImpl implements PersistenceMetricsService.Metric {
   private String name;
   private long startTime, endTime, cpuTime, size;
   private boolean full;
+  private Throwable failed;
   private PersistencePlugin plugin;
   private int count;
 
   PersistenceMetricImpl(String name,
                         long startTime, long endTime, long cpuTime,
-                        long size, boolean full, PersistencePlugin plugin)
+                        long size, boolean full,
+                        Throwable failed,
+                        PersistencePlugin plugin)
   {
     this.name = name;
     this.startTime = startTime;
@@ -49,6 +52,7 @@ public class PersistenceMetricImpl implements PersistenceMetricsService.Metric {
     this.cpuTime = cpuTime;
     this.size = size;
     this.full = full;
+    this.failed = failed;
     this.plugin = plugin;
     this.count = 1;
   }
@@ -84,6 +88,10 @@ public class PersistenceMetricImpl implements PersistenceMetricsService.Metric {
     return full;
   }
 
+  public Throwable getException() {
+    return failed;
+  }
+
   public String getName() {
     return name;
   }
@@ -109,7 +117,7 @@ public class PersistenceMetricImpl implements PersistenceMetricsService.Metric {
   }
 
   public String toString() {
-    return "Persisted "
+    return (failed == null ? "Persisted " : "Failed ")
       + (full ? "full" : "delta")
       + name
       + ", "

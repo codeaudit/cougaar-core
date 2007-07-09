@@ -1173,6 +1173,7 @@ public class PersistenceServiceComponent
     }
     int bytesSerialized = 0;
     full |= returnBytes;        // Must be a full snapshot to return bytes
+    Throwable failed = null;
     recomputeNextPersistenceTime = true;
     PersistenceObject result = null; // Return value if wanted
     synchronized (identityTable) {
@@ -1341,6 +1342,7 @@ public class PersistenceServiceComponent
 	objectsThatMightGoAway.clear();
       }
       catch (Exception e) {
+        failed = e;
         logger.error("Error writing persistence snapshot", e);
       } finally {
         if (isDummy) {
@@ -1362,7 +1364,8 @@ public class PersistenceServiceComponent
     PersistenceMetricImpl metric =
       new PersistenceMetricImpl(formatDeltaNumber(deltaNumber),
                                 startTime, finishTime, finishCPU - startCPU,
-                                bytesSerialized, full, currentPersistPluginInfo.ppi);
+                                bytesSerialized, full, failed,
+                                currentPersistPluginInfo.ppi);
     metricsService.addMetric(metric);
     if (logger.isInfoEnabled()) {
       logger.info(metric.toString());

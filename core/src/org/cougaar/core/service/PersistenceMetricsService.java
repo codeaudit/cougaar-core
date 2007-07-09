@@ -37,6 +37,7 @@ public interface PersistenceMetricsService {
     long getSize();
     long getCpuTime();
     boolean isFull();
+    Throwable getException();
     String getName();
     Class getPersistencePluginClass();
     String getPersistencePluginName();
