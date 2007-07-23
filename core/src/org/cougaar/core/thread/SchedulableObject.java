@@ -184,11 +184,12 @@ final class SchedulableObject implements Schedulable {
     private void end() {
         synchronized (this) {
             thread = null;
-            if (--start_count > 0) {
-        	// Restart 
-        	SchedulableStateChangeQueue.pushStart(this);
+            if (--start_count <= 0) {
+        	return;
             }
         }
+        // Restart 
+        SchedulableStateChangeQueue.pushStart(this);
     }
     
     // This method is not synchronized by design.
@@ -214,10 +215,11 @@ final class SchedulableObject implements Schedulable {
 	    // If the Schedulable has been cancelled, or has already
 	    // been asked to start, there's nothing further to do.
             // Otherwise, submit a request to be started
-            if (!cancelled && ++start_count == 1) {
-        	SchedulableStateChangeQueue.pushStart(this);;
+            if (cancelled || ++start_count != 1) {
+        	return;
             }
         }
+        SchedulableStateChangeQueue.pushStart(this);;
     }
 
     // All callers should be synchronized on this

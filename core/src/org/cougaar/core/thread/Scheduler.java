@@ -430,9 +430,7 @@ public class Scheduler {
 	    }
             for (int i = 0, n = requeue.size(); i < n; i++) {
                 SchedulableObject sched = requeue.get(i);
-		synchronized (sched) {
-		    SchedulableStateChangeQueue.pushStart(sched);
-		}                
+                SchedulableStateChangeQueue.pushStart(sched);
             }
             return true;
 	} else if (qualifier == null) {
