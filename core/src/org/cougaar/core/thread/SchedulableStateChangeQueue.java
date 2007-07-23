@@ -85,7 +85,7 @@ final class SchedulableStateChangeQueue extends Thread {
     private boolean should_stop;
 
     private SchedulableStateChangeQueue() {
-	super("Thread Wrangler");
+	super("Thread Start/Stop Queue");
 	setDaemon(DAEMON);
 	queue = new CircularQueue();
 	lock = new Object();
