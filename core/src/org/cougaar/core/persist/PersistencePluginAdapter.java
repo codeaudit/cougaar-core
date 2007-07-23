@@ -163,13 +163,13 @@ public abstract class PersistencePluginAdapter implements PersistenceNames {
     throw new UnsupportedOperationException("FilePersistence.releaseDatabaseConnection not supported");
   }
 
-  public boolean checkOwnership() {
+  public boolean checkOwnership() throws PersistenceException {
     return true;
   }
 
-  public void lockOwnership() {
+  public void lockOwnership() throws PersistenceException {
   }
 
-  public void unlockOwnership() {
+  public void unlockOwnership() throws PersistenceException {
   }
 }

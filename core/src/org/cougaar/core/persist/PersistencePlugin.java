@@ -248,7 +248,7 @@ public interface PersistencePlugin {
   /**
    * Check that this agent instance still owns the persistence data
    */
-  boolean checkOwnership();
+  boolean checkOwnership() throws PersistenceException;
 
   /**
    * Lock out other instances of this agent.

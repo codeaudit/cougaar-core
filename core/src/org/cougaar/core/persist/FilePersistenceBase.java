@@ -155,32 +155,31 @@ public abstract class FilePersistenceBase
     }
   }
 
-  public boolean checkOwnership() {
+  public boolean checkOwnership() throws PersistenceException {
     lockOwnership();
     try {
       DataInputStream i = new DataInputStream(new FileInputStream(ownerFile));
       return i.readUTF().equals(instanceId);
     } catch (IOException ioe) {
-      pps.getLogger().fatal("checkOwnership exception", ioe);
-      return false;
+      throw new PersistenceException("checkOwnership exception", ioe);
     } finally {
       unlockOwnership();
     }
   }
 
-  public void lockOwnership() {
+  public void lockOwnership() throws PersistenceException {
     try {
       mutex.lock();
     } catch (IOException ioe) {
-      pps.getLogger().fatal("lockOwnership exception", ioe);
+      throw new PersistenceException("lockOwnership exception", ioe);
     }
   }
 
-  public void unlockOwnership() {
+  public void unlockOwnership() throws PersistenceException {
     try {
       mutex.unlock();
     } catch (IOException ioe) {
-      pps.getLogger().fatal("unlockOwnership exception", ioe);
+      throw new PersistenceException("unlockOwnership exception", ioe);
     }
   }
 
