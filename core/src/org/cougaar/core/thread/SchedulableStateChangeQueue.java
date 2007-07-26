@@ -100,27 +100,34 @@ final class SchedulableStateChangeQueue extends Thread {
     
     private void add(QueueEntry entry) {
 	synchronized (lock) {
-	    // Verify that the Schedulable isn't already on the
-	    // queue.  This is potentially expensive and in theory
-	    // should never happen.  But it does, so until we know
-	    // why, we need to check.
-	    SchedulableObject schedulable = entry.schedulable;
-	    Iterator itr = queue.iterator();
-	    while (itr.hasNext()) {
-		QueueEntry e = (QueueEntry) itr.next();
-		if (e.schedulable == schedulable) {
-		    Logger logger = Logging.getLogger(SchedulableStateChangeQueue.class);
-		    logger.error(schedulable + " is already in the queue with "
-			    + e.operation +   ", new op is " + entry.operation);
-		    // XXX: Figure out why this happens !!
-		    return;
-		}
+	    // TODO turn the validity check into an assertion that only runs during testing
+	    if (validToAdd(entry)) {
+		queue.add(entry);
+		lock.notify();
 	    }
-	    queue.add(entry);
-	    lock.notify();
 	}	
     }
-    
+
+   private boolean validToAdd(QueueEntry entry) {
+	// Verify that the Schedulable isn't already on the
+	// queue.  This is potentially expensive and in theory
+	// should never happen.  But it does, so until we know
+	// why, we need to check.
+	SchedulableObject schedulable = entry.schedulable;
+	Iterator itr = queue.iterator();
+	while (itr.hasNext()) {
+	    QueueEntry e = (QueueEntry) itr.next();
+	    if (e.schedulable == schedulable) {
+		Logger logger = Logging.getLogger(SchedulableStateChangeQueue.class);
+		logger.error(schedulable + " is already in the queue with "
+			+ e.operation +   ", new op is " + entry.operation);
+		// XXX: Figure out why this happens !!
+		return false;
+	    }
+	}
+	return true;
+    }
+
     public void run() {
 	while (true) {
 	    QueueEntry entry = null;

@@ -202,12 +202,29 @@ final class SchedulableObject implements Schedulable {
 	queued = false;
 	if (thread != null) {
 	    Logger logger = Logging.getLogger(getClass()); 
-	    logger.error(this + " already has a thread!");
+	    logger.error(this + " already has a Thread=" +thread);
 	    return;
 	}
-	thread = pool.getThread(this, name);
-	timestamp = System.currentTimeMillis();
-	thread.start_running();
+	while (true) {
+	    try {
+		thread = pool.getThread(this, name);
+		timestamp = System.currentTimeMillis();
+		thread.start_running();
+		break; 	//success
+	    } catch (IllegalThreadStateException e1) {
+		Logger logger = Logging.getLogger(getClass()); 
+		logger.error("Thread="+ thread + " is already running! " +
+			"Attempting to restart Schedulable=" +this+ " with new thread");
+		thread = null;
+		// retry
+	    } catch (RuntimeException e2) {
+		Logger logger = Logging.getLogger(getClass()); 
+		logger.error("Unrecoverable Thread pool error Pool=" +pool+
+			"Can not start Schedulable=" +this+ "\n" +
+			e2.getMessage());
+		break; // abort (maybe we should retry?)
+	    }
+	}
     }
 
     public void start() {
