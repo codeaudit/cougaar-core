@@ -26,8 +26,6 @@
 
 package org.cougaar.core.thread;
 
-import java.util.Iterator;
-
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.CircularQueue;
 import org.cougaar.util.log.Logger;
@@ -40,7 +38,7 @@ final class SchedulableStateChangeQueue extends Thread {
     private static final boolean DAEMON =
         SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
-    static SchedulableStateChangeQueue singleton;
+    private static SchedulableStateChangeQueue singleton;
 
     static void startThread()  {
 	singleton = new SchedulableStateChangeQueue();
@@ -49,13 +47,16 @@ final class SchedulableStateChangeQueue extends Thread {
 
     static void stopThread() {
 	SchedulableStateChangeQueue instance = singleton;
-        if (instance == null) return;
-        singleton = null;
-        instance.quit();
-        try {
-            instance.join();
-        } catch (InterruptedException ie) {
-        }
+	if (instance == null) {
+	    return;
+	}
+	singleton = null;
+	instance.quit();
+	try {
+	    instance.join();
+	} catch (InterruptedException ie) {
+	    // don't care
+	}
     }
     
     static void pushStart(SchedulableObject sched) {
@@ -80,14 +81,14 @@ final class SchedulableStateChangeQueue extends Thread {
     }
 
 
-    private final CircularQueue queue;
+    private final CircularQueue<QueueEntry> queue;
     private final Object lock;
     private boolean should_stop;
 
     private SchedulableStateChangeQueue() {
 	super("Thread Start/Stop Queue");
 	setDaemon(DAEMON);
-	queue = new CircularQueue();
+	queue = new CircularQueue<QueueEntry>();
 	lock = new Object();
     }
     
@@ -108,15 +109,15 @@ final class SchedulableStateChangeQueue extends Thread {
 	}	
     }
 
+    /**
+     * Verify that the Schedulable isn't already on the
+     * queue.  This is potentially expensive and in theory
+     * should never happen.  But it does, so until we know
+     * why, we need to check.
+     */
    private boolean validToAdd(QueueEntry entry) {
-	// Verify that the Schedulable isn't already on the
-	// queue.  This is potentially expensive and in theory
-	// should never happen.  But it does, so until we know
-	// why, we need to check.
 	SchedulableObject schedulable = entry.schedulable;
-	Iterator itr = queue.iterator();
-	while (itr.hasNext()) {
-	    QueueEntry e = (QueueEntry) itr.next();
+	for (QueueEntry e : queue) {
 	    if (e.schedulable == schedulable) {
 		Logger logger = Logging.getLogger(SchedulableStateChangeQueue.class);
 		logger.error(schedulable + " is already in the queue with "
@@ -133,14 +134,18 @@ final class SchedulableStateChangeQueue extends Thread {
 	    QueueEntry entry = null;
 	    synchronized (lock) {
 		while (true) {
-		    if (should_stop) return;
-		    if (!queue.isEmpty()) break;
+		    if (should_stop) {
+			return;
+		    }
+		    if (!queue.isEmpty()) {
+			break;
+		    }
 		    try { 
 			lock.wait();
 		    } catch (InterruptedException ex) {
 		    }
 		}
-		entry = (QueueEntry) queue.next();
+		entry = queue.next();
 	    }
 	    entry.doWork();
 	}

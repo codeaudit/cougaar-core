@@ -36,45 +36,45 @@ import org.cougaar.util.CircularQueue;
  * for up to 500ms or until the queue is empty, whichever comes
  * first.  Every addition to the queue (re)starts the Schedulable.
  */
-public class RunnableQueue implements Runnable
-{
+public class RunnableQueue implements Runnable {
     private static final long  MAX_RUNTIME = 500;
-    private CircularQueue queue;
-    private Schedulable sched;
+    private final CircularQueue<Runnable> queue;
+    private final Schedulable sched;
     
-    public RunnableQueue(ThreadService svc, String name) 
-    {
-	queue = new CircularQueue();
+    public RunnableQueue(ThreadService svc, String name) {
+	queue = new CircularQueue<Runnable>();
 	sched = svc.getThread(this, this, name);
     }
 
-    public void add(Runnable runnable)
-    {
+    public void add(Runnable runnable) {
 	synchronized (queue) {
 	    queue.add(runnable);
 	}
 	sched.start();
     }
 
-    public void run()
-    {
+    public void run() {
 	long start = System.currentTimeMillis();
 	Runnable next = null;
 	boolean restart = false;
 	while (true) {
 	    synchronized (queue) {
-		if (queue.isEmpty()) break;
+		if (queue.isEmpty()) {
+		    break;
+		}
 		if (System.currentTimeMillis()-start > MAX_RUNTIME) {
 		    // Spent too long in this thread but the queue
 		    // isn't empty yet.  Start a new thread.
 		    restart = true;
 		    break;
 		}
-		next = (Runnable) queue.next();
+		next = queue.next();
 	    }
 	    next.run();
 	}
-	if (restart) sched.start();
+	if (restart) {
+	    sched.start();
+	}
     }
 }
 

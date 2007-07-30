@@ -28,28 +28,23 @@ import org.cougaar.util.CircularQueue;
  * Schedulable}s serially, uses this utility class to hold a set of {@link
  * Schedulable}s in proper sequence.
  */
-final class SerialThreadQueue
-{
+final class SerialThreadQueue {
 	
-    private CircularQueue schedulables;
-    private Object lock;
+    private final CircularQueue<TrivialSchedulable> schedulables;
+    private final Object lock;
 
-    SerialThreadQueue()
-    {
-	schedulables = new CircularQueue();
+    SerialThreadQueue() {
+	schedulables = new CircularQueue<TrivialSchedulable>();
 	lock = new Object();
     }
 
-    int iterateOverThreads(ThreadStatusService.Body body)
-    {
+    int iterateOverThreads(ThreadStatusService.Body body) {
 	int count = 0;
-	Object[] objects;
-	TrivialSchedulable sched;
+	TrivialSchedulable[] objects = new TrivialSchedulable[schedulables.size()];
 	synchronized (lock) {
-	    objects = schedulables.toArray();
+	    schedulables.toArray(objects);
 	}
-	for (int i=0; i<objects.length; i++) {
-	    sched = (TrivialSchedulable) objects[i];
+	for (TrivialSchedulable sched : objects) {
 	    try {
 		body.run("root", sched);
 		count++;
@@ -60,13 +55,11 @@ final class SerialThreadQueue
 	return count;
     }
 
-    Object getLock()
-    {
+    Object getLock() {
 	return lock;
     }
 
-    void enqueue(TrivialSchedulable sched) 
-    {
+    void enqueue(TrivialSchedulable sched) {
 	sched.setState(CougaarThread.THREAD_PENDING);
 	synchronized (lock) {
 	    if (!schedulables.contains(sched)) {
@@ -77,22 +70,16 @@ final class SerialThreadQueue
     }
 
     // caller synchronizes
-    boolean isEmpty()
-    {
+    boolean isEmpty() {
 	return schedulables.isEmpty();
     }
 
     // caller synchronizes
-    TrivialSchedulable next() 
-    {
+    TrivialSchedulable next()  {
 	if (schedulables.isEmpty())
 	    return null;
 	else
-	    return (TrivialSchedulable) schedulables.next();
+	    return schedulables.next();
     }
-
-
 }
-
-
 
