@@ -10,7 +10,7 @@
 		<project reference="1.0,:ext:cougaar.org:/cvsroot/mts,mtsstd,mtsstd"/>
 		<project reference="1.0,:ext:cougaar.org:/cvsroot/tutorials,ping,ping"/>
 		<project reference="1.0,:ext:cougaar.org:/cvsroot/qos,qos,qos"/>
-		<project reference="1.0,:ext:cougaar.org:/cvsroot/qos,quo,quo"/>
+		<project reference="1.0,:ext:cougaar.org:/cvsroot/qos,qrs,qrs"/>
 		<project reference="1.0,:ext:cougaar.org:/cvsroot/tutorials,tools,tools"/>
 		<project reference="1.0,:ext:cougaar.org:/cvsroot/util,util,util"/>
 		<project reference="1.0,:ext:cougaar.org:/cvsroot/webserver,webserver,webserver"/>
