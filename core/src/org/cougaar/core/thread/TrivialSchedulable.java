@@ -200,4 +200,18 @@ class TrivialSchedulable implements Schedulable
 
     }
 
+    public void resume() {
+	// brain-dead version
+	cancelled = false;
+	start();
+    }
+
+    public void suspend(SuspendCallback cb) {
+	cancel();
+	// Don't bother to wait, pretend the suspend happens immediately
+	if (cb != null) {
+	    cb.suspended(this);
+	}
+    }
+
 }

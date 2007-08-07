@@ -63,6 +63,21 @@ public interface Schedulable
     void start();
 
     /**
+     * Like {@link #cancel} but with two differences: the Schedulable
+     * can be resumed later, and a special callback is invoked when
+     * the current run finishes.
+     * 
+     */
+    void suspend(SuspendCallback callback);
+
+    /**
+     * Restart after a {@link #suspend).
+     *
+     */
+    void resume();
+    
+    
+    /**
      * Cancelling a Schedulable will prevent starting if it's
      * currently queued or from restarting if it was scheduled to do
      * so.  It will not cancel the current run.
@@ -112,4 +127,13 @@ public interface Schedulable
     void schedule(long delay, long interval);
     void scheduleAtFixedRate(long delay, long interval);
     void cancelTimer();
+    
+    /**
+     * Notification that a suspend request did its work, ie
+     * the Schedulable is actually suspended.
+     *
+     */
+    interface SuspendCallback {
+	void suspended(Schedulable s);
+    }
 }

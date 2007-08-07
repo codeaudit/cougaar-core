@@ -49,6 +49,9 @@ final class SchedulableObject implements Schedulable {
     private boolean cancelled;
     private boolean queued;
     private boolean disqualified;
+    private boolean suspending; // suspend requested but not yet achieved
+    private boolean suspended;  // truly suspended
+    private SuspendCallback suspendCallback;
     private TimerTask task;
     private int blocking_type = SchedulableStatus.NOT_BLOCKING;
     private String blocking_excuse;
@@ -76,6 +79,41 @@ final class SchedulableObject implements Schedulable {
 	this.start_count = 0;
     }
 
+    public void suspend(SuspendCallback cb) {
+	boolean runCallback = false;
+	synchronized (this) {
+	    if (thread == null) {
+		// Already suspended, run the callback immediately
+		runCallback = suspended = true;
+		
+	    } else if (suspendCallback != null) {
+		throw new RuntimeException("More than one SuspendCallback!");
+	    } else {
+		suspendCallback = cb;
+		suspending = true;
+	    }
+	}
+	if (runCallback) {
+	    cb.suspended(this);
+	}
+    }
+    
+    public void resume() {
+	boolean restart = false;
+	synchronized (this) {
+	    if (!suspended) {
+		Logger logger = Logging.getLogger(getClass());
+		logger.warn("Resuming " +this+ ", which was not suspended");
+		return;
+	    }
+	    suspended = false;
+	    restart = start_count > 0;
+	}	
+	if (restart) {
+	    SchedulableStateChangeQueue.pushStart(this);
+	}
+    }
+    
     void run() {
 	runnable.run();
     }
@@ -164,6 +202,18 @@ final class SchedulableObject implements Schedulable {
 	} else if (continuation != null) {
 	    end();
 	}
+	SuspendCallback cb = null;
+	synchronized (this) {
+	    if (suspending) {
+		cb = suspendCallback;
+		suspendCallback = null;
+		suspended = true;
+		suspending = false;
+	    }	    
+	}
+	if (cb != null) {
+	    cb.suspended(this);
+	}
         return continuation;
     }
 
@@ -232,11 +282,14 @@ final class SchedulableObject implements Schedulable {
 	    // If the Schedulable has been cancelled, or has already
 	    // been asked to start, there's nothing further to do.
             // Otherwise, submit a request to be started
-            if (cancelled || ++start_count != 1) {
+            //
+            // check suspended after the pre-increment since
+            // we need to know about start requests when suspended
+            if (cancelled || ++start_count != 1 || suspending || suspended) {
         	return;
             }
         }
-        SchedulableStateChangeQueue.pushStart(this);;
+        SchedulableStateChangeQueue.pushStart(this);
     }
 
     // All callers should be synchronized on this
@@ -293,12 +346,15 @@ final class SchedulableObject implements Schedulable {
 
     synchronized public int getState() {
         // Later add a 'disqualified' state
-        if (queued)
+	if (suspended) {
+	    return CougaarThread.THREAD_SUSPENDED;
+	} else if (queued) {
             return CougaarThread.THREAD_PENDING;
-        else if (thread != null)
+        } else if (thread != null) {
             return CougaarThread.THREAD_RUNNING;
-        else
+        } else {
             return CougaarThread.THREAD_DORMANT;
+        }
     }
 
     synchronized public boolean cancel() {
