@@ -32,20 +32,140 @@ import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
-
 /**
- * A simple pool of Java threads, used by the trivial {@link
- * ThreadService}.   The pool can grown without bounds, since there are
- * no limits on the number of concurrent threads.
+ * A simple pool of Java threads, used by the trivial {@link ThreadService}. The
+ * pool can grown without bounds, since there are no limits on the number of
+ * concurrent threads.
  */
-class TrivialThreadPool
-{
+class TrivialThreadPool {
     // As noted in Starter, we need at least one thread to be non-daemon
-    // to keep our JVM alive.  We mark the first ThreadRunner as non-daemon.
+    // to keep our JVM alive. We mark the first ThreadRunner as non-daemon.
     private static final boolean DAEMON =
-        SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
+            SystemProperties.getBoolean("org.cougaar.core.thread.daemon");
 
     private static TrivialThreadPool singleton;
+
+    private final Logger logger = Logging.getLogger(getClass().getName());
+    private final List<ThreadRunner> list_pool = new ArrayList<ThreadRunner>();
+    private ThreadRunner[] pool = new ThreadRunner[100];
+    int anon_count = 0;
+
+    private TrivialThreadPool() {
+        if (!DAEMON) {
+            // Start our keep-alive
+            pool[0] = new ThreadRunner(false);
+        }
+    }
+
+    synchronized String generateName() {
+        return "TrivialThread-" + anon_count++;
+    }
+
+    Thread getThread(TrivialSchedulable schedulable, Runnable runnable, String name) {
+        ThreadRunner result = null;
+
+        synchronized (this) {
+            if (pool == null) {
+                throw new RuntimeException("The ThreadPool has been stopped");
+            }
+            for (int i = 0; i < pool.length; i++) {
+                ThreadRunner candidate = pool[i];
+                if (candidate == null) {
+                    result = new ThreadRunner();
+                    pool[i] = result;
+                    result.in_use = true;
+                    break;
+                } else if (!candidate.in_use) {
+                    result = candidate;
+                    result.in_use = true;
+                    break;
+                }
+            }
+
+            if (result == null && list_pool != null) {
+                // Use the slow ArrayList.
+                for (int i = 0; i < list_pool.size(); i++) {
+                    ThreadRunner candidate = list_pool.get(i);
+                    if (!candidate.in_use) {
+                        result = candidate;
+                        result.in_use = true;
+                        break;
+                    }
+                }
+            }
+
+            if (result == null) {
+                // None in the list either. Make one and add it,
+                result = new ThreadRunner();
+                result.in_use = true;
+                list_pool.add(result);
+            }
+        }
+
+        result.configure(schedulable, runnable, name);
+
+        return result;
+    }
+
+    // Unsynchronized read access to list_pool. This is by design
+    // (this operation cannot block the entire service) and should be
+    // ok. If it isn't, the list could be copied.
+    int iterateOverRunningThreads(ThreadStatusService.Body body) {
+        int count = 0;
+        int n = pool == null ? 0 : pool.length;
+        for (int i = 0; i < n; i++) {
+            ThreadRunner thread = pool[i];
+            count += runBody(thread, body);
+        }
+        if (list_pool != null) {
+            for (int i = 0, size = list_pool.size(); i < size; i++) {
+                ThreadRunner thread = null;
+                try {
+                    thread = list_pool.get(i);
+                } catch (Exception ex) {
+                    // list_pool size has changed - doesn't matter
+                    if (logger.isDebugEnabled()) {
+                        logger.debug("list_pool size changed");
+                    }
+                }
+                count += runBody(thread, body);
+            }
+        }
+        return count;
+    }
+
+    private int runBody(ThreadRunner thread, ThreadStatusService.Body body) {
+        if (thread != null && thread.in_use) {
+            try {
+                TrivialSchedulable sched = thread.schedulable;
+                if (sched != null) {
+                    body.run("root", sched);
+                    return 1; // one Schedulable processed
+                }
+            } catch (Throwable t) {
+                logger.error("ThreadStatusService error in body", t);
+            }
+        }
+
+        // No Schedulable processed
+        return 0;
+    }
+
+    void stopAllThreads() {
+        synchronized (this) {
+            int n = pool == null ? 0 : pool.length;
+            for (int i = 0; i < n; i++) {
+                ThreadRunner thread = pool[i];
+                if (thread == null) {
+                    continue;
+                }
+                thread.in_use = true;
+                thread.stop_running();
+                pool[i] = null;
+            }
+            pool = null;
+        }
+    }
 
     static void makePool() {
         if (singleton == null) {
@@ -54,199 +174,76 @@ class TrivialThreadPool
     }
 
     static TrivialThreadPool pool() {
-	return singleton;
-    }
-
-    int anon_count = 0;
-    ThreadRunner[] pool = new ThreadRunner[100];
-    List<ThreadRunner> list_pool = new ArrayList<ThreadRunner>();
-    Logger logger = Logging.getLogger(getClass().getName());
-
-    private TrivialThreadPool() {
-      if (!DAEMON) {
-        // Start our keep-alive
-        pool[0] = new ThreadRunner(false);
-      }
-    }
-
-    synchronized String generateName() {
-	return "TrivialThread-" + anon_count++;
+        return singleton;
     }
 
     private class ThreadRunner extends Thread {
-	TrivialSchedulable schedulable;
-	Runnable body;
-	boolean in_use;
-	boolean should_stop;
-	final Object lock = new Object();
-
-	ThreadRunner() {
-          this(true);
+        TrivialSchedulable schedulable;
+        Runnable body;
+        boolean in_use;
+        boolean should_stop;
+        final Object lock = new Object();
+    
+        ThreadRunner() {
+            this(true);
         }
-
-	ThreadRunner(boolean daemon) {
-	    super("ThreadRunner");
-	    setDaemon(daemon);
-	    super.start();
-	}
-
-	public void start () {
-	    throw new RuntimeException("You can't call start() on a PooledThread");
-	}
-
-
-	void configure(TrivialSchedulable schedulable,
-		       Runnable body,
-		       String name) 
-	{
-	    synchronized (lock) {
-		this.schedulable = schedulable;
-		this.body = body;
-		// thread.setName(name);
-		lock.notify();
-	    }
-	}
-
-	public void run() {
-	    while (true) {
-		synchronized (lock) {
-		    if (body != null) body.run();
-		    if (schedulable != null) schedulable.thread_stop();
-		    in_use = false;
-                    if (should_stop) break;
-		    try { lock.wait(); } catch (InterruptedException ex) {} 
-                    if (should_stop) break;
-		}
-
-	    }
-	}
-
+    
+        ThreadRunner(boolean daemon) {
+            super("ThreadRunner");
+            setDaemon(daemon);
+            super.start();
+        }
+    
+        public void start() {
+            throw new RuntimeException("You can't call start() on a PooledThread");
+        }
+    
+        void configure(TrivialSchedulable schedulable, Runnable body, String name) {
+            synchronized (lock) {
+                this.schedulable = schedulable;
+                this.body = body;
+                // thread.setName(name);
+                lock.notify();
+            }
+        }
+    
+        public void run() {
+            while (true) {
+                synchronized (lock) {
+                    if (body != null) {
+                        body.run();
+                    }
+                    if (schedulable != null) {
+                        schedulable.thread_stop();
+                    }
+                    in_use = false;
+                    if (should_stop) {
+                        break;
+                    }
+                    try {
+                        lock.wait();
+                    } catch (InterruptedException ex) {
+                    }
+                    if (should_stop) {
+                        break;
+                    }
+                }
+    
+            }
+        }
+    
         void stop_running() {
-	    synchronized (lock) {
+            synchronized (lock) {
                 should_stop = true;
                 lock.notify();
             }
             try {
-              join();
+                join();
             } catch (InterruptedException ie) {
             }
             synchronized (lock) {
                 should_stop = false;
             }
         }
-    }
-    
-
-
-    Thread getThread(TrivialSchedulable schedulable,
-		     Runnable runnable, 
-		     String name) 
-    {
-	ThreadRunner result = null;
-
-	synchronized (this) {
-            if (pool == null) {
-                throw new RuntimeException("The ThreadPool has been stopped");
-            }
-	    for (int i = 0; i < pool.length; i++) {
-		ThreadRunner candidate = pool[i];
-		if (candidate == null) {
-		    result = new ThreadRunner();
-		    pool[i] = result;
-		    result.in_use = true;
-		    break;
-		} else if (!candidate.in_use) {
-		    result = candidate;
-		    result.in_use = true;
-		    break;
-		}
-	    }
-
-	    if (result == null && list_pool != null) {
-		// Use the slow ArrayList.
-		for (int i=0; i<list_pool.size(); i++) {
-		    ThreadRunner candidate = list_pool.get(i);
-		    if (!candidate.in_use) {
-			result = candidate;
-			result.in_use = true;
-			break;
-		    }
-		}
-	    }
-	    
-	    if (result == null) {
-		// None in the list either. Make one and add it,
-		result = new ThreadRunner();
-		result.in_use = true;
-		list_pool.add(result);
-	    }
-	}
-
-
-	result.configure(schedulable, runnable, name);
-
-	return result;
-    }
-
-
-    // Unsynchronized read access to list_pool.  This is by design
-    // (this operation cannot block the entire service) and should be
-    // ok.  If it isn't, the list could be copied.
-    int iterateOverRunningThreads(ThreadStatusService.Body body) 
-    {
-	int count = 0;
-        int n = (pool == null ? 0 : pool.length);
-	for (int i = 0; i < n; i++) {
-	    ThreadRunner thread = pool[i];
-	    count += runBody(thread, body);
-	}
-	if (list_pool != null) {
-	    for (int i=0, size=list_pool.size(); i<size; i++) {
-                ThreadRunner thread = null;
-		try {
-		    thread = list_pool.get(i);
-		} catch (Exception ex) {
-		    // list_pool size has changed - doesn't matter
-		    if (logger.isDebugEnabled())
-			logger.debug("list_pool size changed");
-		}
-		count += runBody(thread, body);
-	    }
-	}
-	return count;
-    }
-
-    int runBody(ThreadRunner thread, ThreadStatusService.Body body) 
-    {
-	if (thread != null && thread.in_use) {
-	    try {
-		TrivialSchedulable sched = thread.schedulable;
-		if (sched != null) {
-		    body.run("root", sched);
-		    return 1; // one  Schedulable processed
-		}
-	    } catch (Throwable t) {
-		logger.error("ThreadStatusService error in body", t);
-	    }
-	}
-
-	// No Schedulable processed
-	return 0;
-    }
-
-    void stopAllThreads() {
-	synchronized (this) {
-            int n = (pool == null ? 0 : pool.length);
-	    for (int i = 0; i < n; i++) {
-		ThreadRunner thread = pool[i];
-		if (thread == null) {
-                    continue;
-                }
-                thread.in_use = true;
-                thread.stop_running();
-                pool[i] = null;
-            }
-            pool = null;
-	}
     }
 }
