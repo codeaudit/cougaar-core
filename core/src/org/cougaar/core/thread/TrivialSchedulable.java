@@ -29,15 +29,14 @@ package org.cougaar.core.thread;
 import java.util.TimerTask;
 
 /**
- * This implementation of {@link Schedulable} is used by the
- * trivial {@link ThreadService}, which has no queueing and always runs
- * threads immediately.
+ * This implementation of {@link Schedulable} is used by the trivial
+ * {@link ThreadService}, which has no queueing and always runs threads
+ * immediately.
  */
-class TrivialSchedulable implements Schedulable
-{
-    private Object consumer;
+class TrivialSchedulable implements Schedulable {
+    private final Object consumer;
+    private final Runnable runnable;
     private Thread thread;
-    private Runnable runnable;
     private String name;
     private int start_count;
     private boolean cancelled;
@@ -45,173 +44,154 @@ class TrivialSchedulable implements Schedulable
     private long start_time;
     private int state;
 
-    TrivialSchedulable(Runnable runnable, 
-		       String name,
-		       Object consumer) 
-    {
+    TrivialSchedulable(Runnable runnable, String name, Object consumer) {
         this.runnable = runnable;
-        if (name == null)
-            this.name =  TrivialThreadPool.pool().generateName();
-        else
+        if (name == null) {
+            this.name = TrivialThreadPool.pool().generateName();
+        } else {
             this.name = name;
+        }
         this.consumer = consumer;
-	this.start_count = 0;
+        this.start_count = 0;
     }
 
     // should only be used by the SerialThreadRunner/Queue
-    void setState(int state)
-    {
-	this.state = state;
+    void setState(int state) {
+        this.state = state;
     }
 
-    Runnable getRunnable()
-    {
-	return runnable;
+    Runnable getRunnable() {
+        return runnable;
     }
 
-    public int getLane() 
-    {
-	return org.cougaar.core.service.ThreadService.BEST_EFFORT_LANE;
+    public int getLane() {
+        return org.cougaar.core.service.ThreadService.BEST_EFFORT_LANE;
     }
 
-    public String getName() 
-    {
-	return name;
+    public String getName() {
+        return name;
     }
 
-    public int getBlockingType()
-    {
-	return SchedulableStatus.NOT_BLOCKING;
+    public int getBlockingType() {
+        return SchedulableStatus.NOT_BLOCKING;
     }
 
-    public String getBlockingExcuse()
-    {
-	return "";
+    public String getBlockingExcuse() {
+        return "";
     }
 
-    public long getTimestamp()
-    {
-	return start_time;
+    public long getTimestamp() {
+        return start_time;
     }
 
-    public String toString() 
-    {
-        return 	"<Schedulable " 
-	    +(name == null ? "anonymous" : name)+
-	    ">";
+    public String toString() {
+        return "<Schedulable " + (name == null ? "anonymous" : name) + ">";
     }
 
-    public Object getConsumer() 
-    {
+    public Object getConsumer() {
         return consumer;
     }
 
     // caller synchronizes
-    private void thread_start() 
-    {
-	start_count = 1; // forget any extra intervening start() calls
-	start_time = System.currentTimeMillis();
-	state = CougaarThread.THREAD_RUNNING;
-	thread = runThread();
+    private void thread_start() {
+        start_count = 1; // forget any extra intervening start() calls
+        start_time = System.currentTimeMillis();
+        state = CougaarThread.THREAD_RUNNING;
+        thread = runThread();
     }
 
-    Thread runThread()
-    {
-	return TrivialThreadPool.pool().getThread(this, runnable, name);
+    Thread runThread() {
+        return TrivialThreadPool.pool().getThread(this, runnable, name);
     }
 
-    void thread_stop() 
-    {
-	state = CougaarThread.THREAD_DORMANT;
-	// If start_count > 1, start() was called while the
-	// Schedulable was running.  Now that it's finished,  start it
-	// again. 
-	boolean restart = false;
-	synchronized (this) {
-	    restart = --start_count > 0;
-	    thread = null;
-	    if (restart) thread_start();
-	}
-    }
-
-    public void start() 
-    {
+    void thread_stop() {
+        state = CougaarThread.THREAD_DORMANT;
+        // If start_count > 1, start() was called while the
+        // Schedulable was running. Now that it's finished, start it
+        // again.
+        boolean restart = false;
         synchronized (this) {
-	    // If the Schedulable has been cancelled, or has already
-	    // been asked to start, there's nothing further to do.
-            if (cancelled) return;
-            if (++start_count > 1) return;
-	    thread_start();
-	}
+            restart = --start_count > 0;
+            thread = null;
+            if (restart) {
+                thread_start();
+            }
+        }
     }
 
-    
-    private TimerTask task() 
-    {
-	cancelTimer();
-	task = new TimerTask() {
-		public void run() {
-		    start();
-		}
-	    };
-	return task;
-    }
-
-    public synchronized void schedule(long delay) 
-    {
-	TreeNode.timer().schedule(task(), delay);
-    }
-
-
-    public synchronized void schedule(long delay, long interval) 
-    {
-	TreeNode.timer().schedule(task(), delay, interval);
-    }
-
-    public synchronized void scheduleAtFixedRate(long delay, long interval)
-    {
-	TreeNode.timer().scheduleAtFixedRate(task(), delay, interval);
-    }
-
-
-    public synchronized void cancelTimer() 
-    {
-	if (task != null) task.cancel();
-	task = null;
-    }
-
-    public synchronized int getState() 
-    {
-	return state;
-    }
-
-    public boolean cancel() 
-    {
+    public void start() {
         synchronized (this) {
-	    cancelTimer();
+            // If the Schedulable has been cancelled, or has already
+            // been asked to start, there's nothing further to do.
+            if (cancelled) {
+                return;
+            }
+            if (++start_count > 1) {
+                return;
+            }
+            thread_start();
+        }
+    }
+
+    private TimerTask task() {
+        cancelTimer();
+        task = new TimerTask() {
+            public void run() {
+                start();
+            }
+        };
+        return task;
+    }
+
+    public synchronized void schedule(long delay) {
+        TreeNode.timer().schedule(task(), delay);
+    }
+
+    public synchronized void schedule(long delay, long interval) {
+        TreeNode.timer().schedule(task(), delay, interval);
+    }
+
+    public synchronized void scheduleAtFixedRate(long delay, long interval) {
+        TreeNode.timer().scheduleAtFixedRate(task(), delay, interval);
+    }
+
+    public synchronized void cancelTimer() {
+        if (task != null) {
+            task.cancel();
+        }
+        task = null;
+    }
+
+    public synchronized int getState() {
+        return state;
+    }
+
+    public boolean cancel() {
+        synchronized (this) {
+            cancelTimer();
             cancelled = true;
-	    start_count = 0;
+            start_count = 0;
             if (thread != null) {
-                // Currently running. 
+                // Currently running.
                 return false;
-            } 
+            }
             return true;
         }
 
     }
 
     public void resume() {
-	// brain-dead version
-	cancelled = false;
-	start();
+        // brain-dead version
+        cancelled = false;
+        start();
     }
 
     public void suspend(SuspendCallback cb) {
-	cancel();
-	// Don't bother to wait, pretend the suspend happens immediately
-	if (cb != null) {
-	    cb.suspended(this);
-	}
+        cancel();
+        // Don't bother to wait, pretend the suspend happens immediately
+        if (cb != null) {
+            cb.suspended(this);
+        }
     }
 
 }
