@@ -28,6 +28,9 @@ package org.cougaar.core.thread;
 
 import java.util.TimerTask;
 
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
+
 /**
  * This implementation of {@link Schedulable} is used by the trivial
  * {@link ThreadService}, which has no queueing and always runs threads
@@ -43,6 +46,9 @@ class TrivialSchedulable implements Schedulable {
     private TimerTask task;
     private long start_time;
     private int state;
+    private boolean suspending; // suspend requested but not yet achieved
+    private boolean suspended;  // truly suspended
+    private SuspendCallback suspendCallback;
 
     TrivialSchedulable(Runnable runnable, String name, Object consumer) {
         this.runnable = runnable;
@@ -105,17 +111,62 @@ class TrivialSchedulable implements Schedulable {
     }
 
     void thread_stop() {
-        state = CougaarThread.THREAD_DORMANT;
-        // If start_count > 1, start() was called while the
-        // Schedulable was running. Now that it's finished, start it
-        // again.
+        SuspendCallback cb = null;
         boolean restart = false;
         synchronized (this) {
-            restart = --start_count > 0;
+            if (suspending) {
+                cb = suspendCallback;
+                suspendCallback = null;
+                suspended = true;
+                suspending = false;
+            }       
+            state = CougaarThread.THREAD_DORMANT;
+            // If start_count > 1, start() was called while the
+            // Schedulable was running. Now that it's finished, start it
+            // again.
+            restart = !suspended && --start_count > 0;
             thread = null;
-            if (restart) {
-                thread_start();
+        }
+        if (cb != null) {
+            cb.suspended(this);
+        }
+        if (restart) {
+            thread_start();
+        }
+    }
+
+    public void suspend(SuspendCallback cb) {
+        boolean runCallback = false;
+        synchronized (this) {
+            if (thread == null) {
+                // Already suspended, run the callback immediately
+                runCallback = suspended = true;
+
+            } else if (suspendCallback != null) {
+                throw new RuntimeException("More than one SuspendCallback!");
+            } else {
+                suspendCallback = cb;
+                suspending = true;
             }
+        }
+        if (runCallback) {
+            cb.suspended(this);
+        }
+    }
+
+    public void resume() {
+        boolean restart = false;
+        synchronized (this) {
+            if (!suspended) {
+                Logger logger = Logging.getLogger(getClass());
+                logger.warn("Resuming " +this+ ", which was not suspended");
+                return;
+            }
+            suspended = false;
+            restart = start_count > 0;
+        }   
+        if (restart) {
+            thread_start();
         }
     }
 
@@ -126,7 +177,7 @@ class TrivialSchedulable implements Schedulable {
             if (cancelled) {
                 return;
             }
-            if (++start_count > 1) {
+            if (++start_count > 1 || suspended || suspending) {
                 return;
             }
             thread_start();
@@ -177,21 +228,5 @@ class TrivialSchedulable implements Schedulable {
             }
             return true;
         }
-
     }
-
-    public void resume() {
-        // brain-dead version
-        cancelled = false;
-        start();
-    }
-
-    public void suspend(SuspendCallback cb) {
-        cancel();
-        // Don't bother to wait, pretend the suspend happens immediately
-        if (cb != null) {
-            cb.suspended(this);
-        }
-    }
-
 }
