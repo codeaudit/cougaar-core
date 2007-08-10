@@ -81,12 +81,12 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
         }
         if (log != null) {
             sb.releaseService(
-                    this, NodeIdentificationService.class, log);
+                    this, LoggingService.class, log);
             log = null;
         }
         if (alarmService != null) {
             sb.releaseService(
-                    this, NodeIdentificationService.class, alarmService);
+                    this, AlarmService.class, alarmService);
             alarmService = null;
         }
         
