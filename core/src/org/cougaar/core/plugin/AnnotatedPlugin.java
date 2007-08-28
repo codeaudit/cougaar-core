@@ -108,7 +108,8 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
             Class<?> pluginClass = AnnotatedPlugin.this.getClass();
             try {
                 final Method tester = pluginClass.getMethod(testerName, parameterTypes);
-                if (tester.getReturnType() != Boolean.class) {
+                Class<?> returnType = tester.getReturnType();
+                if (returnType != Boolean.class && returnType != boolean.class) {
                     throw new IllegalArgumentException("Wrong return type");
                 }
                 UnaryPredicate predicate = new UnaryPredicate() {
