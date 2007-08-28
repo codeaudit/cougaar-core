@@ -27,53 +27,11 @@
 // TO BE DONE move to cougaar utilities package
 package org.cougaar.core.qos.metrics;
 
-import java.util.List;
-import java.util.Map;
-
-import org.cougaar.core.plugin.ComponentPlugin;
-import org.cougaar.util.Arguments;
 
 /**
- ** This Plugin is used to convert ordered standard parameter list from plugin
- * to key value pair paramteters
+ * Vestigial, use {@link org.cougaar.core.plugin.ParameterizedPlugin}.
  */
 
-public abstract class ParameterizedPlugin extends ComponentPlugin 
-{
-    protected Arguments args;
-
-    public void setArguments(Arguments args) {
-      this.args = args;
-      try {
-	    args.getAnnotations().setAllFields(this);
-	} catch (Exception e) {
-	    // TODO: Add Logging support when it's ready
-	    throw new RuntimeException("Exception during field initialization", e);
-	}
-    }
-
-    /** @see Arguments#getString(String) */
-    protected String getParameter(String key) {
-	return args.getString(key);
-    }
-    /** @see Arguments#getString(String,String) */
-    protected String getParameter(String key, String defaultValue) {
-        return args.getString(key, defaultValue);
-    }
-    /** @see Arguments#getLong(String,long) */
-    public long getParameter(String key, long defaultValue) {
-        return args.getLong(key, defaultValue);
-    }
-    /** @see Arguments#getDouble(String,double) */
-    public double getParameter(String key, double defaultValue) {
-        return args.getDouble(key, defaultValue);
-    }
-    /** @see Arguments#getStrings(String) */
-    public List getParameterValues(String key) {
-        return args.getStrings(key);
-    }
-    /** @see Arguments */
-    public Map getParameterMap() {
-        return args;
-    }
+@Deprecated
+public abstract class ParameterizedPlugin extends org.cougaar.core.plugin.ParameterizedPlugin {
 }
