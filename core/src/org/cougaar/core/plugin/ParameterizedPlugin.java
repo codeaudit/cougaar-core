@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.cougaar.util.Arguments;
+import org.cougaar.util.annotations.ParameterAnnotations;
 
 public abstract class ParameterizedPlugin extends ComponentPlugin {
     protected Arguments args;
@@ -17,7 +18,7 @@ public abstract class ParameterizedPlugin extends ComponentPlugin {
     public void setArguments(Arguments args) {
         this.args = args;
         try {
-            args.getAnnotations().setAllFields(this);
+            new ParameterAnnotations(args).setAllFields(this);
         } catch (Exception e) {
             // TODO: Add Logging support when it's ready
             throw new RuntimeException("Exception during field initialization", e);
