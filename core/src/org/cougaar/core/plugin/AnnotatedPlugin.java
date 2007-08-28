@@ -121,17 +121,20 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
     }
     
     private IncrementalSubscription createBlackboardSubscription(Cougaar.Execute annotation) {
-        Class<?>[] parameterTypes = { Object.class };
+        // Prefer the 'isa' value if there is one
         Class<?> isa = annotation.isa();
-        if (isa != null) {
+        if (isa != null && isa != Object.class) {
             IsInstanceOf predicate = new IsInstanceOf(isa);
             return (IncrementalSubscription) blackboard.subscribe(predicate);
         }
-        String testerName = annotation.when();
+        
+        // No isa, use the 'when' method
+        String testerName = annotation.when().trim();
         if (testerName == null || testerName.length() == 0) {
             logger.error("Neither a 'when' nor a 'isa' clause was provided");
             return null;
         }
+        Class<?>[] parameterTypes = { Object.class };
         try {
             final Method tester = getClass().getMethod(testerName, parameterTypes);
             if (tester.getReturnType() != Boolean.class) {
