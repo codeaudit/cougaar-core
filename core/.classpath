@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="examples"/>
-	<classpathentry kind="src" path="regress"/>
+	<classpathentry kind="src" output="tmp/examples" path="examples"/>
+	<classpathentry kind="src" output="tmp/regress" path="regress"/>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/util"/>
