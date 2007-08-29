@@ -222,7 +222,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
         
         public void execute() {
             if (sub == null || !sub.hasChanged()) {
-                // failed to make a proper subscription
+                // failed to make a proper subscription, or no changes
                 return;
             }
             for (Subscribe.ModType op : ops) {
