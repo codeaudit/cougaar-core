@@ -13,7 +13,7 @@ import org.cougaar.core.mobility.ldm.MobilityFactory;
 import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.qos.metrics.ParameterizedPlugin;
+import org.cougaar.core.plugin.ParameterizedPlugin;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.BlackboardService;

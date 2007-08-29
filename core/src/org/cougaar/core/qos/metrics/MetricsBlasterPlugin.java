@@ -40,7 +40,7 @@ import org.cougaar.core.thread.Schedulable;
  * <code>path</code> (the subscription path).
  */
 public class MetricsBlasterPlugin
-    extends ParameterizedPlugin
+    extends org.cougaar.core.plugin.ParameterizedPlugin
     implements Observer
 {
     

@@ -47,7 +47,7 @@ import org.cougaar.core.mts.MessageAddress;
  *       </component>
  */
 public class MetricsClientPlugin 
-    extends ParameterizedPlugin
+    extends org.cougaar.core.plugin.ParameterizedPlugin
     implements Constants
 {
     protected MetricsService metricsService;
