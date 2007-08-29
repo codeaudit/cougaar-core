@@ -47,14 +47,18 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
             if (method.isAnnotationPresent(Cougaar.Execute.class)) {
                 Cougaar.Execute annotation = method.getAnnotation(Cougaar.Execute.class);
                 String id;
-                String todo = annotation.todo().trim();
+                String todo = annotation.todo();
                 Class<?> isa =  annotation.isa();
-                if (todo.length() > 0) {
+                String when = annotation.when();
+                if (!Cougaar.NO_VALUE.equals(todo)) {
                     id = todo;
-                } else if (!Cougaar.isNoClass(isa)) {
+                } else if (Cougaar.NoClass.class != isa) {
                     id = isa.getName();
+                } else if (!Cougaar.NO_VALUE.equals(when)){
+                    id = when;
                 } else {
-                    id = annotation.when().trim();
+                    log.error("Neither a 'todo', an 'isa' or a 'when' clause was provided");
+                    continue;
                 }
                 Subscription subscription = subscriptions.get(id);
                 if (subscription != null) {
@@ -109,11 +113,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
         }
 
         private Subscription createTodoSubscription(Cougaar.Execute annotation) {
-            String key = annotation.todo().trim();
-            if (key.length() == 0) {
-                log.error("TODO key is empty");
-                return null;
-            }
+            String key = annotation.todo();
             return blackboard.subscribe(new TodoSubscription(key));
         }
 
@@ -135,17 +135,13 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
         private Subscription createBlackboardSubscription(Cougaar.Execute annotation) {
             // Prefer the 'isa' value if there is one
             Class<?> isa = annotation.isa();
-            if (!Cougaar.isNoClass(isa)) {
+            if (Cougaar.NoClass.class != isa) {
                 IsInstanceOf predicate = new IsInstanceOf(isa);
                 return blackboard.subscribe(predicate);
             }
 
             // No isa, use the 'when' method
-            String testerName = annotation.when().trim();
-            if (testerName == null || testerName.length() == 0) {
-                log.error("Neither a 'when' nor a 'isa' clause was provided");
-                return null;
-            }
+            String testerName = annotation.when();
             Class<?> pluginClass = AnnotatedPlugin.this.getClass();
             Method[] methods = pluginClass.getMethods();
             Class<?> argClass = method.getParameterTypes()[0];
@@ -180,8 +176,8 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
         }
 
         private Subscription makeSubscription(Cougaar.Execute annotation) {
-            String todo = annotation.todo().trim();
-            if (todo.length() > 0) {
+            String todo = annotation.todo();
+            if (!Cougaar.NO_VALUE.equals(todo)) {
                 return createTodoSubscription(annotation);
             } else {
                 return createBlackboardSubscription(annotation);
