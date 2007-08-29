@@ -20,7 +20,7 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.IsInstanceOf;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.annotations.Cougaar;
-import org.cougaar.util.annotations.Cougaar.BlackboardOp;
+import org.cougaar.util.annotations.Subscribe;
 
 /**
  * This class provides support for plugins that wish
@@ -58,7 +58,8 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
                 }
                 Subscription subscription = subscriptions.get(id);
                 if (subscription != null) {
-                    // TODO Make a new invoker with the old invoker's subscription
+                    Invoker invoker = new Invoker(method, annotation, subscription);
+                    invokers.add(invoker);
                 } else {
                     Invoker invoker = new Invoker(method, annotation);
                     subscriptions.put(id, invoker.sub);
@@ -92,7 +93,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
         /**
          * The set of operations, as given in the annotation.
          */
-        private final Cougaar.BlackboardOp[] ops;
+        private final Subscribe.ModType[] ops;
         
         public Invoker(Method method, Cougaar.Execute annotation, Subscription sub) {
             this.method = method;
@@ -187,7 +188,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
             }
         }
 
-        private Collection<?> getCollection(BlackboardOp op) {
+        private Collection<?> getCollection(Subscribe.ModType op) {
             if (sub instanceof IncrementalSubscription) {
                 IncrementalSubscription is = (IncrementalSubscription) sub;
                 switch (op) {
@@ -228,7 +229,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
                 // failed to make a proper subscription
                 return;
             }
-            for (Cougaar.BlackboardOp op : ops) {
+            for (Subscribe.ModType op : ops) {
                 Collection<?> objects = getCollection(op);
                 if (objects != null) {
                     for (Object object : objects) {
