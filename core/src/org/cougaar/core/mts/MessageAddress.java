@@ -29,6 +29,8 @@ package org.cougaar.core.mts;
 import java.io.Externalizable;
 import java.net.URI;
 
+import org.cougaar.util.annotations.Cougaar;
+
 /**
  * An address for a {@link Message} sender or receiver.
  */
@@ -90,6 +92,7 @@ public abstract class MessageAddress
   public static final MessageAddress MULTICAST_LOCAL = MulticastMessageAddress.getMulticastMessageAddress("LOCAL");
 
   /** @return an address with the specified name */
+  @Cougaar.Resolver()
   public static final MessageAddress getMessageAddress(String address) {
     return SimpleMessageAddress.getSimpleMessageAddress(address);
   }
