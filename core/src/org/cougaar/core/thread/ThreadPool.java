@@ -33,150 +33,147 @@ import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
 
 /**
- * A pool of native Java threads used by the standard implementation
- * of the {@link ThreadService}.  By default this pool has a fixed
- * size.  
+ * A pool of native Java threads used by the standard implementation of the
+ * {@link ThreadService}. By default this pool has a fixed size.
  */
-class ThreadPool 
-{
-    
+class ThreadPool {
+
     static final class PooledThread extends Thread {
-	private static final long MAX_CONTINUATION_TIME = 100;
+        private static final long MAX_CONTINUATION_TIME = 100;
 
-	private SchedulableObject schedulable;
+        private SchedulableObject schedulable;
 
-	private boolean in_use = false;
+        private boolean in_use = false;
 
         private boolean should_stop = false;
 
-	/** reference to our thread pool so we can return when we die **/
-	private ThreadPool pool;
-  
-  
-	/** Has this thread already be actually started yet?
-	 * access needs to be guarded by runLock.
-	 **/
-	private boolean isStarted = false;
+        /** reference to our thread pool so we can return when we die * */
+        private final ThreadPool pool;
 
-	/** are we actively running the runnable? **/
-	private boolean isRunning = false;
+        /**
+         * Has this thread already be actually started yet? access needs to be
+         * guarded by runLock.
+         */
+        private boolean isStarted = false;
 
-	/** guards isRunning, synced while actually executing and waits when
-	 * suspended.
-	 **/
-	private Object runLock = new Object();
+        /** are we actively running the runnable? * */
+        private boolean isRunning = false;
 
+        /**
+         * guards isRunning, synced while actually executing and waits when
+         * suspended.
+         */
+        private final Object runLock = new Object();
 
+        SchedulableObject getSchedulable() {
+            return schedulable;
+        }
 
-	SchedulableObject getSchedulable() {
-	    return schedulable;
-	}
+        /** The only constructor. * */
+        private PooledThread(ThreadPool p, String name) {
+            super(p.getThreadGroup(), null, name);
+            setDaemon(true);
+            pool = p;
+        }
 
-	/** The only constructor. **/
-	private PooledThread(ThreadPool p, String name) {
-	    super(p.getThreadGroup(), null, name);
-	    setDaemon(true);
-	    pool = p;
-	}
+        // Hook for subclasses
+        private void claim() {
+            schedulable.claim();
+        }
 
-	// Hook for subclasses
-	private void claim() {
-	    schedulable.claim();
-	}
+        // Keep running Schedulables as long as we have one to run,
+        // or we've been running for too long.
+        private void continuationLoop() {
+            SchedulableObject last_schedulable = null;
+            long continuation_start = System.currentTimeMillis();
+            while (schedulable != null) {
+                last_schedulable = schedulable;
+                claim();
+                try {
+                    schedulable.run();
+                } catch (Throwable any_ex) {
+                    pool.logger.error("Uncaught exception in pooled thread (" + schedulable
+                            + ")", any_ex);
+                }
 
-	public final void run() {
-	    while (true) {
-		synchronized (runLock) {
-		    SchedulableObject last_schedulable = null;
-		    long continuation_start = System.currentTimeMillis();
-		    int continuation_count = 0;
-		    while (schedulable != null) {
-			continuation_count++;
-			if (pool.logger.isInfoEnabled() &&
-			    continuation_count % 50 == 0)
-			    pool.logger.info(this +" continuation count = "+
-					     continuation_count);
-			    
-			    
-			last_schedulable = schedulable;
-			claim();
-			try {
-			    schedulable.run();
-			} catch (Throwable any_ex) {
-			    pool.logger.error("Uncaught exception in pooled thread ("
-					      +schedulable+")", 
-					      any_ex);
-			}
-
-			isRunning = false;
-			long elapsed = System.currentTimeMillis() - 
-			    continuation_start;
-			if (elapsed < MAX_CONTINUATION_TIME) {
-			    schedulable = reclaim(true);
-			} else {
-			    if (pool.logger.isInfoEnabled())
-				pool.logger.info(this +
-						 "Ending continuation, count = " 
-						 +continuation_count);
-
-			    reclaim(false);
-			    schedulable = null; // exit continuation
-			}
-		    }
-
-		    in_use = false; // thread is now reusable
-		    if (last_schedulable != null) {
-			last_schedulable.addToReclaimer();
-		    }
-		    if (should_stop) {
-                      break;
+                isRunning = false;
+                long elapsed = System.currentTimeMillis() - continuation_start;
+                if (elapsed < MAX_CONTINUATION_TIME) {
+                    schedulable = reclaim(true);
+                } else {
+                    // Too much time, 
+                    reclaim(false);
+                    schedulable = null;
+                    break; // don't look for anything else to run
+                }
+            }
+            in_use = false; // thread is now reusable
+            if (last_schedulable != null) {
+                last_schedulable.addToReclaimer();
+            }
+        }
+        
+        public final void run() {
+            synchronized (runLock) {
+                while (true) {
+                    
+                    // Run schedulables as long as we have one to run
+                    continuationLoop();
+                    
+                    // Check special shutdown flag
+                    if (should_stop) {
+                        break;
                     }
-		    try {
-			runLock.wait();       // suspend
-			if (schedulable == null) {
-			    pool.logger.warn("Spurious wake up (no work)");
-			}
-		    } catch (InterruptedException ie) {
-		    }
-		    if (should_stop) {
-			break;
-		    }
-		}
-	    }
-	}
+                    
+                    // Wait for more work
+                    try {
+                        runLock.wait();
+                        if (schedulable == null) {
+                            pool.logger.warn("Spurious wake up (no work), runLock = " + runLock);
+                        }
+                    } catch (InterruptedException ie) {
+                        pool.logger.warn("Interruption Exception thread=" + this);
+                    }
+                    
+                    // Check special shutdown flag again
+                    if (should_stop) {
+                        break;
+                    }
+                }
+            }
+        }
 
-	public void start () {
-	    throw new RuntimeException("You can't call start() on a PooledThread");
-	}
+        public void start() {
+            throw new RuntimeException("You can't call start() on a PooledThread");
+        }
 
-	void start_running() 
-	    throws IllegalThreadStateException {
-	    synchronized (runLock) {
-		if (isRunning) {
-		    throw new IllegalThreadStateException("PooledThread already started: "+
-							  schedulable);
-		}
-		isRunning = true;
+        void start_running() throws IllegalThreadStateException {
+            synchronized (runLock) {
+                if (isRunning) {
+                    throw new IllegalThreadStateException("PooledThread already started: "
+                            + schedulable);
+                }
+                isRunning = true;
 
-		if (!isStarted) {
-		    isStarted=true;
-		    super.start();
-		} else {
-		    if (schedulable == null) {
-			pool.logger.warn(this + " was started with no work");
-		    }
-		    runLock.notify();     // resume
-		}
-	    }
-	}
+                if (!isStarted) {
+                    isStarted = true;
+                    super.start();
+                } else {
+                    if (schedulable == null) {
+                        pool.logger.warn(this + " was started with no work");
+                    }
+                    runLock.notify(); // resume
+                }
+            }
+        }
 
         void stop_running() {
-	    synchronized (runLock) {
+            synchronized (runLock) {
                 should_stop = true;
                 runLock.notify();
             }
             try {
-              join();
+                join();
             } catch (InterruptedException ie) {
             }
             synchronized (runLock) {
@@ -185,146 +182,155 @@ class ThreadPool
             }
         }
 
-	private SchedulableObject reclaim(boolean reuse) {
-	    SchedulableObject new_schedulable = schedulable.reclaim(reuse);
-	    if (pool.logger.isInfoEnabled()) {
-		if (new_schedulable != null) {
-		    setName(new_schedulable.getName());
-		} else {
-		    setName( "Reclaimed");
-		}
-	    }
-	    return new_schedulable;
-	}
+        private SchedulableObject reclaim(boolean reuse) {
+            SchedulableObject new_schedulable = schedulable.reclaim(reuse);
+            if (pool.logger.isInfoEnabled()) {
+                if (new_schedulable != null) {
+                    setName(new_schedulable.getName());
+                } else {
+                    setName("Reclaimed");
+                }
+            }
+            return new_schedulable;
+        }
     }
-    
-    /** The ThreadGroup of the pool - all threads in the pool must be
-     * members of the same threadgroup.
-     **/
-    private ThreadGroup group;
-    /** The maximum number of unused threads to keep around in the pool.
-     * anything beyond this may be destroyed or GCed.
-     **/
 
-    /** the actual pool **/
+    /**
+     * The ThreadGroup of the pool - all threads in the pool must be members of
+     * the same threadgroup.
+     */
+    private final ThreadGroup group;
+    /**
+     * The maximum number of unused threads to keep around in the pool. anything
+     * beyond this may be destroyed or GCed.
+     */
+
+    /** the actual pool * */
     private PooledThread pool[];
     private List<PooledThread> list_pool;
-    private Logger logger;
+    private final Logger logger;
     private int index = 0;
 
-    ThreadPool(int maximumSize, int initialSize, String name) 
-    {
-	// Maybe give each pool its own group?
-	group = new ThreadGroup(name); 
-	// Thread.currentThread().getThreadGroup();
+    ThreadPool(int maximumSize, int initialSize, String name) {
+        // Maybe give each pool its own group?
+        group = new ThreadGroup(name);
+        // Thread.currentThread().getThreadGroup();
 
-	logger = Logging.getLogger(getClass().getName());
-	if (maximumSize < 0) {
-	    // Unlimited.  Make an array of a somewhat arbitrary size
-	    // (100 or initialSize, whichever is larger), and also
-	    // make an ArrayList which will be used if the array runs
-	    // out.
-	    pool = new PooledThread[Math.max(initialSize, 100)];
-	    list_pool = new ArrayList<PooledThread>(100);
-	} else {
-	    if (initialSize > maximumSize) initialSize = maximumSize;
-	    pool = new PooledThread[maximumSize];
-	}
-	for (int i = 0 ; i < initialSize; i++)
-	    pool[i] = constructReusableThread();
+        logger = Logging.getLogger(getClass().getName());
+        if (maximumSize < 0) {
+            // Unlimited. Make an array of a somewhat arbitrary size
+            // (100 or initialSize, whichever is larger), and also
+            // make an ArrayList which will be used if the array runs
+            // out.
+            pool = new PooledThread[Math.max(initialSize, 100)];
+            list_pool = new ArrayList<PooledThread>(100);
+        } else {
+            if (initialSize > maximumSize) {
+                initialSize = maximumSize;
+            }
+            pool = new PooledThread[maximumSize];
+        }
+        for (int i = 0; i < initialSize; i++) {
+            pool[i] = constructReusableThread();
+        }
     }
 
-
     private synchronized String nextName() {
-	return "CougaarPooledThread-" + (index++);
+        return "CougaarPooledThread-" + index++;
     }
 
     ThreadGroup getThreadGroup() {
-	return group;
+        return group;
     }
 
     PooledThread getThread(SchedulableObject schedulable, String name) {
-	PooledThread thread = null;
-	PooledThread candidate = null;
+        PooledThread thread = null;
+        PooledThread candidate = null;
 
-	synchronized (this) {
+        synchronized (this) {
             if (pool == null) {
                 throw new RuntimeException("The ThreadPool has been stopped");
             }
 
-	    for (int i=0; i<pool.length; i++) {
-		candidate = pool[i];
-		if (candidate == null) {
-		    thread = constructReusableThread();
-		    pool[i] = thread;
-		    thread.in_use = true;
-		    thread.schedulable = schedulable;
-		    break;
-		} else if (!candidate.in_use) {
-		    thread = candidate;
-		    thread.in_use = true;
-		    thread.schedulable = schedulable;
-		    break;
-		}
-	    }
-
-	    if (thread == null && list_pool != null) {
-		// Use the slow ArrayList.  This is only enabled if
-		// there's no thread limit.
-                for (int i = 0, n = list_pool.size(); i < n; i++) { 
-		    candidate = list_pool.get(i);
-		    if (!candidate.in_use) {
-			thread = candidate;
-			thread.in_use = true;
-			thread.schedulable = schedulable;
-			break;
-		    }
-		}
-                if (thread == null) {
-		    // None in the list either. Make one and add it,
-		    thread = constructReusableThread();
-		    thread.in_use = true;
-		    thread.schedulable = schedulable;
-		    list_pool.add(thread);
+            for (int i = 0; i < pool.length; i++) {
+                candidate = pool[i];
+                if (candidate == null) {
+                    thread = constructReusableThread();
+                    pool[i] = thread;
+                    thread.in_use = true;
+                    thread.schedulable = schedulable;
+                    break;
+                } else if (!candidate.in_use) {
+                    thread = candidate;
+                    thread.in_use = true;
+                    thread.schedulable = schedulable;
+                    break;
                 }
-	    }
-	}
+            }
 
-	if (thread == null) {
-	    // None available.  This is unrecoverable.
-	    throw new RuntimeException("Exceeded ThreadPool max");
-	}
+            if (thread == null && list_pool != null) {
+                // Use the slow ArrayList. This is only enabled if
+                // there's no thread limit.
+                for (int i = 0, n = list_pool.size(); i < n; i++) {
+                    candidate = list_pool.get(i);
+                    if (!candidate.in_use) {
+                        thread = candidate;
+                        thread.in_use = true;
+                        thread.schedulable = schedulable;
+                        break;
+                    }
+                }
+                if (thread == null) {
+                    // None in the list either. Make one and add it,
+                    thread = constructReusableThread();
+                    thread.in_use = true;
+                    thread.schedulable = schedulable;
+                    list_pool.add(thread);
+                }
+            }
+        }
 
-	if (logger.isInfoEnabled()) thread.setName(name);
+        if (thread == null) {
+            // None available. This is unrecoverable.
+            throw new RuntimeException("Exceeded ThreadPool max");
+        }
 
-	return thread;
+        if (logger.isInfoEnabled()) {
+            thread.setName(name);
+        }
+
+        return thread;
     }
-  
-    /** actually construct a new PooledThread **/
+
+    /** actually construct a new PooledThread * */
     PooledThread constructReusableThread() {
-	// If info logging is enabled the thread's name will get set
-	// when it's run, so it can start out empty.
-	String name = "";
-	if (!logger.isInfoEnabled()) name = nextName();
-	return new PooledThread(this, name);
+        // If info logging is enabled the thread's name will get set
+        // when it's run, so it can start out empty.
+        String name = "";
+        if (!logger.isInfoEnabled()) {
+            name = nextName();
+        }
+        return new PooledThread(this, name);
     }
-
 
     String generateName() {
-	// Generate a name for a Schedulable.  If info logging is
-	// enabled the name won't be used anywhere, so just return
-	// null.  Otherwise make a unique one.
-	if (logger.isInfoEnabled()) 
-	    return nextName();
-	else
-	    return null;
+        // Generate a name for a Schedulable. If info logging is
+        // enabled the name won't be used anywhere, so just return
+        // null. Otherwise make a unique one.
+        if (logger.isInfoEnabled()) {
+            return nextName();
+        } else {
+            return null;
+        }
     }
 
     int iterateOverRunningThreads(ThreadStatusService.Body body) {
-        int count = 0;
         PooledThread[] p = pool;
-        int n = (p == null ? 0 : p.length);
-        for (int i = 0; i < n; i++) {
+        if (p == null) {
+            return 0;
+        }
+        int count = 0;
+        for (int i = 0; i < p.length; i++) {
             PooledThread thread = p[i];
             if (thread == null || thread.isRunning) {
                 continue;
@@ -338,8 +344,9 @@ class ThreadPool
                 if (sched != null) {
                     Scheduler scheduler = sched.getScheduler();
                     String scheduler_name = null;
-                    if (scheduler != null)
+                    if (scheduler != null) {
                         scheduler_name = scheduler.getName();
+                    }
                     body.run(scheduler_name, sched);
                     count++;
                 }
@@ -351,11 +358,11 @@ class ThreadPool
     }
 
     void stopAllThreads() {
-	synchronized (this) {
-            int n = (pool == null ? 0 : pool.length);
-	    for (int i = 0; i < n; i++) {
-		PooledThread thread = pool[i];
-		if (thread == null) {
+        synchronized (this) {
+            int n = pool == null ? 0 : pool.length;
+            for (int i = 0; i < n; i++) {
+                PooledThread thread = pool[i];
+                if (thread == null) {
                     continue;
                 }
                 thread.in_use = true;
@@ -363,7 +370,7 @@ class ThreadPool
                 pool[i] = null;
             }
             pool = null;
-	}
+        }
     }
 
 }
