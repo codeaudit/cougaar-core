@@ -7,7 +7,9 @@
 package org.cougaar.core.blackboard;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
@@ -16,34 +18,37 @@ import org.cougaar.util.annotations.Cougaar;
 import org.cougaar.util.annotations.Subscribe;
 
 /**
- * An AnnotatedPlugin which manages a single {@link TodoSubscription},
- * the contents of which can be added to via an alarm expiration.
+ * An AnnotatedPlugin which manages {@link TodoSubscription}s,
+ * the contents of which can be added to via alarm expirations.
  */
 public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin {
-    protected static final String TODO_ID = "todo";
-    
     // In some cases we need to add items before the subscription exists.
     // Handle that with a list that holds the early adds until the
     // subscription is created.
     private final Object todoLock = new Object();
-    private List<T> todoPending = new ArrayList<T>();
+    private Map<String, List<T>> todoPending = new HashMap<String, List<T>>();
     
-    protected TodoSubscription getTodoSubscription() {
-        return (TodoSubscription) getSubscription(TODO_ID);
+    protected TodoSubscription getTodoSubscription(String todoId) {
+        return (TodoSubscription) getSubscription(todoId);
     }
    
     /**
      * Add an item to the todo list
      * @param item the datum to add
      */
-    protected void addTodoItem(T item) {
+    protected void addTodoItem(T item, String todoId) {
         synchronized (todoLock) {
             if (todoPending != null) {
-                todoPending.add(item);
+                List<T> todoList = todoPending.get(todoId);
+                if (todoList == null) {
+                    todoList = new ArrayList<T>();
+                    todoPending.put(todoId, todoList);
+                }
+                todoList.add(item);
                 return;
             }
         }
-        TodoSubscription todo = getTodoSubscription();
+        TodoSubscription todo = getTodoSubscription(todoId);
         if (todo == null) {
             return;
         }
@@ -55,45 +60,39 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
      * @param futureTime when to add, as an offset from now in millis
      * @param item the datum to add
      */
-    protected void addTodoItem(long delay, T item) {
-        Alarm alarm = new TodoAlarm(System.currentTimeMillis()+delay, item);
+    protected void addTodoItem(long delay, T item, String todoId) {
+        Alarm alarm = new TodoAlarm(System.currentTimeMillis()+delay, item, todoId);
         getAlarmService().addRealTimeAlarm(alarm);
     }
     
-    
-    /**
-     * Do the domain-specific work on one item.
-     * No-op here, subclasses will almost always override.
-     * Overriding methods must include the annotation!
-     * 
-     * @param item datum to work on.
-     */
-    @Cougaar.Execute(on=Subscribe.ModType.ADD, todo=TODO_ID)
-    public void executeToDoItem(T item) {
-    }
 
-    @Override
     protected void setupSubscriptions() {
-       super.setupSubscriptions();
-       // Add any pending items that were added before
-       // the subscription was made.
-       synchronized (todoLock) {
-            TodoSubscription todo = getTodoSubscription();
-            todo.addAll(todoPending);
+        super.setupSubscriptions();
+        // Add any pending items that were added before
+        // the subscription was made.
+        synchronized (todoLock) {
+            for (Map.Entry<String, List<T>> entry : todoPending.entrySet()) {
+                String id = entry.getKey();
+                List<T> todoList = entry.getValue();
+                TodoSubscription todo = getTodoSubscription(id);
+                todo.addAll(todoList);
+            }
             todoPending = null;
         }
     }
     
     public class TodoAlarm extends AlarmBase {
         private final T item;
+        private final String todoId;
         
-        public TodoAlarm(long futureTime, T item) {
+        public TodoAlarm(long futureTime, T item, String todoId) {
             super(futureTime);
             this.item = item;
+            this.todoId = todoId;
         }
 
         public void onExpire() {
-            addTodoItem(item);
+            addTodoItem(item, todoId);
         }
     }
 
