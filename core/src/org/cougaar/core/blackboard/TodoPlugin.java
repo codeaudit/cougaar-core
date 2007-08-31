@@ -9,6 +9,7 @@ package org.cougaar.core.blackboard;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
 import org.cougaar.core.plugin.AnnotatedPlugin;
 import org.cougaar.util.annotations.Cougaar;
@@ -63,11 +64,16 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedPlugin {
             todoPending = null;
         }
     }
+
+    protected void doLater(long futureTime, T item) {
+        Alarm alarm = new TodoAlarm(futureTime, item);
+        getAlarmService().addRealTimeAlarm(alarm);
+    }
     
     public class TodoAlarm extends AlarmBase {
         private final T item;
         
-        public TodoAlarm(T item, long futureTime) {
+        public TodoAlarm(long futureTime, T item) {
             super(futureTime);
             this.item = item;
         }
