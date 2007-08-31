@@ -16,7 +16,6 @@ import java.util.Map;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.blackboard.TodoSubscription;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.IsInstanceOf;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.annotations.Cougaar;
@@ -27,15 +26,9 @@ import org.cougaar.util.annotations.Subscribe;
  * to use annotations to create and manage blackboard
  * subscriptions.
  */
-public abstract class AnnotatedPlugin extends ParameterizedPlugin {
+public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
     private final Map<String, Subscription> subscriptions = new HashMap<String, Subscription>();
     private final List<Invoker> invokers = new ArrayList<Invoker>();
-    protected LoggingService log;
-    
-    public final void setLoggingService(LoggingService logger) {
-        this.log = logger;
-    }
-    
     protected void execute() {
         for (Invoker invoker : invokers) {
             invoker.execute();
@@ -118,7 +111,11 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
         }
 
         private boolean isTesterMethod(Method method, String name, Class<?> argClass) {
-            if (!name.equals(method.getName())) {
+            if (!method.isAnnotationPresent(Cougaar.Predicate.class)) {
+                return false;
+            }
+            Cougaar.Predicate pred = method.getAnnotation(Cougaar.Predicate.class);
+            if (!name.equals(pred.when())) {
                 return false;
             }
             Class<?>[] paramTypes = method.getParameterTypes();
@@ -132,7 +129,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
             return returnType == Boolean.class || returnType == boolean.class;
         }
         
-        private Subscription createBlackboardSubscription(Cougaar.Execute annotation) {
+        private Subscription createIncrementalSubscription(Cougaar.Execute annotation) {
             // Prefer the 'isa' value if there is one
             Class<?> isa = annotation.isa();
             if (Cougaar.NoClass.class != isa) {
@@ -142,7 +139,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
 
             // No isa, use the 'when' method
             String testerName = annotation.when();
-            Class<?> pluginClass = AnnotatedPlugin.this.getClass();
+            Class<?> pluginClass = AnnotatedSubscriptionsPlugin.this.getClass();
             Method[] methods = pluginClass.getMethods();
             Class<?> argClass = method.getParameterTypes()[0];
             Method testerMethod = null;
@@ -164,7 +161,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
                         return false;
                     }
                     try {
-                        return (Boolean) tester.invoke(AnnotatedPlugin.this, o);
+                        return (Boolean) tester.invoke(AnnotatedSubscriptionsPlugin.this, o);
                     } catch (Exception e) {
                         log.error("Test failed", e);
                         return false;
@@ -180,7 +177,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
             if (!Cougaar.NO_VALUE.equals(todo)) {
                 return createTodoSubscription(annotation);
             } else {
-                return createBlackboardSubscription(annotation);
+                return createIncrementalSubscription(annotation);
             }
         }
 
@@ -230,7 +227,7 @@ public abstract class AnnotatedPlugin extends ParameterizedPlugin {
                 if (objects != null) {
                     for (Object object : objects) {
                         try {
-                            method.invoke(AnnotatedPlugin.this, object);
+                            method.invoke(AnnotatedSubscriptionsPlugin.this, object);
                         } catch (Exception e) {
                             log.error("Failed to invoke annotated method", e);
                         }

@@ -9,12 +9,44 @@ package org.cougaar.core.plugin;
 import java.util.List;
 import java.util.Map;
 
+import org.cougaar.core.service.LoggingService;
+import org.cougaar.core.service.UIDService;
 import org.cougaar.util.Arguments;
 import org.cougaar.util.annotations.Argument;
+import org.cougaar.util.annotations.Cougaar;
 
 public abstract class ParameterizedPlugin extends ComponentPlugin {
     protected Arguments args;
-
+    
+    /** 
+     * TODO: Pull up to BlackboardClientComponent.
+     * TODO: Make public once the annotation is working.
+     */
+    @Cougaar.Service()
+    protected LoggingService log;
+    
+    /** 
+     * TODO: Pull up to BlackboardClientComponent.
+     * TODO: Make public once the annotation is working.
+     */
+    @Cougaar.Service()
+    protected UIDService uids;
+    
+    /**
+     * TODO: Remove once the {@Cougaar.Service} annotation on {@link #uids} is working.
+     */
+    public void setUIDService(UIDService uidService) {
+        this.uids=uidService;
+    }
+    
+    /**
+     * TODO: Remove once the {@Cougaar.Service} annotation on {@link #log} is working.
+     */
+    public final void setLoggingService(LoggingService logger) {
+        this.log = logger;
+    }
+    
+    
     public void setArguments(Arguments args) {
         this.args = args;
         try {

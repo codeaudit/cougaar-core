@@ -11,16 +11,16 @@ import java.util.List;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
-import org.cougaar.core.plugin.AnnotatedPlugin;
+import org.cougaar.core.plugin.AnnotatedSubscriptionsPlugin;
 import org.cougaar.util.annotations.Cougaar;
 import org.cougaar.util.annotations.Subscribe;
 
 /**
  * An AnnotatedPlugin which manages a single {@link TodoSubscription},
- * the contents of which are added to via an alarm expiration.
+ * the contents of which can be added to via an alarm expiration.
  */
-public class TodoPlugin<T extends TodoItem> extends AnnotatedPlugin {
-    private static final String TODO_ID = "todo";
+public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin {
+    protected static final String TODO_ID = "todo";
     
     // In some cases we need to add items before the subscription exists.
     // Handle that with a list that holds the early adds until the
@@ -32,6 +32,10 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedPlugin {
         return (TodoSubscription) getSubscription(TODO_ID);
     }
    
+    /**
+     * Add an item to the todo list
+     * @param item the datum to add
+     */
     protected void addTodoItem(T item) {
         synchronized (todoLock) {
             if (todoPending != null) {
@@ -45,29 +49,39 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedPlugin {
         }
         todo.add(item);
     }
-
-    // No-op here, subclasses usually override but don't have to.
-    protected void doTodoItem(T item) {
+    
+    /**
+     * Add a item to the todo list in the future
+     * @param futureTime when to add, as an offset from now in millis
+     * @param item the datum to add
+     */
+    protected void addTodoItem(long delay, T item) {
+        Alarm alarm = new TodoAlarm(System.currentTimeMillis()+delay, item);
+        getAlarmService().addRealTimeAlarm(alarm);
     }
     
+    
+    /**
+     * Do the domain-specific work on one item.
+     * No-op here, subclasses will almost always override.
+     * Overriding methods must include the annotation!
+     * 
+     * @param item datum to work on.
+     */
     @Cougaar.Execute(on=Subscribe.ModType.ADD, todo=TODO_ID)
-    public final void executeToDoItem(T item) {
-        doTodoItem(item);
+    public void executeToDoItem(T item) {
     }
 
     @Override
     protected void setupSubscriptions() {
        super.setupSubscriptions();
+       // Add any pending items that were added before
+       // the subscription was made.
        synchronized (todoLock) {
             TodoSubscription todo = getTodoSubscription();
             todo.addAll(todoPending);
             todoPending = null;
         }
-    }
-
-    protected void doLater(long futureTime, T item) {
-        Alarm alarm = new TodoAlarm(futureTime, item);
-        getAlarmService().addRealTimeAlarm(alarm);
     }
     
     public class TodoAlarm extends AlarmBase {
