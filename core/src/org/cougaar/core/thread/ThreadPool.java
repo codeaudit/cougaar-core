@@ -128,11 +128,11 @@ class ThreadPool {
                     // Wait for more work
                     try {
                         runLock.wait();
-                        if (schedulable == null) {
+                        if (schedulable == null && !should_stop) {
                             pool.logger.warn("Spurious wake up (no work), runLock = " + runLock);
                         }
                     } catch (InterruptedException ie) {
-                        pool.logger.warn("Interruption Exception thread=" + this);
+                        pool.logger.warn("Unexpected interrupt, thread=" + this);
                     }
                     
                     // Check special shutdown flag again
