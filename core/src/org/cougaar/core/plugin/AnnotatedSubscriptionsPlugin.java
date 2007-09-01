@@ -50,8 +50,8 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
                 } else if (!Cougaar.NO_VALUE.equals(when)){
                     id = when;
                 } else {
-                    log.error("Neither a 'todo', an 'isa' or a 'when' clause was provided");
-                    continue;
+                    // Use the type of the first arg as an implicit 'isa'
+                    id = method.getParameterTypes()[0].getClass().getName();
                 }
                 Subscription subscription = subscriptions.get(id);
                 if (subscription != null) {
@@ -130,45 +130,49 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
         }
         
         private Subscription createIncrementalSubscription(Cougaar.Execute annotation) {
-            // Prefer the 'isa' value if there is one
             Class<?> isa = annotation.isa();
+            String when = annotation.when();
+            UnaryPredicate predicate;
             if (Cougaar.NoClass.class != isa) {
-                IsInstanceOf predicate = new IsInstanceOf(isa);
-                return blackboard.subscribe(predicate);
-            }
+                // Prefer the 'isa' value if there is one
+                predicate = new IsInstanceOf(isa);
+            } else if (when == Cougaar.NO_VALUE) {
+                // Use implicit isa if no 'when' and no explicit 'isa'
+                isa = method.getParameterTypes()[0].getClass();
+                predicate = new IsInstanceOf(isa);
+            } else {
+                // Construct a UnaryPredicate from the 'when'
+                Class<?> pluginClass = AnnotatedSubscriptionsPlugin.this.getClass();
+                Method[] methods = pluginClass.getMethods();
+                Class<?> argClass = method.getParameterTypes()[0];
+                Method testerMethod = null;
+                for (Method method : methods) {
+                    if (isTesterMethod(method, when, argClass)) {
+                        testerMethod = method;
+                        break;
+                    }
+                }
+                if (testerMethod == null) {
+                    log.error("Couldn't find method " + when+ " (" + argClass + ")");
+                    return null;
+                }
+                final Method tester = testerMethod;
+                final Class<?> testerArgClass = tester.getParameterTypes()[0];
+                predicate = new UnaryPredicate() {
+                    public boolean execute(Object o) {
+                        if (!testerArgClass.isAssignableFrom(o.getClass())) {
+                            return false;
+                        }
+                        try {
+                            return (Boolean) tester.invoke(AnnotatedSubscriptionsPlugin.this, o);
+                        } catch (Exception e) {
+                            log.error("Test failed", e);
+                            return false;
+                        }
+                    }
 
-            // No isa, use the 'when' method
-            String testerName = annotation.when();
-            Class<?> pluginClass = AnnotatedSubscriptionsPlugin.this.getClass();
-            Method[] methods = pluginClass.getMethods();
-            Class<?> argClass = method.getParameterTypes()[0];
-            Method testerMethod = null;
-            for (Method method : methods) {
-                if (isTesterMethod(method, testerName, argClass)) {
-                    testerMethod = method;
-                    break;
-                }
+                };
             }
-            if (testerMethod == null) {
-                log.error("Couldn't find method " + testerName+ " (" + argClass + ")");
-                return null;
-            }
-            final Method tester = testerMethod;
-            final Class<?> testerArgClass = tester.getParameterTypes()[0];
-            UnaryPredicate predicate = new UnaryPredicate() {
-                public boolean execute(Object o) {
-                    if (!testerArgClass.isAssignableFrom(o.getClass())) {
-                        return false;
-                    }
-                    try {
-                        return (Boolean) tester.invoke(AnnotatedSubscriptionsPlugin.this, o);
-                    } catch (Exception e) {
-                        log.error("Test failed", e);
-                        return false;
-                    }
-                }
-                
-            };
             return blackboard.subscribe(predicate);
         }
 
