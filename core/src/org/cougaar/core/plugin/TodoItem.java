@@ -4,7 +4,9 @@
  *
  */
 
-package org.cougaar.core.blackboard;
+package org.cougaar.core.plugin;
+
+import org.cougaar.core.blackboard.TodoSubscription;
 
 /**
  * Marker interface for elements of a {@link TodoSubscription}

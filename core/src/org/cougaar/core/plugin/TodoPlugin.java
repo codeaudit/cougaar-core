@@ -4,7 +4,7 @@
  *
  */
 
-package org.cougaar.core.blackboard;
+package org.cougaar.core.plugin;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,9 +13,7 @@ import java.util.Map;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
-import org.cougaar.core.plugin.AnnotatedSubscriptionsPlugin;
-import org.cougaar.util.annotations.Cougaar;
-import org.cougaar.util.annotations.Subscribe;
+import org.cougaar.core.blackboard.TodoSubscription;
 
 /**
  * An AnnotatedPlugin which manages {@link TodoSubscription}s,
@@ -50,6 +48,7 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
         }
         TodoSubscription todo = getTodoSubscription(todoId);
         if (todo == null) {
+            log.error("Couldn't find TodoSubscription " + todoId);
             return;
         }
         todo.add(item);
@@ -81,7 +80,7 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
         }
     }
     
-    public class TodoAlarm extends AlarmBase {
+    private final class TodoAlarm extends AlarmBase {
         private final T item;
         private final String todoId;
         
