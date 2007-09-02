@@ -22,7 +22,7 @@ import org.cougaar.util.annotations.Subscribe;
 /**
  * This class provides support for plugins that wish
  * to use annotations to create and manage blackboard
- * subscriptions.
+ * IncrementalSubscriptions.
  */
 public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
     private final Map<String, IncrementalSubscription> subscriptions = 
@@ -74,22 +74,23 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
     
 
     /**
-     * Keeps the state of one blackboard subscription created via annotations.
+     * Keeps the state of one IncrementalSubscription created via annotations.
      */
     private class Invoker {
         /**
-         * The subscription itself, created via {@link #makeSubscription}.
+         * The subscription itself.
          */
         private final IncrementalSubscription sub;
         
         /**
          * The annotated method which will be invoked on the plugin, passing in each element
-         * of a blackboard collection in turn as an argument.
+         * of an IncrementalSubscription collection in turn as an argument.
          */
         private final Method method;
         
         /**
-         * The set of operations, as given in the annotation.
+         * The set of operations, as given in the annotation, which determines
+         * which ncrementalSubscription collection are relevant.
          */
         private final Subscribe.ModType[] ops;
         
