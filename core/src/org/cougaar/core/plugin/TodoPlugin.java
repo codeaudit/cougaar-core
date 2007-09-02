@@ -30,10 +30,6 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
     private Map<String, List<T>> todoPending = new HashMap<String, List<T>>();
     private Map<String, TodoSubscription> todos = new HashMap<String, TodoSubscription>();
     
-    protected TodoSubscription getTodoSubscription(String todoId) {
-        return todos.get(todoId);
-    }
-   
     /**
      * Add an item to the todo list
      * @param item the datum to add
@@ -50,7 +46,7 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
                 return;
             }
         }
-        TodoSubscription todo = getTodoSubscription(todoId);
+        TodoSubscription todo = todos.get(todoId);
         if (todo == null) {
             log.error("Couldn't find TodoSubscription " + todoId);
             return;
@@ -105,7 +101,7 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
             for (Map.Entry<String, List<T>> entry : todoPending.entrySet()) {
                 String id = entry.getKey();
                 List<T> todoList = entry.getValue();
-                TodoSubscription todo = getTodoSubscription(id);
+                TodoSubscription todo = todos.get(id);
                 todo.addAll(todoList);
             }
             todoPending = null;
