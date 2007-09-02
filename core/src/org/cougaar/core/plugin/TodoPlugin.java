@@ -6,7 +6,9 @@
 
 package org.cougaar.core.plugin;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,6 +16,7 @@ import java.util.Map;
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
 import org.cougaar.core.blackboard.TodoSubscription;
+import org.cougaar.util.annotations.Cougaar;
 
 /**
  * An AnnotatedPlugin which manages {@link TodoSubscription}s,
@@ -25,9 +28,10 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
     // subscription is created.
     private final Object todoLock = new Object();
     private Map<String, List<T>> todoPending = new HashMap<String, List<T>>();
+    private Map<String, TodoSubscription> todos = new HashMap<String, TodoSubscription>();
     
     protected TodoSubscription getTodoSubscription(String todoId) {
-        return (TodoSubscription) getSubscription(todoId);
+        return todos.get(todoId);
     }
    
     /**
@@ -64,9 +68,37 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
         getAlarmService().addRealTimeAlarm(alarm);
     }
     
-
+    protected void execute() {
+        super.execute();
+        for (TodoSubscription subscription : todos.values()) {
+            if (subscription.hasChanged()) {
+                @SuppressWarnings("unchecked")
+                Collection<TodoItem> items = subscription.getAddedCollection();
+                for (TodoItem item : items) {
+                    item.doWork();
+                }
+            }
+        }
+    }
+    
     protected void setupSubscriptions() {
         super.setupSubscriptions();
+        for (Field field : getClass().getFields()) {
+            if (field.isAnnotationPresent(Cougaar.Todo.class)) {
+                Cougaar.Todo todo = field.getAnnotation(Cougaar.Todo.class);
+                String key = todo.id();
+                TodoSubscription todoSubscription = new TodoSubscription(key);
+                blackboard.subscribe(todoSubscription);
+                todos.put(key, todoSubscription);
+                try {
+                    field.set(this, todoSubscription);
+                } catch (Exception e) {
+                    String message = "Couldn't set field " +field.getName()+ " of " + this;
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                }
+            }
+        }
         // Add any pending items that were added before
         // the subscription was made.
         synchronized (todoLock) {

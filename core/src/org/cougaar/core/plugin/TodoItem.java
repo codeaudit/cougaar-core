@@ -9,9 +9,9 @@ package org.cougaar.core.plugin;
 import org.cougaar.core.blackboard.TodoSubscription;
 
 /**
- * Marker interface for elements of a {@link TodoSubscription}
- * as managed by a {@link TodoPlugin}.
+ * Encapsulates a piece of work to be done through {@link TodoSubscription}
+ * managed by a {@link TodoPlugin}.
  */
 public interface TodoItem {
-
+    public void doWork();
 }

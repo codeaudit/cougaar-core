@@ -14,8 +14,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.cougaar.core.blackboard.IncrementalSubscription;
-import org.cougaar.core.blackboard.Subscription;
-import org.cougaar.core.blackboard.TodoSubscription;
 import org.cougaar.util.IsInstanceOf;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.annotations.Cougaar;
@@ -27,8 +25,10 @@ import org.cougaar.util.annotations.Subscribe;
  * subscriptions.
  */
 public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
-    private final Map<String, Subscription> subscriptions = new HashMap<String, Subscription>();
+    private final Map<String, IncrementalSubscription> subscriptions = 
+        new HashMap<String, IncrementalSubscription>();
     private final List<Invoker> invokers = new ArrayList<Invoker>();
+    
     protected void execute() {
         for (Invoker invoker : invokers) {
             invoker.execute();
@@ -40,20 +40,21 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
             if (method.isAnnotationPresent(Cougaar.Execute.class)) {
                 Cougaar.Execute annotation = method.getAnnotation(Cougaar.Execute.class);
                 String id;
-                String todo = annotation.todo();
-                Class<?> isa =  annotation.isa();
                 String when = annotation.when();
-                if (!Cougaar.NO_VALUE.equals(todo)) {
-                    id = todo;
-                } else if (Cougaar.NoClass.class != isa) {
-                    id = isa.getName();
-                } else if (!Cougaar.NO_VALUE.equals(when)){
+                if (!Cougaar.NO_VALUE.equals(when)){
                     id = when;
                 } else {
                     // Use the type of the first arg as an implicit 'isa'
-                    id = method.getParameterTypes()[0].getClass().getName();
+                    Class<?>[] parameterTypes = method.getParameterTypes();
+                    if (parameterTypes.length != 1) {
+                        String message = method.getName() + " of class " +getClass().getName()+
+                        " has the wrong number of arguments (should be 1)";
+                        log.error(message);
+                        continue;
+                    }
+                    id = parameterTypes[0].getName();
                 }
-                Subscription subscription = subscriptions.get(id);
+                IncrementalSubscription subscription = subscriptions.get(id);
                 if (subscription != null) {
                     Invoker invoker = new Invoker(method, annotation, subscription);
                     invokers.add(invoker);
@@ -66,7 +67,7 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
         }
     }
     
-    public Subscription getSubscription(String id) {
+    public IncrementalSubscription getSubscription(String id) {
         return subscriptions.get(id);
     }
     
@@ -79,7 +80,7 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
         /**
          * The subscription itself, created via {@link #makeSubscription}.
          */
-        private final Subscription sub;
+        private final IncrementalSubscription sub;
         
         /**
          * The annotated method which will be invoked on the plugin, passing in each element
@@ -92,7 +93,7 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
          */
         private final Subscribe.ModType[] ops;
         
-        public Invoker(Method method, Cougaar.Execute annotation, Subscription sub) {
+        public Invoker(Method method, Cougaar.Execute annotation, IncrementalSubscription sub) {
             this.method = method;
             this.ops = annotation.on();
             this.sub = sub;
@@ -101,13 +102,8 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
         public Invoker(Method method, Cougaar.Execute annotation) {
             this.method = method;
             this.ops = annotation.on();
-            this.sub = makeSubscription(annotation);
+            this.sub = createIncrementalSubscription(annotation);
             
-        }
-
-        private Subscription createTodoSubscription(Cougaar.Execute annotation) {
-            String key = annotation.todo();
-            return blackboard.subscribe(new TodoSubscription(key));
         }
 
         private boolean isTesterMethod(Method method, String name, Class<?> argClass) {
@@ -129,16 +125,12 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
             return returnType == Boolean.class || returnType == boolean.class;
         }
         
-        private Subscription createIncrementalSubscription(Cougaar.Execute annotation) {
-            Class<?> isa = annotation.isa();
+        private IncrementalSubscription createIncrementalSubscription(Cougaar.Execute annotation) {
             String when = annotation.when();
             UnaryPredicate predicate;
-            if (Cougaar.NoClass.class != isa) {
-                // Prefer the 'isa' value if there is one
-                predicate = new IsInstanceOf(isa);
-            } else if (when == Cougaar.NO_VALUE) {
-                // Use implicit isa if no 'when' and no explicit 'isa'
-                isa = method.getParameterTypes()[0].getClass();
+            if (Cougaar.NO_VALUE.equals(when)) {
+                // Implicit instanceof if no 'when'
+                Class<?> isa = method.getParameterTypes()[0];
                 predicate = new IsInstanceOf(isa);
             } else {
                 // Construct a UnaryPredicate from the 'when'
@@ -173,51 +165,22 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
 
                 };
             }
-            return blackboard.subscribe(predicate);
-        }
-
-        private Subscription makeSubscription(Cougaar.Execute annotation) {
-            String todo = annotation.todo();
-            if (!Cougaar.NO_VALUE.equals(todo)) {
-                return createTodoSubscription(annotation);
-            } else {
-                return createIncrementalSubscription(annotation);
-            }
+            return (IncrementalSubscription) blackboard.subscribe(predicate);
         }
 
         private Collection<?> getCollection(Subscribe.ModType op) {
-            if (sub instanceof IncrementalSubscription) {
-                IncrementalSubscription is = (IncrementalSubscription) sub;
-                switch (op) {
-                    case ADD:
-                        return is.getAddedCollection();
-
-                    case CHANGE:
-                        return is.getChangedCollection();
-
-                    case REMOVE:
-                        return is.getRemovedCollection();
-
-                    default:
-                        return null;
-                }
-            } else if (sub instanceof TodoSubscription) {
-                TodoSubscription ts = (TodoSubscription) sub;
-                switch (op) {
-                    case ADD:
-                        return ts.getAddedCollection();
-
-                    case CHANGE:
-                        return null;
-
-                    case REMOVE:
-                        return null;
-
-                    default:
-                        return null;
-                }
-            } else {
-                return null;
+            switch (op) {
+                case ADD:
+                    return sub.getAddedCollection();
+                    
+                case CHANGE:
+                    return sub.getChangedCollection();
+                    
+                case REMOVE:
+                    return sub.getRemovedCollection();
+                    
+                default:
+                    return null;
             }
         }
         
