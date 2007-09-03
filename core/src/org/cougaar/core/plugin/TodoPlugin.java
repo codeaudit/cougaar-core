@@ -56,7 +56,7 @@ public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
     
     /**
      * Add a item to the todo list in the future
-     * @param futureTime when to add, as an offset from now in millis
+     * @param delay when to add, as an offset from now in millis
      * @param item the datum to add
      */
     protected void addTodoItem(long delay, TodoItem item, String todoId) {
