@@ -22,24 +22,24 @@ import org.cougaar.util.annotations.Cougaar;
  * An AnnotatedPlugin which manages {@link TodoSubscription}s,
  * the contents of which can be added to via alarm expirations.
  */
-public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin {
+public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
     // In some cases we need to add items before the subscription exists.
     // Handle that with a list that holds the early adds until the
     // subscription is created.
     private final Object todoLock = new Object();
-    private Map<String, List<T>> todoPending = new HashMap<String, List<T>>();
+    private Map<String, List<TodoItem>> todoPending = new HashMap<String, List<TodoItem>>();
     private Map<String, TodoSubscription> todos = new HashMap<String, TodoSubscription>();
     
     /**
      * Add an item to the todo list
      * @param item the datum to add
      */
-    protected void addTodoItem(T item, String todoId) {
+    protected void addTodoItem(TodoItem item, String todoId) {
         synchronized (todoLock) {
             if (todoPending != null) {
-                List<T> todoList = todoPending.get(todoId);
+                List<TodoItem> todoList = todoPending.get(todoId);
                 if (todoList == null) {
-                    todoList = new ArrayList<T>();
+                    todoList = new ArrayList<TodoItem>();
                     todoPending.put(todoId, todoList);
                 }
                 todoList.add(item);
@@ -59,7 +59,7 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
      * @param futureTime when to add, as an offset from now in millis
      * @param item the datum to add
      */
-    protected void addTodoItem(long delay, T item, String todoId) {
+    protected void addTodoItem(long delay, TodoItem item, String todoId) {
         Alarm alarm = new TodoAlarm(System.currentTimeMillis()+delay, item, todoId);
         getAlarmService().addRealTimeAlarm(alarm);
     }
@@ -98,9 +98,9 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
         // Add any pending items that were added before
         // the subscription was made.
         synchronized (todoLock) {
-            for (Map.Entry<String, List<T>> entry : todoPending.entrySet()) {
+            for (Map.Entry<String, List<TodoItem>> entry : todoPending.entrySet()) {
                 String id = entry.getKey();
-                List<T> todoList = entry.getValue();
+                List<TodoItem> todoList = entry.getValue();
                 TodoSubscription todo = todos.get(id);
                 todo.addAll(todoList);
             }
@@ -109,10 +109,10 @@ public class TodoPlugin<T extends TodoItem> extends AnnotatedSubscriptionsPlugin
     }
     
     private final class TodoAlarm extends AlarmBase {
-        private final T item;
+        private final TodoItem item;
         private final String todoId;
         
-        public TodoAlarm(long futureTime, T item, String todoId) {
+        public TodoAlarm(long futureTime, TodoItem item, String todoId) {
             super(futureTime);
             this.item = item;
             this.todoId = todoId;
