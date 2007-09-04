@@ -31,10 +31,16 @@ import org.cougaar.core.blackboard.TodoSubscription;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.util.UniqueObject;
 
+/**
+ * Add some methods to {@link TodoSubscription} to improve
+ * the encapsulation of the {@link TodoPlugin} behavior.
+ * Later maybe move these methods into TodoSubscription
+ * itself.
+ */
 public final class DeferrableTodoSubscription extends TodoSubscription {
     private final TodoPlugin plugin;
     
-    DeferrableTodoSubscription(String id, TodoPlugin plugin) {
+    public DeferrableTodoSubscription(String id, TodoPlugin plugin) {
         super(id);
         this.plugin = plugin;
     }
@@ -43,10 +49,12 @@ public final class DeferrableTodoSubscription extends TodoSubscription {
      * Add a item to the todo list in the future
      * @param delay when to add, as an offset from now in millis
      * @param item the datum to add
+     * @return the new alarm, so the caller has the option of cancelling
      */
-    public void add(TodoItem item, long delay) {
+    public Alarm add(long delay, TodoItem item) {
         Alarm alarm = new TodoAlarm(System.currentTimeMillis()+delay, item, this);
         plugin.getAlarmService().addRealTimeAlarm(alarm);
+        return alarm;
     }
     
     /**
@@ -55,10 +63,83 @@ public final class DeferrableTodoSubscription extends TodoSubscription {
      * @param object The object to be added to the blackboard
      * @param blackboard
      */
-    public void deferredPublishAdd(final UniqueObject object, final  BlackboardService blackboard) {
+    public void publishAdd(final UniqueObject object, final BlackboardService blackboard) {
         add(new TodoItem() {
             public void execute() {
                 blackboard.publishAdd(object);
+            }
+        });
+    }
+    
+    /**
+     * Schedule the publish-add of an object during the next execute block
+     * after the given delay.
+     * 
+     * @param object The object to be added to the blackboard
+     * @param blackboard
+     */
+    public Alarm publishAdd(long delay, final UniqueObject object, final BlackboardService blackboard) {
+        return add(delay, new TodoItem() {
+            public void execute() {
+                blackboard.publishAdd(object);
+            }
+        });
+    }
+    
+    /**
+     * Schedule the publish-remove of an object during the next execute block.
+     * 
+     * @param object The object to be added to the blackboard
+     * @param blackboard
+     */
+    public void publishRemove(final UniqueObject object, final BlackboardService blackboard) {
+        add(new TodoItem() {
+            public void execute() {
+                blackboard.publishRemove(object);
+            }
+        });
+    }
+    
+    /**
+     * Schedule the publish-remove of an object during the next execute block
+     * after the given delay.
+     * 
+     * @param object The object to be added to the blackboard
+     * @param blackboard
+     */
+    public Alarm publishRemove(long delay, final UniqueObject object, final BlackboardService blackboard) {
+        return add(delay, new TodoItem() {
+            public void execute() {
+                blackboard.publishRemove(object);
+            }
+        });
+    }
+    
+    /**
+     * Schedule the publish-change of an object during the next execute block.
+     * 
+     * @param object The object to be added to the blackboard
+     * @param blackboard
+     */
+    public void publishChange(final UniqueObject object, final BlackboardService blackboard) {
+        add(new TodoItem() {
+            public void execute() {
+                blackboard.publishChange(object);
+            }
+        });
+    }
+    
+    /**
+     * Schedule the publish-change of an object during the next execute block
+     * after the given delay.
+     * 
+     * @param object The object to be added to the blackboard
+     * @param blackboard
+     */
+    public Alarm publishChange(long delay, final UniqueObject object, final BlackboardService blackboard) {
+        return add(delay, new TodoItem() {
+            public void execute() {
+                blackboard.publishChange(object);
             }
         });
     }
