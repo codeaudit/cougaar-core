@@ -6,68 +6,115 @@
 
 package org.cougaar.core.plugin;
 
-import java.lang.reflect.Field;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
 
+import org.cougaar.core.agent.service.alarm.Alarm;
+import org.cougaar.core.agent.service.alarm.AlarmBase;
 import org.cougaar.core.blackboard.TodoSubscription;
-import org.cougaar.core.service.AlarmService;
-import org.cougaar.util.annotations.Cougaar;
+import org.cougaar.core.util.UniqueObject;
 
 /**
  * An AnnotatedPlugin which manages {@link TodoSubscription}s,
  * the contents of which can be added to via alarm expirations.
  */
 public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
-    private final Map<String, DeferrableTodoSubscription> todos = 
-        new HashMap<String, DeferrableTodoSubscription>();
+    private TodoSubscription todo;
     
     public void load() {
         super.load();
-        for (Field field : getClass().getFields()) {
-            if (field.isAnnotationPresent(Cougaar.Todo.class)) {
-                Cougaar.Todo todo = field.getAnnotation(Cougaar.Todo.class);
-                String key = todo.id();
-                DeferrableTodoSubscription todoSubscription = 
-                    new DeferrableTodoSubscription(key, this);
-                todos.put(key, todoSubscription);
-                try {
-                    field.set(this, todoSubscription);
-                } catch (Exception e) {
-                    String message = "Couldn't set field " +field.getName()+ " of " + this;
-                    log.error(message, e);
-                    throw new RuntimeException(message, e);
-                }
-            }
+        todo = new TodoSubscription("me");
+    }
+    
+    public void executeLater(Runnable runnable) {
+        todo.add(runnable);
+    }
+    
+    public Alarm executeLater(long delayMillis, Runnable runnable) {
+        if (delayMillis <= 0) {
+            executeLater(runnable);
+            return null;
+        } else {
+            Alarm alarm = new TodoAlarm(System.currentTimeMillis()+delayMillis, runnable);
+            getAlarmService().addRealTimeAlarm(alarm);
+            return alarm;
         }
     }
-    
-    /**
-     * This is public so that {@link DeferrableTodoSubscription} can use it.
-     */
-    public AlarmService getAlarmService() {
-        return alarmService;
-    }
-    
+        
     protected void execute() {
         super.execute();
-        for (TodoSubscription subscription : todos.values()) {
-            if (subscription.hasChanged()) {
-                @SuppressWarnings("unchecked")
-                Collection<TodoItem> items = subscription.getAddedCollection();
-                for (TodoItem item : items) {
-                    item.execute();
-                }
-            }
+        @SuppressWarnings("unchecked")
+        Collection<Runnable> items = todo.getAddedCollection();
+        for (Runnable item : items) {
+            item.run();
         }
     }
     
     protected void setupSubscriptions() {
         super.setupSubscriptions();
-        for (TodoSubscription subscription : todos.values()) {
-            blackboard.subscribe(subscription);
-        }
+        blackboard.subscribe(todo);
+    }
+    
+    protected void publishAddLater(UniqueObject object) {
+        publishAddLater(0, object);
+    }
+    
+    protected Alarm publishAddLater(long delay, final UniqueObject object) {
+        return executeLater(delay, new Runnable() {
+            public void run() {
+                blackboard.publishAdd(object);
+            }
+        });
+    }
+    
+    protected void publishRemoveLater(UniqueObject object) {
+        publishRemoveLater(0, object);
+    }
+    
+    protected Alarm publishRemoveLater(long delay, final UniqueObject object) {
+        return executeLater(delay, new Runnable() {
+            public void run() {
+                blackboard.publishRemove(object);
+            }
+        });
+    }
+   
+    protected void publishChangeLater(UniqueObject object) {
+        publishChangeLater(0, object);
+    }
+    
+    protected Alarm publishChangeLater(long delay, final UniqueObject object) {
+        return executeLater(delay, new Runnable() {
+            public void run() {
+                blackboard.publishChange(object);
+            }
+        });
+    }
+    
+    protected void publishChangeLater(UniqueObject object, Collection<?> changeReports) {
+        publishChangeLater(0, object, changeReports);
+    }
+    
+    protected Alarm publishChangeLater(long delay, 
+                                       final UniqueObject object,
+                                       final Collection<?> changeReports) {
+        return executeLater(delay, new Runnable() {
+            public void run() {
+                blackboard.publishChange(object, changeReports);
+            }
+        });
     }
 
+    
+    private final class TodoAlarm extends AlarmBase {
+        private final Runnable item;
+        
+        public TodoAlarm(long futureTime, Runnable item) {
+            super(futureTime);
+            this.item = item;
+        }
+        
+        public void onExpire() {
+            todo.add(item);
+        }
+    }
 }
