@@ -13,5 +13,5 @@ import org.cougaar.core.blackboard.TodoSubscription;
  * managed by a {@link TodoPlugin}.
  */
 public interface TodoItem {
-    public void doWork();
+    public void execute();
 }
