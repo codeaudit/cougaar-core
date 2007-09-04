@@ -3,7 +3,7 @@ package org.cougaar.core.util;
 /**
  * Minimal base class for UniqueObjects that use the UID for equality
  */
-public class BaseUniqueObject {
+public class BaseUniqueObject implements UniqueObject {
     private final UID uid;
 
     public BaseUniqueObject(UID uid) {
@@ -20,5 +20,9 @@ public class BaseUniqueObject {
 
     public int hashCode() {
         return uid.hashCode();
+    }
+
+    public void setUID(UID uid) {
+        throw new IllegalStateException("UID cannot be changed");
     }
 }
