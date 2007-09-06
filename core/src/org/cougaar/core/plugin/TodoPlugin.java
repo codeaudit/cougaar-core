@@ -6,7 +6,9 @@
 
 package org.cougaar.core.plugin;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
@@ -24,11 +26,11 @@ import org.cougaar.core.util.UniqueObject;
  */
 public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
     private TodoSubscription todo;
-
-    public void load() {
-        super.load();
-        todo = new TodoSubscription("me");
-    }
+    
+    // Hackery to deal with work being added before the the
+    // subscription is operational.
+    private final Object pendingLock = new Object();
+    private List<Runnable> pendingWork = new ArrayList<Runnable>();
 
     /**
      * Add some work to the TodoSubscription. The actual running happens in the
@@ -38,7 +40,13 @@ public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
      *            The work to be performed in the execute thread
      */
     public void executeLater(Runnable work) {
-        todo.add(work);
+        synchronized (pendingLock) {
+            if (pendingWork != null) {
+                pendingWork.add(work);
+                return;
+            }
+            todo.add(work);
+        }
     }
 
     /**
@@ -77,7 +85,15 @@ public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
 
     protected void setupSubscriptions() {
         super.setupSubscriptions();
+        todo = new TodoSubscription("me");
         blackboard.subscribe(todo);
+        
+        // Add early work, if any
+        synchronized (pendingLock) {
+            todo.addAll(pendingWork);
+            // now disable pending work
+            pendingWork = null;
+        }
     }
 
     // Convenience methods for simple work that does a single
