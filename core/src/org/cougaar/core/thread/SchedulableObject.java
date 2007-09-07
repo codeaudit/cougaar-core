@@ -257,9 +257,9 @@ final class SchedulableObject implements Schedulable {
 	}
 	while (true) {
 	    try {
-		thread = pool.getThread(this, name);
+		thread = pool.getThread(name);
 		timestamp = System.currentTimeMillis();
-		thread.start_running();
+		thread.start_running(this);
 		break; 	//success
 	    } catch (IllegalThreadStateException e1) {
 		Logger logger = Logging.getLogger(getClass()); 

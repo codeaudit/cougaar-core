@@ -63,7 +63,7 @@ class ThreadPool {
          * guards isRunning, synced while actually executing and waits when
          * suspended.
          */
-        private final Object runLock = new Object();
+        private final Object runLock;
 
         SchedulableObject getSchedulable() {
             return schedulable;
@@ -72,6 +72,7 @@ class ThreadPool {
         /** The only constructor. * */
         private PooledThread(ThreadPool p, String name) {
             super(p.getThreadGroup(), null, name);
+            runLock = new NamedLock(name);
             setDaemon(true);
             pool = p;
         }
@@ -112,7 +113,7 @@ class ThreadPool {
                 last_schedulable.addToReclaimer();
             }
         }
-        
+               
         public final void run() {
             synchronized (runLock) {
                 while (true) {
@@ -120,25 +121,28 @@ class ThreadPool {
                     // Run schedulables as long as we have one to run
                     continuationLoop();
                     
-                    // Check special shutdown flag
                     if (should_stop) {
-                        break;
+                    	// Thread service is shutting down
+                        return;
                     }
                     
-                    // Wait for more work
-                    try {
-                        runLock.wait();
-                        if (schedulable == null && !should_stop) {
-                            pool.logger.warn("Spurious wake up (no work), runLock = " + runLock);
-                        }
-                    } catch (InterruptedException ie) {
-                        pool.logger.warn("Unexpected interrupt, thread=" + this);
-                    }
-                    
-                    // Check special shutdown flag again
-                    if (should_stop) {
-                        break;
-                    }
+                    // Wait for more work, ignoring spurious wakeups and interrupts
+					do {
+						try {
+							runLock.wait();
+							if (should_stop) {
+								// Thread service is shutting down
+								return;
+							}
+							if (schedulable == null) {
+								pool.logger.warn("Spurious wake up (no work), runLock = "
+												+ runLock);
+							}
+						} catch (InterruptedException ie) {
+							pool.logger.warn("Unexpected interrupt, thread="
+									+ this);
+						}
+					} while (schedulable == null);                
                 }
             }
         }
@@ -147,8 +151,9 @@ class ThreadPool {
             throw new RuntimeException("You can't call start() on a PooledThread");
         }
 
-        void start_running() throws IllegalThreadStateException {
+        void start_running(SchedulableObject newSchedulable) throws IllegalThreadStateException {
             synchronized (runLock) {
+            	schedulable=newSchedulable;
                 if (isRunning) {
                     throw new IllegalThreadStateException("PooledThread already started: "
                             + schedulable);
@@ -243,7 +248,7 @@ class ThreadPool {
         return group;
     }
 
-    PooledThread getThread(SchedulableObject schedulable, String name) {
+    PooledThread getThread(String name) {
         PooledThread thread = null;
         PooledThread candidate = null;
 
@@ -258,12 +263,10 @@ class ThreadPool {
                     thread = constructReusableThread();
                     pool[i] = thread;
                     thread.in_use = true;
-                    thread.schedulable = schedulable;
-                    break;
+                     break;
                 } else if (!candidate.in_use) {
                     thread = candidate;
                     thread.in_use = true;
-                    thread.schedulable = schedulable;
                     break;
                 }
             }
@@ -276,7 +279,6 @@ class ThreadPool {
                     if (!candidate.in_use) {
                         thread = candidate;
                         thread.in_use = true;
-                        thread.schedulable = schedulable;
                         break;
                     }
                 }
@@ -284,7 +286,6 @@ class ThreadPool {
                     // None in the list either. Make one and add it,
                     thread = constructReusableThread();
                     thread.in_use = true;
-                    thread.schedulable = schedulable;
                     list_pool.add(thread);
                 }
             }
@@ -373,4 +374,16 @@ class ThreadPool {
         }
     }
 
+    
+    private static class NamedLock {
+    	private final String name;
+    	
+    	NamedLock(String name) {
+    		this.name = "Run lock " +name;
+    	}
+    	
+    	public String toString() {
+    		return name;
+    	}
+    }
 }
