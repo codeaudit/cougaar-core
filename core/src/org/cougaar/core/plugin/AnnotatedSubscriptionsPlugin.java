@@ -107,12 +107,14 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
             
         }
 
+        @SuppressWarnings("deprecation")
         private boolean isTesterMethod(Method method, String name, Class<?> argClass) {
-            if (!method.isAnnotationPresent(Cougaar.Predicate.class)) {
-                return false;
-            }
-            Cougaar.Predicate pred = method.getAnnotation(Cougaar.Predicate.class);
-            if (!name.equals(pred.when())) {
+            if (method.isAnnotationPresent(Cougaar.Predicate.class)) {
+                Cougaar.Predicate pred = method.getAnnotation(Cougaar.Predicate.class);
+                if (!name.equals(pred.when())) {
+                    return false;
+                }
+            } else if (!name.equals(method.getName())) {
                 return false;
             }
             Class<?>[] paramTypes = method.getParameterTypes();
