@@ -22,14 +22,14 @@ public abstract class ParameterizedPlugin extends ComponentPlugin {
      * TODO: Pull up to BlackboardClientComponent.
      * TODO: Make public once the annotation is working.
      */
-    @Cougaar.Service()
+    @Cougaar.ObtainService()
     protected LoggingService log;
     
     /** 
      * TODO: Pull up to BlackboardClientComponent.
      * TODO: Make public once the annotation is working.
      */
-    @Cougaar.Service()
+    @Cougaar.ObtainService()
     protected UIDService uids;
     
     /**
