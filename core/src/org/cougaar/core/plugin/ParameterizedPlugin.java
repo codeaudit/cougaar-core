@@ -20,32 +20,15 @@ public abstract class ParameterizedPlugin extends ComponentPlugin {
     
     /** 
      * TODO: Pull up to BlackboardClientComponent.
-     * TODO: Make public once the annotation is working.
      */
     @Cougaar.ObtainService()
-    protected LoggingService log;
+    public LoggingService log;
     
     /** 
      * TODO: Pull up to BlackboardClientComponent.
-     * TODO: Make public once the annotation is working.
      */
     @Cougaar.ObtainService()
-    protected UIDService uids;
-    
-    /**
-     * TODO: Remove once the {@Cougaar.Service} annotation on {@link #uids} is working.
-     */
-    public void setUIDService(UIDService uidService) {
-        this.uids=uidService;
-    }
-    
-    /**
-     * TODO: Remove once the {@Cougaar.Service} annotation on {@link #log} is working.
-     */
-    public final void setLoggingService(LoggingService logger) {
-        this.log = logger;
-    }
-    
+    public UIDService uids;
     
     public void setArguments(Arguments args) {
         this.args = args;
