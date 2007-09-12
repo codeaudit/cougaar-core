@@ -21,13 +21,13 @@ public abstract class ParameterizedPlugin extends ComponentPlugin {
     /** 
      * TODO: Pull up to BlackboardClientComponent.
      */
-    @Cougaar.ObtainService()
+    @Cougaar.ObtainService
     public LoggingService log;
     
     /** 
      * TODO: Pull up to BlackboardClientComponent.
      */
-    @Cougaar.ObtainService()
+    @Cougaar.ObtainService
     public UIDService uids;
     
     public void setArguments(Arguments args) {
