@@ -39,20 +39,20 @@ public class UniqueObjectBase implements UniqueObject {
     this.uid = uid;
   }
 
-  public UID getUID() {
+  public final UID getUID() {
     return uid;
   }
-  public void setUID(UID uid) {
+  public final void setUID(UID uid) {
     throw new IllegalStateException("UID cannot be changed");
   }
 
-  public boolean equals(Object o) {
+  public final boolean equals(Object o) {
     return 
       ((o == this) ||
        ((o instanceof UniqueObject) &&
         uid.equals(((UniqueObject) o).getUID())));
   }
-  public int hashCode() {
+  public final int hashCode() {
     return uid.hashCode();
   }
   public String toString() {
