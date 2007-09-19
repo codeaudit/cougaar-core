@@ -230,6 +230,7 @@
       <include name="**/*.png"/>
       <include name="**/*.properties"/>
       <include name="**/*.xml"/>
+      <include name="**/*.dtd"/>
       <include name="**/*.wav"/>
       <include name="**/*.au"/>
     </patternset>
@@ -353,11 +354,10 @@
     <!-- ========================================================== -->	
     <target name="compile-examples" depends="prepare, compile" description="Compiles the example Code" if="has.examples">
       <mkdir dir="${module.examples}" />
-      <!-- source=1.4 required to allow asserts -->
       <javac srcdir="${examples}"
 	     destdir="${module.examples}"
 	     includeAntRuntime="no"
-	     source="1.4"
+	     source="1.5"
 	     debug="${build.compiler.debug}"
 	     optimize="${build.compiler.optimize}"
 	     deprecation="${build.compiler.deprecation}">
@@ -452,9 +452,8 @@
     <target name="really-compile" depends="prepare, defrunner, check-sources" if="has.src">
       <mkdir dir="${module.classes}" />
       <available property="has.build" file="${module.classes}"/>
-      <!-- source=1.4 required for asserts -->
       <javac srcdir="${src}" destdir="${module.classes}"
-	     source="1.4"
+	     source="1.5"
 	     includeAntRuntime="no"
 	     debug="${build.compiler.debug}"
 	     optimize="${build.compiler.optimize}"
@@ -525,7 +524,7 @@
     <target name="clean" depends="clean-gencode, custom.clean" description="Delete compiled code">
       <delete dir="${module.classes}" />
       <delete>
-	<fileset dir="${target.dir}" includes="**/${module.jar}" />
+	<fileset dir="${target.dir}" includes="**/${module}.jar" />
       </delete>
     </target>
 
@@ -534,7 +533,7 @@
     <!-- ====================================================================== -->	
     <target name="compile-tests" depends="prepare, junit, compile" description="Compile unit tests" if="junit.present"> 
       <mkdir dir="${module.regress}" />
-      <javac srcdir="${regress}" destdir="${module.regress}" source="1.4"
+      <javac srcdir="${regress}" destdir="${module.regress}" source="1.5"
 	     deprecation="${build.compiler.deprecation}"
 	     optimize="off"
 	     debug="on">
@@ -578,7 +577,7 @@
     <target name="dist-module" depends="compile, clean-tests, clean-examples" description="Jars the module" if="has.build">
       <jar jarfile="${target.lib}/${module}-${DSTAMP}.jar" basedir="${module.classes}" />
       <exec dir="${target.lib}" executable="ln" os="Linux">
-	<arg line=" -s ${module}-${DSTAMP}.jar ${module.jar}" />
+	<arg line=" -s ${module}-${DSTAMP}.jar ${module}.jar" />
       </exec>
     </target>
     
@@ -606,7 +605,7 @@
 	       use="true"
 	       doclet="org.cougaar.tools.javadoc.CougaarDoclet"
 	       docletpath="${target.clib}/build.jar"
-	       source="1.4"
+	       source="1.5"
 	       additionalparam="-breakiterator"
 	       windowtitle="${moduleUp} API"
 	       doctitle="${moduleUp} API"
