@@ -26,99 +26,85 @@
 
 package org.cougaar.core.qos.metrics;
 
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.lang.reflect.Constructor;
 import java.util.List;
-import java.util.StringTokenizer;
 
-import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.service.LoggingService;
+import org.cougaar.util.annotations.Cougaar.ObtainService;
 
 /**
- * This Component uses its parameters to create and register a
- * DataFeed.  The parameters are <code>name</code> (the name of the
- * feed), <code>class</code> (the fully qualified classname of the
- * feed type) and <code>args</code> (the initialization parameters for
- * the feed.
- *
+ * This Component uses its parameters to create and register a DataFeed. The
+ * parameters are <code>name</code> (the name of the feed), <code>class</code>
+ * (the fully qualified classname of the feed type) and <code>args</code> (the
+ * initialization parameters for the feed.
+ * 
  * @see DataFeedRegistrationService
  */
-public class FeedLoader extends QosComponent
-{
-    private static final Class[] ParamTypes =  { String[].class };
+public class FeedLoader extends QosComponent {
+    private static final Class<?>[] ParamTypes = {String[].class};
     private String[] args;
     private String name;
     private String classname;
-
-    private String[] parseArgs(String raw) {
-	ArrayList temp = new ArrayList();
-	StringTokenizer tokenizer = new StringTokenizer(raw, " ");
-	while (tokenizer.hasMoreTokens()) {
-	    String token = tokenizer.nextToken().trim();
-	    temp.add(token);
-	}
-	//JAZ Object[] can not be cast to Sting[], 
-	// Must be a better way
-	String[] returnValue = new String[temp.size()];
-	int i;
-	for (i = 0; i< temp.size(); i++) returnValue[i]=(String) temp.get(i);
-	return returnValue;
-    }
+    
+    @ObtainService
+    public DataFeedRegistrationService svc;
+    
+    @ObtainService
+    public LoggingService log;
 
     private String getURL() {
-	int i ;
-	for (i = 0; i < (args.length -1); i++) {
-	    if ( args[i].equals("-url") )
-		return args[i+1];
-	}
-	return null;
+        int i;
+        for (i = 0; i < args.length - 1; i++) {
+            if (args[i].equals("-url")) {
+                return args[i + 1];
+            }
+        }
+        return null;
     }
 
+    // XXX: Can we replace this with @Arg fields?
     public void setParameter(Object param) {
-	if (param instanceof List) {
-	    Iterator itr = ((List) param).iterator();
-	    while(itr.hasNext()) {
-		String property = (String) itr.next();
-		int sepr = property.indexOf('=');
-		if (sepr < 0) continue;
-		String key = property.substring(0, sepr);
-		String value = property.substring(++sepr);
-		if (key.equalsIgnoreCase("name"))
-		    name = value;
-		else if (key.equalsIgnoreCase("class"))
-		    classname = value;
-		else if (key.equalsIgnoreCase("args"))
-		    args=parseArgs(value);
-	    }
-	}
+        if (param instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<String> parameters = (List<String>) param;
+            for (String property : parameters) {
+                int sepr = property.indexOf('=');
+                if (sepr < 0) {
+                    continue;
+                }
+                String key = property.substring(0, sepr);
+                String value = property.substring(++sepr);
+                if (key.equalsIgnoreCase("name")) {
+                    name = value;
+                } else if (key.equalsIgnoreCase("class")) {
+                    classname = value;
+                } else if (key.equalsIgnoreCase("args")) {
+                    args = value.split(" ");
+                }
+            }
+        }
     }
 
     public void load() {
         super.load();
-	ServiceBroker sb = getServiceBroker();
-	DataFeedRegistrationService svc = (DataFeedRegistrationService)
-	    sb.getService(this, DataFeedRegistrationService.class, null);
-	if (svc != null && name != null && 
-	    classname != null  && args != null ) {
-	    Object feed = null;
-	    try {
-		Class cl = Class.forName(classname);
-		java.lang.reflect.Constructor constructor = 
-		    cl.getConstructor(ParamTypes);
-		Object[] argList = { args };
-		feed = constructor.newInstance(argList);
-		svc.registerFeed(feed, name);
-		if (name.equalsIgnoreCase("sites")){
-		    // special Feed that has the URL for the sites file
-		    svc.populateSites(getURL());
-		}
-	    } catch (Exception ex) {
-		LoggingService lsvc = (LoggingService)
-		    sb.getService(this, LoggingService.class, null);
-		if (lsvc.isErrorEnabled())
-		    lsvc.error("Error creating DataFeed: " + ex);
-	    }
+        if (svc != null && name != null && classname != null && args != null) {
+            Object feed = null;
+            try {
+                Class<?> cl = Class.forName(classname);
+                Constructor<?> constructor = cl.getConstructor(ParamTypes);
+                Object[] argList = {args};
+                feed = constructor.newInstance(argList);
+                svc.registerFeed(feed, name);
+                if (name.equalsIgnoreCase("sites")) {
+                    // special Feed that has the URL for the sites file
+                    svc.populateSites(getURL());
+                }
+            } catch (Exception ex) {
+                if (log.isErrorEnabled()) {
+                    log.error("Error creating DataFeed: " + ex);
+                }
+            }
 
-	}
+        }
     }
 }
