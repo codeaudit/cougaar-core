@@ -101,7 +101,7 @@ public class FeedLoader extends QosComponent {
                 }
             } catch (Exception ex) {
                 if (log.isErrorEnabled()) {
-                    log.error("Error creating DataFeed: " + ex);
+                    log.error("Error creating DataFeed: " + ex.getMessage());
                 }
             }
 
