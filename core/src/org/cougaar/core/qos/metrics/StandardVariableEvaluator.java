@@ -31,47 +31,54 @@ import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 
-
 /**
  * This VariableEvaluator can find values for <code>$(localhost)</code> (the
  * current host), <code>$(localnode)</code> (the current node) and
  * <code>$(localagent)</code> (the current agent).
+ * 
+ * For example if you're running on host cranberry.bbn.com, then the path
+ * 
+ * <pre>
+ *     $(localhost):EffectiveMJips
+ * </pre>
+ * 
+ * will be converted to:
+ * 
+ * <pre>
+ *    Host(cranberry.bbn.com):EffectiveMJips
+ * </pre>
  */
-public class StandardVariableEvaluator implements VariableEvaluator
-{
+public class StandardVariableEvaluator implements VariableEvaluator {
     protected ServiceBroker sb;
-    private AgentIdentificationService agentid_service;
-    private NodeIdentificationService nodeid_service;
+    private final AgentIdentificationService agentid_service;
+    private final NodeIdentificationService nodeid_service;
     private String host;
 
     public StandardVariableEvaluator(ServiceBroker sb) {
-	this.sb = sb;
-	agentid_service = (AgentIdentificationService)
-	    sb.getService(this, AgentIdentificationService.class, null);
-	nodeid_service = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
-	try {
-	    host = java.net.InetAddress.getLocalHost().getHostAddress();
-	} catch (Exception ex) {
-	    LoggingService lsvc = (LoggingService)
-		sb.getService(this, LoggingService.class, null);
-	    if (lsvc.isErrorEnabled())
-		lsvc.error("Failed to get local address: " + ex);
-	    host = "10.0.0.0"; // nice
-	}
+        this.sb = sb;
+        agentid_service = sb.getService(this, AgentIdentificationService.class, null);
+        nodeid_service = sb.getService(this, NodeIdentificationService.class, null);
+        try {
+            host = java.net.InetAddress.getLocalHost().getHostAddress();
+        } catch (Exception ex) {
+            LoggingService log = sb.getService(this, LoggingService.class, null);
+            if (log.isErrorEnabled()) {
+                log.error("Failed to get local address: " + ex);
+            }
+            host = "10.0.0.0"; // nice
+        }
     }
 
     public String evaluateVariable(String var) {
-	if (var.equals("localagent")) {
-	    return "Agent(" +agentid_service.getName()+ ")";
-	} else if (var.equals("localnode")) {
-	    return "Node(" +nodeid_service.getMessageAddress().getAddress()+
-		")";
-	} else if (var.equals("localhost")) {
-	    return "Host(" +host+ ")";
-	} else {
-	    return null;
-	}
+        if (var.equals("localagent")) {
+            return "Agent(" + agentid_service.getName() + ")";
+        } else if (var.equals("localnode")) {
+            return "Node(" + nodeid_service.getMessageAddress().getAddress() + ")";
+        } else if (var.equals("localhost")) {
+            return "Host(" + host + ")";
+        } else {
+            return null;
+        }
     }
 
 }

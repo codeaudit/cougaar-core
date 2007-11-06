@@ -49,7 +49,7 @@ import org.cougaar.core.service.ServletService;
  * useful for web display).
  * 
  * <p> Example:
- * <p>http://localhost:8800/$3-69-ARBN/metrics/query?format=xml&amp;paths=Agent($3-69-ARBN):Jips|Agent($3-69-ARBN):CPULoadJips10SecAvg
+ * <p>http://localhost:8800/$3-69-ARBN/metrics/query?format=xml&amp;paths=$(localagent):Jips|Agent(3-69-ARBN):CPULoadJips(10)
  *
  * <p> See org.cougaar.core.examples.metrics.ExampleMetricQueryClient
  */
@@ -58,8 +58,10 @@ public class MetricQueryServlet
     extends HttpServlet
 {
   private MetricsService metricsService;
+  private VariableEvaluator variableEvaluator;
   
   public MetricQueryServlet(ServiceBroker sb) {
+     
     // Register our servlet with servlet service
     ServletService servletService = (ServletService)
       sb.getService(this, ServletService.class, null);
@@ -75,6 +77,7 @@ public class MetricQueryServlet
    
     // get metrics service
     try {
+    variableEvaluator= new StandardVariableEvaluator(sb);
     metricsService = (MetricsService)
       sb.getService(this, MetricsService.class, null);
     } catch (Exception e) {
@@ -144,8 +147,8 @@ public class MetricQueryServlet
   {
       if (paths == null) return
 	  "<?xml version='1.0'?>\n"+
-	  "<!-- Null Metrics Query -->\n"+
-	  "<!-- Usage: /metrics/query/?paths=Host(Foo):Jips|Host(Foo):LoadAverage -->\n"+
+	  "<!-- Bad Metrics Query -->\n"+
+	  "<!-- Usage: /metrics/query?format=xml&paths=Host(Foo):Jips|$(localhost):LoadAverage -->\n"+
 	  "<paths></paths>\n";
 
     StringTokenizer st = new StringTokenizer(paths, "|");
@@ -179,7 +182,7 @@ public class MetricQueryServlet
       metrics = metrics+"</name>";
       
       try {
-	Metric pathMetric = metricsService.getValue(path);
+	Metric pathMetric = metricsService.getValue(path,variableEvaluator);
 	// here we call XMLString(Metric), which is an xml toString() for Metric
 	metrics = metrics+ServletUtilities.XMLString(pathMetric);
       } catch(Exception e) {
@@ -210,7 +213,7 @@ public class MetricQueryServlet
       String path = st.nextToken();
       Metric pathMetric=null;
       try {
-	  pathMetric = metricsService.getValue(path);
+	  pathMetric = metricsService.getValue(path,variableEvaluator);
       } catch(Exception e) {
 	  // Bad path spec Leave pathMetric as null or "Undefined"
       }
