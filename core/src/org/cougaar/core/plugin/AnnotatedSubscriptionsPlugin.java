@@ -46,11 +46,21 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
                 } else {
                     // Use the type of the first arg as an implicit 'isa'
                     Class<?>[] parameterTypes = method.getParameterTypes();
-                    if (parameterTypes.length != 1) {
+                    if (parameterTypes.length < 1 || parameterTypes.length > 2) {
                         String message = method.getName() + " of class " +getClass().getName()+
-                        " has the wrong number of arguments (should be 1)";
+                        " has the wrong number of arguments (should be 1 or 2)";
                         log.error(message);
                         continue;
+                    }
+                    if (parameterTypes.length == 2) {
+                        // ensure 2nd arg is IncrementalSubscription
+                        Class<?> cls = parameterTypes[1];
+                        if (!IncrementalSubscription.class.isAssignableFrom(cls)) {
+                            String message = method.getName() + " of class " +getClass().getName()+
+                            " has an invalid second argument (should be IncrementalSubscription)";
+                            log.error(message);
+                            continue;
+                        }
                     }
                     id = parameterTypes[0].getName();
                 }
@@ -192,12 +202,18 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
                 // failed to make a proper subscription, or no changes
                 return;
             }
+            boolean includeSubscription = method.getParameterTypes().length == 2;
             for (Subscribe.ModType op : ops) {
                 Collection<?> objects = getCollection(op);
                 if (objects != null) {
                     for (Object object : objects) {
                         try {
-                            method.invoke(AnnotatedSubscriptionsPlugin.this, object);
+                            AnnotatedSubscriptionsPlugin plugin = AnnotatedSubscriptionsPlugin.this;
+                            if (includeSubscription) {
+                                method.invoke(plugin, object, sub);
+                            } else {
+                                method.invoke(plugin, object);
+                            }
                         } catch (Exception e) {
                             log.error("Failed to invoke annotated method", e);
                         }
