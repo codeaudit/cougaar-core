@@ -36,43 +36,44 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
      }
     
     protected void setupSubscriptions() {
-        for (Method method : getClass().getMethods()) {
-            if (method.isAnnotationPresent(Cougaar.Execute.class)) {
-                Cougaar.Execute annotation = method.getAnnotation(Cougaar.Execute.class);
-                String id;
-                String when = annotation.when();
-                if (!Cougaar.NO_VALUE.equals(when)){
-                    id = when;
-                } else {
-                    // Use the type of the first arg as an implicit 'isa'
-                    Class<?>[] parameterTypes = method.getParameterTypes();
-                    if (parameterTypes.length < 1 || parameterTypes.length > 2) {
+        Class<? extends AnnotatedSubscriptionsPlugin> klass = getClass();
+        // Method[] methods = klass.getMethods();
+        Collection<Method> methods = Cougaar.getAnnotatedMethods(klass, Cougaar.Execute.class);
+        for (Method method : methods) {
+            Cougaar.Execute annotation = method.getAnnotation(Cougaar.Execute.class);
+            String id;
+            String when = annotation.when();
+            if (!Cougaar.NO_VALUE.equals(when)){
+                id = when;
+            } else {
+                // Use the type of the first arg as an implicit 'isa'
+                Class<?>[] parameterTypes = method.getParameterTypes();
+                if (parameterTypes.length < 1 || parameterTypes.length > 2) {
+                    String message = method.getName() + " of class " +getClass().getName()+
+                    " has the wrong number of arguments (should be 1 or 2)";
+                    log.error(message);
+                    continue;
+                }
+                if (parameterTypes.length == 2) {
+                    // ensure 2nd arg is IncrementalSubscription
+                    Class<?> cls = parameterTypes[1];
+                    if (!IncrementalSubscription.class.isAssignableFrom(cls)) {
                         String message = method.getName() + " of class " +getClass().getName()+
-                        " has the wrong number of arguments (should be 1 or 2)";
+                        " has an invalid second argument (should be IncrementalSubscription)";
                         log.error(message);
                         continue;
                     }
-                    if (parameterTypes.length == 2) {
-                        // ensure 2nd arg is IncrementalSubscription
-                        Class<?> cls = parameterTypes[1];
-                        if (!IncrementalSubscription.class.isAssignableFrom(cls)) {
-                            String message = method.getName() + " of class " +getClass().getName()+
-                            " has an invalid second argument (should be IncrementalSubscription)";
-                            log.error(message);
-                            continue;
-                        }
-                    }
-                    id = parameterTypes[0].getName();
                 }
-                IncrementalSubscription subscription = subscriptions.get(id);
-                if (subscription != null) {
-                    Invoker invoker = new Invoker(method, annotation, subscription);
-                    invokers.add(invoker);
-                } else {
-                    Invoker invoker = new Invoker(method, annotation);
-                    subscriptions.put(id, invoker.sub);
-                    invokers.add(invoker);
-                }
+                id = parameterTypes[0].getName();
+            }
+            IncrementalSubscription subscription = subscriptions.get(id);
+            if (subscription != null) {
+                Invoker invoker = new Invoker(method, annotation, subscription);
+                invokers.add(invoker);
+            } else {
+                Invoker invoker = new Invoker(method, annotation);
+                subscriptions.put(id, invoker.sub);
+                invokers.add(invoker);
             }
         }
     }
