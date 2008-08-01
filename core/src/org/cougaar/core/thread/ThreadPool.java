@@ -333,7 +333,7 @@ class ThreadPool {
         int count = 0;
         for (int i = 0; i < p.length; i++) {
             PooledThread thread = p[i];
-            if (thread == null || thread.isRunning) {
+            if (thread == null || !thread.isRunning) {
                 continue;
             }
             try {
