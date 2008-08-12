@@ -34,17 +34,19 @@ import org.cougaar.core.component.Service;
  * This service is used by the metrics service to monitor agent and node
  * messaging activity.
  */
-public interface AgentStatusService extends Service
-{
-    int UNKNOWN = 0;
-    int UNREGISTERED = 1;
-    int UNREACHABLE = 2;
-    int ACTIVE = 3;
+public interface AgentStatusService extends Service {
+
+    enum Status {
+        UNKNOWN,
+        UNREGISTERED,
+        UNREACHABLE,
+        ACTIVE
+    }
 
     /** {@link AgentStatusService} state object */
-    class AgentState {
-	public long timestamp;
-	public int status;
+    class AgentState implements Cloneable {
+	public long timestamp = System.currentTimeMillis();
+	public Status status = Status.UNREGISTERED;
 	public int queueLength;
 	public int receivedCount;
 	public long receivedBytes;
@@ -65,18 +67,16 @@ public interface AgentStatusService extends Service
 	public long lastHeardFrom;
 	public long lastSentTo;
 	public long lastFailedSend;
+	
+	public AgentState clone() throws CloneNotSupportedException {
+	    return (AgentState) super.clone();
+	}
     }
 
-    AgentState getRemoteAgentState(MessageAddress address);
-    AgentState getLocalAgentState(MessageAddress address);
-    AgentState getNodeState();
+    public AgentState getRemoteAgentState(MessageAddress address);
+    public AgentState getLocalAgentState(MessageAddress address);
+    public AgentState getNodeState();
 
-    Set<MessageAddress> getLocalAgents();
-    Set<MessageAddress> getRemoteAgents();
-
-    /**
-     * @deprecated Use {@link #getRemoteAgentState}
-     */
-    AgentState getAgentState(MessageAddress address);
-
+    public Set<MessageAddress> getLocalAgents();
+    public Set<MessageAddress> getRemoteAgents();
 }
