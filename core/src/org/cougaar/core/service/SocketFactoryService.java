@@ -52,5 +52,5 @@ public interface SocketFactoryService extends Service {
    * @param m Allows arbitrary preferences and parameters to be specified.
    * @return an object which is instanceof the requested class or null.
    */
-  Object getSocketFactory(Class clazz, Map m);
+  Object getSocketFactory(Class<?> clazz, Map<String,Boolean> m);
 }

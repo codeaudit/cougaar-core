@@ -26,6 +26,8 @@
 
 package org.cougaar.core.service;
 
+import java.util.List;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Message;
@@ -69,7 +71,7 @@ public interface MessageTransportService extends Service
      * Block until all queued messages have been sent (or dropped).
      * @return The list of dropped messages (could be null).
      */
-    java.util.ArrayList flushMessages();
+    List<Message> flushMessages();
 
     /**
      * @return the name of the entity that this MessageTransport

@@ -71,8 +71,8 @@ public interface AgentStatusService extends Service
     AgentState getLocalAgentState(MessageAddress address);
     AgentState getNodeState();
 
-    Set getLocalAgents();
-    Set getRemoteAgents();
+    Set<MessageAddress> getLocalAgents();
+    Set<MessageAddress> getRemoteAgents();
 
     /**
      * @deprecated Use {@link #getRemoteAgentState}
