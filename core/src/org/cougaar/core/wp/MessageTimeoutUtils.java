@@ -26,6 +26,7 @@
 
 package org.cougaar.core.wp;
 
+import org.cougaar.core.mts.AttributeConstants;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.mts.SimpleMessageAttributes;
@@ -34,34 +35,27 @@ import org.cougaar.core.mts.SimpleMessageAttributes;
  * A utility class to attach an MTS timeout attribute to a message
  * address.
  */
-public final class MessageTimeoutUtils {
+public final class MessageTimeoutUtils implements AttributeConstants {
 
-  /**
-   * Attribute constants, to be moved into the core MTS (bug 3213).
-   */
-  private static final String SEND_TIMEOUT  = "MessageSendTimeout";
-  private static final String SEND_DEADLINE = "MessageSendDeadline";
-
-
-  private MessageTimeoutUtils() {}
+ private MessageTimeoutUtils() {}
 
   /**
    * Get the absolute deadline on an address, for example
    * <code>1060280361356</code> milliseconds.
    */
   public static long getDeadline(MessageAddress addr) {
-    Number value = get(addr, SEND_DEADLINE);
+    Number value = get(addr, MESSAGE_SEND_DEADLINE_ATTRIBUTE);
     return (value == null ? -1 : value.longValue());
   }
 
-  /** Tag an address with a relative timeout. */
+  /** Tag an address with a absolute timeout. */
   public static MessageAddress setDeadline(
       MessageAddress addr,
       long deadline) {
     return
       (deadline <= 0 ?
        (addr) :
-       set(addr, SEND_DEADLINE, new Long(deadline)));
+       set(addr, MESSAGE_SEND_DEADLINE_ATTRIBUTE, new Long(deadline)));
   }
 
   /**
@@ -69,7 +63,7 @@ public final class MessageTimeoutUtils {
    * <code>5000</code> milliseconds. 
    */
   public static long getTimeout(MessageAddress addr) {
-    Number value = get(addr, SEND_TIMEOUT);
+    Number value = get(addr, MESSAGE_SEND_TIMEOUT_ATTRIBUTE);
     return (value == null ? -1 : value.longValue());
   }
 
@@ -81,7 +75,7 @@ public final class MessageTimeoutUtils {
     return
       (t <= 0 ?
        (addr) :
-       set(addr, SEND_TIMEOUT, new Integer(t)));
+       set(addr, MESSAGE_SEND_TIMEOUT_ATTRIBUTE, new Integer(t)));
   }
 
   // get a number attribute
