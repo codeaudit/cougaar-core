@@ -25,6 +25,7 @@
  */
 package org.cougaar.core.examples;
 
+import java.net.InetAddress;
 import java.util.*;
 import org.cougaar.util.*;
 import org.cougaar.core.agent.*;
@@ -107,6 +108,10 @@ extends ServiceFilter
       MessageAddress ret = nis.getMessageAddress();
       System.out.println("Agent wrapper: get node-id "+ret+" for client "+client);
       return ret;
+    }
+    
+    public InetAddress getInetAddress() {
+      return nis.getInetAddress();
     }
   }
 }

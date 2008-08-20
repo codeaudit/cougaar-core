@@ -26,6 +26,10 @@
 
 package org.cougaar.core.node;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+
+import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
@@ -35,9 +39,16 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public class NodeIdentificationServiceProvider implements ServiceProvider {
   private MessageAddress nodeID;
-
+  private InetAddress inetAddress;
   public NodeIdentificationServiceProvider(MessageAddress nodeID) {
     this.nodeID = nodeID;
+    
+    String addr = SystemProperties.getProperty("org.cougaar.node.inet.address");
+    try {
+        inetAddress = addr != null ? InetAddress.getByName(addr) : InetAddress.getLocalHost();
+    } catch (UnknownHostException e) {
+        throw new RuntimeException("Could not determine host address", e);
+    }
   }
   
   public Object getService(ServiceBroker sb, Object requestor, Class serviceClass) {
@@ -54,6 +65,9 @@ public class NodeIdentificationServiceProvider implements ServiceProvider {
   private final class NodeIdentificationServiceProxy implements NodeIdentificationService {
     public MessageAddress getMessageAddress() {
       return nodeID;
-    } 
+    }
+    public InetAddress getInetAddress() {
+      return inetAddress;
+    }
   } 
 }

@@ -26,6 +26,8 @@
 
 package org.cougaar.core.node;
 
+import java.net.InetAddress;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 
@@ -34,4 +36,5 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public interface NodeIdentificationService extends Service {
   MessageAddress getMessageAddress();
+  InetAddress getInetAddress();
 }

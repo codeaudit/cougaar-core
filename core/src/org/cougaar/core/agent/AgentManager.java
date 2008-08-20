@@ -106,8 +106,8 @@ public class AgentManager
     params = null;
 
     String nodeName = getNodeName();
-
-    add_node_identification_service(nodeName);
+    InetAddress inetAddress = getInetAddress();
+    add_node_identification_service(nodeName, inetAddress);
 
     add_node_control_service();
 
@@ -178,8 +178,17 @@ public class AgentManager
     }
     return nodeName;
   }
+  
+  private InetAddress getInetAddress() {
+      String addr = SystemProperties.getProperty("org.cougaar.node.inet.address");
+      try {
+          return addr != null ? InetAddress.getByName(addr) : InetAddress.getLocalHost();
+      } catch (UnknownHostException e) {
+          throw new RuntimeException("Could not determine host address", e);
+      }
+    }
 
-  private void add_node_identification_service(String nodeName) {
+  private void add_node_identification_service(String nodeName, final InetAddress inetAddress) {
     final MessageAddress localNode =
         MessageAddress.getMessageAddress(nodeName);
     Class clazz = NodeIdentificationService.class;
@@ -187,6 +196,9 @@ public class AgentManager
         new NodeIdentificationService() {
           public MessageAddress getMessageAddress() {
             return localNode;
+          }
+          public InetAddress getInetAddress() {
+            return inetAddress;
           }
         };
     nodeIdentificationSP = add_service(clazz, service);
