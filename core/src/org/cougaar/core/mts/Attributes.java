@@ -53,4 +53,6 @@ public interface Attributes extends Serializable, AttributeConstants
   void mergeAttributes(Attributes attributes);
 
   String getAttributesAsString();
+  
+  boolean isEmpty();
 }

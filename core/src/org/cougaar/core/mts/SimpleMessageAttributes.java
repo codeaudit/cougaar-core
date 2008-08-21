@@ -40,7 +40,7 @@ import java.util.Map;
 public class SimpleMessageAttributes    
     implements MessageAttributes, AgentState, Serializable
 {
-  private HashMap data;
+  private final HashMap data;
   private transient HashMap local_data;
 
   public SimpleMessageAttributes() {
@@ -285,5 +285,9 @@ public class SimpleMessageAttributes
         map.remove(attribute);
       }
     }
+  }
+  
+  public boolean isEmpty() {
+      return data.isEmpty() && local_data.isEmpty();
   }
 }
