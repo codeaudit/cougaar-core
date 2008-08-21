@@ -35,16 +35,15 @@ public interface AttributeConstants
   String ENCRYPTED_SOCKET_ATTRIBUTE = "EncryptedSocket";
 
   String DELIVERY_ATTRIBUTE = "DeliveryStatus";
-  String DELIVERY_STATUS_DELIVERED = "Delivered";
-  String DELIVERY_STATUS_CLIENT_ERROR = 
-    "ClientException";
-  String DELIVERY_STATUS_DROPPED_DUPLICATE = 
-    "DroppedDuplicate";
-  String DELIVERY_STATUS_HELD = "Held";
-  String DELIVERY_STATUS_STORE_AND_FORWARD  =
-    "Store&Forward";
-  String DELIVERY_STATUS_BEST_EFFORT = "BestEffort";
-  String DELIVERY_STATUS_OLD_INCARNATION = "OldIncarnaion";
+  String DELIVERY_STATUS_DELIVERED = "Delivered"; // Successfully delivered to agent
+  String DELIVERY_STATUS_CLIENT_ERROR = "ClientException"; //Receiving agent did not like message
+  String DELIVERY_STATUS_DROPPED_DUPLICATE = "DroppedDuplicate"; //delivered to node, but dropped
+  String DELIVERY_STATUS_HELD = "Held"; // delivered to node out of order, being held temporarily
+  String DELIVERY_STATUS_STORE_AND_FORWARD  = "Store&Forward"; //should be used by email and dtn
+  String DELIVERY_STATUS_BEST_EFFORT = "BestEffort"; // Sent UDP-like
+  String DELIVERY_STATUS_OLD_INCARNATION = "OldIncarnaion"; // Originator is Old Incarnation
+  
+  String RECEIPT_REQUESTED = "ReceiptRequsted";
 
   String MESSAGE_BYTES_ATTRIBUTE = "MessageBytes";
   String HEADER_BYTES_ATTRIBUTE = "HeaderBytes";
