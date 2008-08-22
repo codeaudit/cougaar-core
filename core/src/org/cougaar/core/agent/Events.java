@@ -147,16 +147,10 @@ implements Component
       sb.getService(this, NodeIdentificationService.class, null);
     if (nis != null) {
       localNode = nis.getMessageAddress();
+      InetAddress localAddr = nis.getInetAddress();
+      localHost = localAddr != null ? localAddr.getHostName() : "?";
       sb.releaseService(
           this, NodeIdentificationService.class, nis);
-    }
-
-    // local host
-    try {
-      InetAddress localAddr = InetAddress.getLocalHost();
-      localHost = localAddr.getHostName();
-    } catch (Exception e) {
-      localHost = "?";
     }
 
     // mobility watcher

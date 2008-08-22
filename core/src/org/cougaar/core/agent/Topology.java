@@ -356,12 +356,9 @@ implements Component
 
   private void updateNaming(boolean bind) {
     String localHost;
-    try {
-      InetAddress localAddr = InetAddress.getLocalHost();
-      localHost = localAddr.getHostName();
-    } catch (Exception e) {
-      localHost = "?";
-    }
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
+    InetAddress localAddr = nis.getInetAddress();
+    localHost = localAddr != null ? localAddr.getHostName() : "?";
 
     String identifier = localAgent.getAddress();
 

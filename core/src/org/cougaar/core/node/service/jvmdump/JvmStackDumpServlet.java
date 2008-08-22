@@ -68,11 +68,6 @@ public class JvmStackDumpServlet extends BaseServletComponent {
     jsds = (JvmStackDumpService) serviceBroker.getService(
         this, JvmStackDumpService.class, null);
     // get the host name
-    try {
-      hostId = InetAddress.getLocalHost().getHostName();
-    } catch (Exception e) {
-      hostId = null;
-    }
     // get the agent id
     AgentIdentificationService ais = (AgentIdentificationService)
       serviceBroker.getService(
@@ -87,6 +82,8 @@ public class JvmStackDumpServlet extends BaseServletComponent {
       serviceBroker.getService(
           this, NodeIdentificationService.class, null);
     if (nis != null) {
+      InetAddress hostAddr = nis.getInetAddress();
+      hostId = hostAddr != null ? hostAddr.getHostName() : null;
       nodeId = nis.getMessageAddress();
       serviceBroker.releaseService(
           this, NodeIdentificationService.class, nis);
