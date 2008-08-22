@@ -26,10 +26,14 @@
 
 package org.cougaar.core.relay;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.DirectiveImpl;
 import org.cougaar.core.blackboard.DirectiveMessage;
 import org.cougaar.core.mts.Message;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 
 /**
@@ -84,6 +88,49 @@ public abstract class RelayDirective extends DirectiveImpl {
           }
       }
       return false;
+  }
+  
+  /**
+   * Make a receipt directive for the given relay and receipt
+   */
+  public static Directive makeReceiptDirective(RelayDirective original, Object receipt) {
+     UID requestorUID = original.getUID();
+     RelayDirective.Response dir = 
+         new RelayDirective.Response(requestorUID, receipt);
+     dir.setSource(original.getDestination());
+     dir.setDestination(original.getSource());
+     return dir;
+  }
+  
+  /**
+   * Make a receipt message fro the given directive message, using the
+   * given receipt in each RelayDirective.
+   */
+  public static Message makeReceiptMessage(MessageAddress originator,
+                                           DirectiveMessage message, 
+                                           Object receipt) {
+      Directive[] originalDirectives = message.getDirectives();
+      MessageAddress dest = message.getOriginator();
+      
+      // Construct and collect receipt directives for each RelayDirective
+      List<RelayDirective> relevantDirectives = 
+          new ArrayList<RelayDirective>(originalDirectives.length);
+      for (Directive directive : originalDirectives) {
+          RelayDirective relayDirective = RelayDirective.getRelayDirective(directive);
+          if (relayDirective != null) {
+              relevantDirectives.add(relayDirective);
+          }
+      }
+      Directive[] receipts = new Directive[relevantDirectives.size()];
+      for (int i=0; i<receipts.length; i++) {
+          RelayDirective requestDirective = relevantDirectives.get(i);
+          Directive responseDirective = makeReceiptDirective(requestDirective, receipt);
+          receipts[i] = responseDirective;
+      }
+      
+      // Construct and send the receipt message
+      long incarnation = message.getIncarnationNumber(); // XXX: Is this right?
+      return new DirectiveMessage(originator, dest, incarnation, receipts);
   }
 
   public static class Add extends RelayDirective {
