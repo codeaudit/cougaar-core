@@ -42,6 +42,7 @@ public interface AttributeConstants
   String DELIVERY_STATUS_STORE_AND_FORWARD  = "Store&Forward"; //should be used by email and dtn
   String DELIVERY_STATUS_BEST_EFFORT = "BestEffort"; // Sent UDP-like
   String DELIVERY_STATUS_OLD_INCARNATION = "OldIncarnaion"; // Originator is Old Incarnation
+  String DELIVERY_STATUS_DROPPED = "Dropped";
   
   String RECEIPT_REQUESTED = "ReceiptRequsted";
 
@@ -52,7 +53,6 @@ public interface AttributeConstants
 
   String INCARNATION_ATTRIBUTE = "AgentIncarnationNumber";
 
-  String DELIVERY_STATUS_DROPPED = "Dropped";
 
   // System clock when the client sent the message
   String MESSAGE_SEND_TIME_ATTRIBUTE = "MessageSendTime";
