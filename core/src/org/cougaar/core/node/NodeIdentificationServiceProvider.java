@@ -47,7 +47,7 @@ public class NodeIdentificationServiceProvider implements ServiceProvider {
     try {
         inetAddress = addr != null ? InetAddress.getByName(addr) : InetAddress.getLocalHost();
     } catch (UnknownHostException e) {
-        throw new RuntimeException("Could not determine host address", e);
+        inetAddress = null;
     }
   }
   
