@@ -26,7 +26,10 @@
 
 package org.cougaar.core.relay;
 
+import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.DirectiveImpl;
+import org.cougaar.core.blackboard.DirectiveMessage;
+import org.cougaar.core.mts.Message;
 import org.cougaar.core.util.UID;
 
 /**
@@ -43,6 +46,44 @@ public abstract class RelayDirective extends DirectiveImpl {
 
   public UID getUID() {
     return uid;
+  }
+  
+  // utility methods
+  
+  /**
+   * Return the given Directive as RelayDirective if possible. Otherwise
+   * return null. Usually this just involves a downcast. If the given
+   * Directive has change reports we need to extract the true Directive it
+   * holds and operate on that one instead.
+   */
+  public static RelayDirective getRelayDirective(Directive directive) {
+      Directive candidate;
+      if (directive instanceof DirectiveMessage.DirectiveWithChangeReports) {
+          candidate = ((DirectiveMessage.DirectiveWithChangeReports) directive).getDirective();
+      } else {
+          candidate = directive;
+      }
+      if (candidate instanceof RelayDirective) {
+          return (RelayDirective) candidate;
+      } else {
+          return null;
+      }
+  }
+  
+  /**
+   * @return true iff any of the Directives in the given message, directly
+   * or indirectly, are RelayDirectives.
+   */
+  public static boolean hasRelayDirectives(Message message) {
+      if (message instanceof DirectiveMessage) {
+          DirectiveMessage dmesg = (DirectiveMessage) message;
+          for (Directive directive : dmesg.getDirectives()) {
+              if (getRelayDirective(directive) != null) {
+                  return true;
+              }
+          }
+      }
+      return false;
   }
 
   public static class Add extends RelayDirective {
