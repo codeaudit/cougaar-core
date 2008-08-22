@@ -36,5 +36,10 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public interface NodeIdentificationService extends Service {
   MessageAddress getMessageAddress();
+  
+  /**
+   * 
+   * @return the preferred ip address for the host on which this node is running.  Could be null.
+   */
   InetAddress getInetAddress();
 }
