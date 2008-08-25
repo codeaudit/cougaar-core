@@ -26,80 +26,85 @@
 
 package org.cougaar.core.mts;
 
-
 /**
  * A marker class for multicasting messages.
- * <p> 
- * Will likely be deprecated in the future, to be replaced
- * with an enhanced implementation.
- * <p> 
+ * <p>
+ * Will likely be deprecated in the future, to be replaced with an enhanced
+ * implementation.
+ * <p>
  * Used by constant addresses in MessageAddress.
  */
-public class MulticastMessageAddress 
-  extends SimpleMessageAddress 
-{
-  // for Externalizable use only
-  public MulticastMessageAddress() {}
+public class MulticastMessageAddress
+        extends SimpleMessageAddress {
+    // for Externalizable use only
+    public MulticastMessageAddress() {
+    }
 
-  protected MulticastMessageAddress(String address) {
-    super(address);
-  }
+    protected MulticastMessageAddress(String address) {
+        super(address);
+    }
 
-  public boolean hasReceiverClass() { return false; }
+    public boolean hasReceiverClass() {
+        return false;
+    }
 
-  public Class getReceiverClass() { return null; }
+    public Class<?> getReceiverClass() {
+        return null;
+    }
 
-  // factory methods
+    // factory methods
 
-  public static final MulticastMessageAddress getMulticastMessageAddress(String address) {
-    return new MulticastMessageAddress(address);
-  }
+    public static final MulticastMessageAddress getMulticastMessageAddress(String address) {
+        return new MulticastMessageAddress(address);
+    }
 
-
-  public static final MulticastMessageAddress getMulticastMessageAddress(Class clientClass) {
-    return new MMAWithClass(clientClass);
-  }
-
+    public static final MulticastMessageAddress getMulticastMessageAddress(Class<?> clientClass) {
+        return new MMAWithClass(clientClass);
+    }
 
     /**
      * @deprecated Why would you want a MessageAddress that only has attributes?
      */
-  public static final MessageAddress getMulticastMessageAddress(MessageAttributes ma) {
-    return MessageAddressWithAttributes.getMessageAddressWithAttributes(ma);    
-  }
-
-  
-  public static final MessageAddress getMulticastMessageAddress(String address, MessageAttributes attrs) {
-    MessageAddress ma = MessageAddress.getMessageAddress(address);
-    return MessageAddressWithAttributes.getMessageAddressWithAttributes(ma, attrs);    
-  }
-
-
-  public static final MessageAddress getMulticastMessageAddress(Class clientClass, MessageAttributes attrs) {
-    MessageAddress ma = getMulticastMessageAddress(clientClass);
-    return MessageAddressWithAttributes.getMessageAddressWithAttributes(ma, attrs);    
-  }
-
-
-  // private classes
-  private static class MMAWithClass extends MulticastMessageAddress {
-    private transient Class _myclass = null;
-    public MMAWithClass() {}
-    public MMAWithClass(Class clazz) {
-      super(clazz.getName());
+    public static final MessageAddress getMulticastMessageAddress(MessageAttributes ma) {
+        return MessageAddressWithAttributes.getMessageAddressWithAttributes(ma);
     }
-    public boolean hasReceiverClass() { return true; }
-    public synchronized Class getReceiverClass() { 
-      if (_myclass != null) {
-        return _myclass;
-      } else {
-        try {
-          _myclass = Class.forName(toAddress());
-          return _myclass;
-        } catch (ClassNotFoundException cnf) {
-          return null;
+
+    public static final MessageAddress getMulticastMessageAddress(String address,
+                                                                  MessageAttributes attrs) {
+        MessageAddress ma = MessageAddress.getMessageAddress(address);
+        return MessageAddressWithAttributes.getMessageAddressWithAttributes(ma, attrs);
+    }
+
+    public static final MessageAddress getMulticastMessageAddress(Class<?> clientClass,
+                                                                  MessageAttributes attrs) {
+        MessageAddress ma = getMulticastMessageAddress(clientClass);
+        return MessageAddressWithAttributes.getMessageAddressWithAttributes(ma, attrs);
+    }
+
+    // private classes
+    private static class MMAWithClass
+            extends MulticastMessageAddress {
+        private transient Class<?> klass = null;
+
+        public MMAWithClass(Class<?> clazz) {
+            super(clazz.getName());
         }
-      }
+
+        public boolean hasReceiverClass() {
+            return true;
+        }
+
+        public synchronized Class<?> getReceiverClass() {
+            if (klass != null) {
+                return klass;
+            } else {
+                try {
+                    klass = Class.forName(toAddress());
+                    return klass;
+                } catch (ClassNotFoundException cnf) {
+                    return null;
+                }
+            }
+        }
     }
-  }
 }
