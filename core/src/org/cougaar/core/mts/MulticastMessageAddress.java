@@ -26,6 +26,8 @@
 
 package org.cougaar.core.mts;
 
+import java.net.InetSocketAddress;
+
 /**
  * A marker class for multicasting messages.
  * <p>
@@ -51,6 +53,14 @@ public class MulticastMessageAddress
     public Class<?> getReceiverClass() {
         return null;
     }
+    
+    public boolean isTrueMulticast() {
+        return false;
+    }
+
+    public InetSocketAddress getMulticastAddress() {
+        return null;
+    }
 
     // factory methods
 
@@ -60,6 +70,10 @@ public class MulticastMessageAddress
 
     public static final MulticastMessageAddress getMulticastMessageAddress(Class<?> clientClass) {
         return new MMAWithClass(clientClass);
+    }
+    
+    public static final MulticastMessageAddress getMulticastMessageAddress(InetSocketAddress addr) {
+        return new UdpMulticast(addr);
     }
 
     /**
@@ -80,12 +94,35 @@ public class MulticastMessageAddress
         MessageAddress ma = getMulticastMessageAddress(clientClass);
         return MessageAddressWithAttributes.getMessageAddressWithAttributes(ma, attrs);
     }
+    
+    private static class UdpMulticast
+        extends MulticastMessageAddress {
+        
+        private InetSocketAddress addr;
+        
+        public UdpMulticast(InetSocketAddress addr) {
+            super(addr.toString());
+            this.addr = addr;
+        }
+        
+        public boolean isTrueMulticast() {
+            return true;
+        }
+
+        public InetSocketAddress getMulticastAddress() {
+            return addr;
+        }
+    }
 
     // private classes
     private static class MMAWithClass
             extends MulticastMessageAddress {
         private transient Class<?> klass = null;
 
+        // for externalizable ?
+        public MMAWithClass() {
+        }
+        
         public MMAWithClass(Class<?> clazz) {
             super(clazz.getName());
         }
