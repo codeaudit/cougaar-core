@@ -42,6 +42,7 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.SocketMessageAddress;
 import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceService;
@@ -541,6 +542,13 @@ implements Component
           }
           public MessageAddress getMessageAddress() {
             return localAgent;
+          }
+          
+          public void joinGroup(SocketMessageAddress address) {
+            messenger.joinGroup(mtsClientAdapter, address);
+          }
+          public void leaveGroup(SocketMessageAddress address) {
+            messenger.leaveGroup(mtsClientAdapter, address);
           }
         };
     }

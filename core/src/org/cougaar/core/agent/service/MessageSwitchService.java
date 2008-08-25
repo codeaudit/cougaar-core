@@ -30,6 +30,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
+import org.cougaar.core.mts.SocketMessageAddress;
 
 /**
  * Service for agent subcomponents to send/receive messages.
@@ -42,4 +43,8 @@ public interface MessageSwitchService extends Service {
   void addMessageHandler(MessageHandler mh);
   /** What is the MessageAddress for the entity which will actually send messages? */
   MessageAddress getMessageAddress();
+  
+  // multicast
+  void joinGroup(SocketMessageAddress address);
+  void leaveGroup(SocketMessageAddress address);
 }

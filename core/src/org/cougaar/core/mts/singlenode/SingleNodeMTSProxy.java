@@ -33,6 +33,7 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.mts.MessageTransportClient;
+import org.cougaar.core.mts.SocketMessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.MessageTransportService;
 import org.cougaar.core.component.ServiceBroker;
@@ -121,6 +122,14 @@ public class SingleNodeMTSProxy
    * Redirects the request to the MessageTransportRegistry. */
   public boolean addressKnown(MessageAddress a) {
     return router.addressKnown(a);
+  }
+
+  public void joinGroup(MessageTransportClient client, SocketMessageAddress address) {
+      throw new IllegalStateException("joinGroup is not supported");
+  }
+
+  public void leaveGroup(MessageTransportClient client, SocketMessageAddress address) {
+      throw new IllegalStateException("leaveGroup is not supported");
   }
 }
 
