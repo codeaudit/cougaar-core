@@ -41,6 +41,7 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
+import org.cougaar.core.mts.InetMessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.IncarnationService;
 import org.cougaar.core.service.LoggingService;
@@ -311,8 +312,11 @@ implements Component
         iter.hasNext();
         ) {
       MessageAddress agentId = (MessageAddress) iter.next();
-      long currentInc = lookupIncarnation(agentId);
-      updateIncarnation(agentId, currentInc);
+      if (!(agentId instanceof InetMessageAddress)) {
+          // XXX: Multicast addresses don't have incarnations
+          long currentInc = lookupIncarnation(agentId);
+          updateIncarnation(agentId, currentInc);
+      }
     }
   }
 
