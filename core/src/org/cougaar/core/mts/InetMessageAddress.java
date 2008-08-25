@@ -6,6 +6,7 @@
 
 package org.cougaar.core.mts;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
 /**
@@ -21,6 +22,11 @@ public class InetMessageAddress
     }
     
     public InetMessageAddress(String host, int port) {
+        super(host +":"+ Integer.toString(port));
+        this.addr = new InetSocketAddress(host, port);
+    }
+    
+    public InetMessageAddress(InetAddress host, int port) {
         super(host +":"+ Integer.toString(port));
         this.addr = new InetSocketAddress(host, port);
     }
