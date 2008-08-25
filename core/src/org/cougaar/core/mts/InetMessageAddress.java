@@ -9,20 +9,20 @@ package org.cougaar.core.mts;
 import java.net.InetSocketAddress;
 
 /**
- *  Encapsulate an {@link InetSocketAddress} in a Cougaar MessageAddress.
- *  Used only for true multicasting.
+ *  Encapsulate an {@link InetSocketAddress} in a Cougaar {@link MessageAddress}.
+ *  Used only for (true) multicasting.
  */
-public class SocketMessageAddress
+public class InetMessageAddress
         extends SimpleMessageAddress {
     
     private transient InetSocketAddress addr;
     
-    public SocketMessageAddress() {
+    public InetMessageAddress() {
     }
     
-    public SocketMessageAddress(InetSocketAddress addr) {
-        super(addr.toString());
-        this.addr = addr;
+    public InetMessageAddress(String host, int port) {
+        super(host +":"+ Integer.toString(port));
+        this.addr = new InetSocketAddress(host, port);
     }
 
     public InetSocketAddress getSocketAddress() {

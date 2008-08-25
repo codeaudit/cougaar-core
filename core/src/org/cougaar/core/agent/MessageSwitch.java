@@ -42,7 +42,7 @@ import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.SocketMessageAddress;
+import org.cougaar.core.mts.InetMessageAddress;
 import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceService;
@@ -544,10 +544,10 @@ implements Component
             return localAgent;
           }
           
-          public void joinGroup(SocketMessageAddress address) {
+          public void joinGroup(InetMessageAddress address) {
             messenger.joinGroup(mtsClientAdapter, address);
           }
-          public void leaveGroup(SocketMessageAddress address) {
+          public void leaveGroup(InetMessageAddress address) {
             messenger.leaveGroup(mtsClientAdapter, address);
           }
         };

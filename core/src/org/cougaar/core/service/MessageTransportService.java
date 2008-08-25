@@ -33,7 +33,7 @@ import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.SocketMessageAddress;
+import org.cougaar.core.mts.InetMessageAddress;
 
 /**
  * This service is the node-level message transport that agents
@@ -86,7 +86,7 @@ public interface MessageTransportService extends Service
     AgentState getAgentState();
 
     // Multicast
-    void joinGroup(MessageTransportClient client, SocketMessageAddress multicastAddress);
-    void leaveGroup(MessageTransportClient client, SocketMessageAddress multicastAddress);
+    void joinGroup(MessageTransportClient client, InetMessageAddress multicastAddress);
+    void leaveGroup(MessageTransportClient client, InetMessageAddress multicastAddress);
 }
 
