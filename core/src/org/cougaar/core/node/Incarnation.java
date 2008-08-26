@@ -228,6 +228,10 @@ implements Component
       throw new IllegalArgumentException(
           "null "+(agentId == null ? "addr" : "cb"));
     }
+    if (agentId.getSocketAddress() != null) {
+      // ignore multicast addresses
+      return false;
+    }
     long inc = initialInc;
     while (true) {
       long cachedInc;
@@ -312,11 +316,8 @@ implements Component
         iter.hasNext();
         ) {
       MessageAddress agentId = (MessageAddress) iter.next();
-      if (agentId.getSocketAddress() != null) {
-          // Multicast addresses don't have incarnations
-          long currentInc = lookupIncarnation(agentId);
-          updateIncarnation(agentId, currentInc);
-      }
+      long currentInc = lookupIncarnation(agentId);
+      updateIncarnation(agentId, currentInc);
     }
   }
 
