@@ -27,6 +27,7 @@
 package org.cougaar.core.mts;
 
 import java.io.Externalizable;
+import java.net.InetSocketAddress;
 import java.net.URI;
 
 import org.cougaar.util.annotations.Cougaar;
@@ -81,6 +82,10 @@ public abstract class MessageAddress
     return this;
   }
 
+  public InetSocketAddress getSocketAddress() {
+      return null;
+  }
+  
   //
   // factory items
   //

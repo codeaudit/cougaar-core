@@ -151,6 +151,12 @@ public final class ClusterContextTable {
   /** Convenient shortcut for a safe enterContext - exitContext pair */
   public static final void withMessageContext(MessageAddress ma, MessageAddress from, MessageAddress to, 
                                               Runnable thunk) {
+    if (to.getSocketAddress() != null) {
+      // this is a multicast, use an empty context
+      // XXX: Double-check this with Todd!
+      withEmptyClusterContext(thunk);
+      return;
+    }
     ClusterContext cc = getClusterContext();
     if (cc == null) {
       cc = findContext(ma);

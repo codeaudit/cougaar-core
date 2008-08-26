@@ -312,8 +312,8 @@ implements Component
         iter.hasNext();
         ) {
       MessageAddress agentId = (MessageAddress) iter.next();
-      if (!(agentId instanceof InetMessageAddress)) {
-          // XXX: Multicast addresses don't have incarnations
+      if (agentId.getSocketAddress() != null) {
+          // Multicast addresses don't have incarnations
           long currentInc = lookupIncarnation(agentId);
           updateIncarnation(agentId, currentInc);
       }
