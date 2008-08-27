@@ -82,8 +82,8 @@ public abstract class MessageAddress
     return this;
   }
 
-  public InetSocketAddress getSocketAddress() {
-      return null;
+  public boolean isGroupAddress() {
+    return false;
   }
   
   //

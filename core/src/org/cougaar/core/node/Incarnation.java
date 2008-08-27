@@ -41,7 +41,7 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.mts.InetMessageAddress;
+import org.cougaar.core.mts.InetMulticastMessageAddress;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.IncarnationService;
 import org.cougaar.core.service.LoggingService;
@@ -228,8 +228,8 @@ implements Component
       throw new IllegalArgumentException(
           "null "+(agentId == null ? "addr" : "cb"));
     }
-    if (agentId.getSocketAddress() != null) {
-      // ignore multicast addresses
+    if (agentId.isGroupAddress()) {
+      // ignore multicast addresses and the like
       return false;
     }
     long inc = initialInc;

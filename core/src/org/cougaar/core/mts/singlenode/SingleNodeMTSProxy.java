@@ -26,17 +26,13 @@
 
 package org.cougaar.core.mts.singlenode;
 import java.util.ArrayList;
-import java.util.Iterator;
 
 import org.cougaar.core.mts.AgentState;
+import org.cougaar.core.mts.GroupMessageAddress;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.InetMessageAddress;
-import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.MessageTransportService;
-import org.cougaar.core.component.ServiceBroker;
 
 /**
  * Base Single-Node implementation of MessageTransportService.  It
@@ -124,11 +120,11 @@ public class SingleNodeMTSProxy
     return router.addressKnown(a);
   }
 
-  public void joinGroup(MessageTransportClient client, InetMessageAddress address) {
+  public void joinGroup(MessageTransportClient client, GroupMessageAddress address) {
       throw new IllegalStateException("joinGroup is not supported");
   }
 
-  public void leaveGroup(MessageTransportClient client, InetMessageAddress address) {
+  public void leaveGroup(MessageTransportClient client, GroupMessageAddress address) {
       throw new IllegalStateException("leaveGroup is not supported");
   }
 }

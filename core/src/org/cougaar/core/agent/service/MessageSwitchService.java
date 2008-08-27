@@ -27,10 +27,10 @@
 package org.cougaar.core.agent.service;
 
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.GroupMessageAddress;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
-import org.cougaar.core.mts.InetMessageAddress;
 
 /**
  * Service for agent subcomponents to send/receive messages.
@@ -45,6 +45,6 @@ public interface MessageSwitchService extends Service {
   MessageAddress getMessageAddress();
   
   // multicast
-  void joinGroup(InetMessageAddress address);
-  void leaveGroup(InetMessageAddress address);
+  void joinGroup(GroupMessageAddress address);
+  void leaveGroup(GroupMessageAddress address);
 }

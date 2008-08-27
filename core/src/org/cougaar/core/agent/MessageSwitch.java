@@ -38,11 +38,11 @@ import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Attributes;
+import org.cougaar.core.mts.GroupMessageAddress;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.InetMessageAddress;
 import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceService;
@@ -544,10 +544,10 @@ implements Component
             return localAgent;
           }
           
-          public void joinGroup(InetMessageAddress address) {
+          public void joinGroup(GroupMessageAddress address) {
             messenger.joinGroup(mtsClientAdapter, address);
           }
-          public void leaveGroup(InetMessageAddress address) {
+          public void leaveGroup(GroupMessageAddress address) {
             messenger.leaveGroup(mtsClientAdapter, address);
           }
         };

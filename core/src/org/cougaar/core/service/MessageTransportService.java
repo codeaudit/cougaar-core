@@ -30,10 +30,10 @@ import java.util.List;
 
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.AgentState;
+import org.cougaar.core.mts.GroupMessageAddress;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.mts.InetMessageAddress;
 
 /**
  * This service is the node-level message transport that agents
@@ -86,7 +86,7 @@ public interface MessageTransportService extends Service
     AgentState getAgentState();
 
     // Multicast
-    void joinGroup(MessageTransportClient client, InetMessageAddress multicastAddress);
-    void leaveGroup(MessageTransportClient client, InetMessageAddress multicastAddress);
+    void joinGroup(MessageTransportClient client, GroupMessageAddress multicastAddress);
+    void leaveGroup(MessageTransportClient client, GroupMessageAddress multicastAddress);
 }
 
