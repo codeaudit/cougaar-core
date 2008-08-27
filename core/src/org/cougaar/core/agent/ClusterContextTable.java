@@ -29,6 +29,8 @@ package org.cougaar.core.agent;
 import java.util.HashMap;
 
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * Table of agent addresses on this VM, allowing static
@@ -40,6 +42,8 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public final class ClusterContextTable {
 
+  private static final Logger logger = Logging.getLogger(ClusterContextTable.class);
+  
   /**
    * Our map from a MessageAddress to the ClusterContext wrapper.
    * <p>
@@ -106,20 +110,32 @@ public final class ClusterContextTable {
   }
 
   public static ContextState getContextState() {
-    return ((ContextState)theContext.get());
+    ContextState ret = (ContextState) theContext.get();
+    if (ret == _groupDeliveryContext) {
+      logger.error(
+          "Attempted to get the context state from a message sent to a GroupMessageAddress");
+    }
+    return ret;
   }
 
   public static MessageContext getMessageContext() {
-    Object cs = theContext.get();
+    ContextState cs = getContextState();
     return (cs instanceof MessageContext)?((MessageContext)cs):null;
   }
 
   public static ClusterContext getClusterContext() {
-    ContextState cs = (ContextState)theContext.get();
+    ContextState cs = getContextState();
     
     return (cs!=null)?cs.getClusterContext():null;
   }
 
+  private static final ClusterContext _groupDeliveryContext = 
+      new ClusterContext.GroupDeliveryClusterContext(); 
+  
+  private static final void withGroupDeliveryClusterContext(Runnable thunk) {
+      withClusterContext(_groupDeliveryContext, thunk);
+  }
+  
   private static final ClusterContext _dummyContext = new ClusterContext.DummyClusterContext();
 
   /** May be used by non-society classes to provide an empty context
@@ -152,9 +168,8 @@ public final class ClusterContextTable {
   public static final void withMessageContext(MessageAddress ma, MessageAddress from, MessageAddress to, 
                                               Runnable thunk) {
     if (to.isGroupAddress()) {
-      // this is a multicast, use an empty context
-      // XXX: Double-check this with Todd!
-      withEmptyClusterContext(thunk);
+      // this is a multicast, use a special context
+      withGroupDeliveryClusterContext(thunk);
       return;
     }
     ClusterContext cc = getClusterContext();

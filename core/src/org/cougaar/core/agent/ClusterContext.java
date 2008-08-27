@@ -46,4 +46,10 @@ public interface ClusterContext
     private static final MessageAddress cid = MessageAddress.NULL_SYNC;
     public MessageAddress getMessageAddress() { return cid; }
   }
+  
+  /** A {@link ClusterContext} for delivery to groups.  No Agent-specific refs should be present */
+  final class GroupDeliveryClusterContext implements ClusterContext {
+    private static final MessageAddress cid = MessageAddress.NULL_SYNC;
+    public MessageAddress getMessageAddress() { return cid; }
+  }
 }
