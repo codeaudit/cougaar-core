@@ -7,10 +7,11 @@
 package org.cougaar.core.mts;
 
 /**
- * An address that refers indirectly to a group of destination.
- * The canonical example is a UDP multicast address.
+ * An address that refers indirectly to a group of destinations.
+ * The canonical example is an internet multicast address.
  */
 public abstract class GroupMessageAddress extends SimpleMessageAddress {
+    // The protocol-specific entity that describes the destinations via intention.
     private transient Object reference;
     
     // for deserialization only
