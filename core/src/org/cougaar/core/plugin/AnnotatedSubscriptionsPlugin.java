@@ -49,19 +49,21 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
                 // Use the type of the first arg as an implicit 'isa'
                 Class<?>[] parameterTypes = method.getParameterTypes();
                 if (parameterTypes.length < 1 || parameterTypes.length > 2) {
-                    String message = method.getName() + " of class " +getClass().getName()+
+                    String message = "@Execute method" + method.getName() 
+                    + " of class " +getClass().getName()+
                     " has the wrong number of arguments (should be 1 or 2)";
                     log.error(message);
-                    continue;
+                    throw new IllegalArgumentException(message);
                 }
                 if (parameterTypes.length == 2) {
                     // ensure 2nd arg is IncrementalSubscription
                     Class<?> cls = parameterTypes[1];
                     if (!IncrementalSubscription.class.isAssignableFrom(cls)) {
-                        String message = method.getName() + " of class " +getClass().getName()+
+                        String message = "@Execute method" + method.getName()
+                        + " of class " +getClass().getName()+
                         " has an invalid second argument (should be IncrementalSubscription)";
                         log.error(message);
-                        continue;
+                        throw new IllegalArgumentException(message);
                     }
                 }
                 id = parameterTypes[0].getName();
@@ -159,8 +161,12 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
                     }
                 }
                 if (testerMethod == null) {
-                    log.error("Couldn't find method " + when+ " (" + argClass + ")");
-                    return null;
+                    String message = "@Execute method" + method.getName()
+                    + " of class " +getClass().getName()
+                    + " references unknown predicate method " 
+                        + when+ " (" + argClass + ")";
+                    log.error(message);
+                    throw new IllegalArgumentException(message);
                 }
                 final Method tester = testerMethod;
                 final Class<?> testerArgClass = tester.getParameterTypes()[0];
