@@ -68,11 +68,6 @@ public abstract class BlackboardClientComponent
   extends org.cougaar.util.GenericStateModelAdapter
   implements Component, BlackboardClient 
 {
-  private static final boolean SET_THREAD_NAME =
-    SystemProperties.getBoolean(
-        "org.cougaar.core.blackboard.client.setThreadName",
-        true);
-
   private Object parameter = null;
 
   protected MessageAddress agentId;
@@ -223,8 +218,21 @@ public abstract class BlackboardClientComponent
       };
 
     // create a callback for running this component
-    Trigger myTrigger = 
+    Trigger myTrigger =
       new Trigger() {
+        // we must do this within our inner class, since
+        //   org.cougaar.util.annotations.Cougaar#getAnnotatedFields()
+        // uses reflection to load this class very early, before we have a
+        // chance to finalize our system properties in
+        //   org.cougaar.core.node.SetPropertiesComponent
+        //
+        // If this is moved to the outer class then Applets complain that they
+        // can't access this (unwrapped) system property.
+        final boolean SET_THREAD_NAME = 
+          SystemProperties.getBoolean(
+              "org.cougaar.core.blackboard.client.setThreadName",
+              true);
+
         String compName = null;
         private boolean didPrecycle = false;
         // no need to "sync" when using "SyncTriggerModel"
