@@ -42,15 +42,20 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.Date;
 import java.sql.DriverManager;
+import java.sql.NClob;
 import java.sql.ParameterMetaData;
 import java.sql.PreparedStatement;
 import java.sql.Ref;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
+import java.sql.RowId;
+import java.sql.SQLClientInfoException;
 import java.sql.SQLException;
 import java.sql.SQLWarning;
+import java.sql.SQLXML;
 import java.sql.Savepoint;
 import java.sql.Statement;
+import java.sql.Struct;
 import java.sql.Time;
 import java.sql.Timestamp;
 import java.util.ArrayList;
@@ -60,6 +65,7 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.Vector;
 
 import org.cougaar.bootstrap.SystemProperties;
@@ -748,6 +754,61 @@ public class DatabasePersistence
     }
     // end jdk1.4 compatability
 
+    // begin jdk1.6 compatability
+    public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.unwrap(iface);
+    }
+    public boolean isWrapperFor(java.lang.Class<?> iface) throws java.sql.SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.isWrapperFor(iface);
+    }
+    public Clob createClob() throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.createClob();
+    }
+    public Blob createBlob() throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.createBlob();
+    }
+    public NClob createNClob() throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.createNClob();
+    }
+    public SQLXML createSQLXML() throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.createSQLXML();
+    }
+    public boolean isValid(int timeout) throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.isValid(timeout);
+    }
+    public void setClientInfo(String name, String value) throws SQLClientInfoException {
+      if (!active) throw new SQLClientInfoException("getDatabaseConnection not called", null);
+      c.setClientInfo(name, value);
+    }
+    public void setClientInfo(Properties properties) throws SQLClientInfoException {
+      if (!active) throw new SQLClientInfoException("getDatabaseConnection not called", null);
+      c.setClientInfo(properties);
+    }
+    public String getClientInfo(String name) throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.getClientInfo(name);
+    }
+    public Properties getClientInfo() throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.getClientInfo();
+    }
+    public Array createArrayOf(String typeName, Object[] elements) throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.createArrayOf(typeName, elements);
+    }
+    public Struct createStruct(String typeName, Object[] attributes) throws SQLException {
+      if (!active) throw new SQLException("getDatabaseConnection not called");
+      return c.createStruct(typeName, attributes);
+    }
+    // end jdk1.6 compatability
+
     /**
      * A wrapper for a Statement object. Most operations are
      * delegated to the wrapped object. The close operation goes
@@ -901,6 +962,28 @@ public class DatabasePersistence
       }
       // end jdk 1.4 compatability
 
+      // begin jdk 1.6 compatability
+      public <T> T unwrap(java.lang.Class<T> iface) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theStatement.unwrap(iface);
+      }
+      public boolean isWrapperFor(java.lang.Class<?> iface) throws java.sql.SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theStatement.isWrapperFor(iface);
+      }
+      public boolean isClosed() throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theStatement.isClosed();
+      }
+      public void setPoolable(boolean poolable) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theStatement.setPoolable(poolable);
+      }
+      public boolean isPoolable() throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theStatement.isPoolable();
+      }
+      // end jdk 1.6 compatability
     }
     /**
      * A wrapper for a PreparedStatement object. All operations are
@@ -1066,6 +1149,80 @@ public class DatabasePersistence
         throw new SQLException("getParameterMetaData() disallowed");
       }
       // end jdk 1.4 compatability
+      // begin jdk 1.6 compatability
+      public void setRowId(int parameterIndex, RowId x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setRowId(parameterIndex, x);
+      }
+      public void setNString(int parameterIndex, String value) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setNString(parameterIndex, value);
+      }
+      public void setNCharacterStream(int parameterIndex, Reader value, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setNCharacterStream(parameterIndex, value, length);
+      }
+      public void setNClob(int parameterIndex, NClob value) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setNClob(parameterIndex, value);
+      }
+      public void setClob(int parameterIndex, Reader reader, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setClob(parameterIndex, reader, length);
+      }
+      public void setBlob(int parameterIndex, InputStream inputStream, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setBlob(parameterIndex, inputStream, length);
+      }
+      public void setNClob(int parameterIndex, Reader reader, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setNClob(parameterIndex, reader, length);
+      }
+      public void setSQLXML(int parameterIndex, SQLXML xmlObject) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setSQLXML(parameterIndex, xmlObject);
+      }
+      public void setAsciiStream(int parameterIndex, java.io.InputStream x, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setAsciiStream(parameterIndex, x, length);
+      }
+      public void setBinaryStream(int parameterIndex, java.io.InputStream x, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setBinaryStream(parameterIndex, x, length);
+      }
+      public void setCharacterStream(int parameterIndex, java.io.Reader reader, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setCharacterStream(parameterIndex, reader, length);
+      }
+      public void setAsciiStream(int parameterIndex, java.io.InputStream x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setAsciiStream(parameterIndex, x);
+      }
+      public void setBinaryStream(int parameterIndex, java.io.InputStream x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setBinaryStream(parameterIndex, x);
+      }
+      public void setCharacterStream(int parameterIndex, java.io.Reader reader) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setCharacterStream(parameterIndex, reader);
+      }
+      public void setNCharacterStream(int parameterIndex, Reader value) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setNCharacterStream(parameterIndex, value);
+      }
+      public void setClob(int parameterIndex, Reader reader) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setClob(parameterIndex, reader);
+      }
+      public void setBlob(int parameterIndex, InputStream inputStream) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setBlob(parameterIndex, inputStream);
+      }
+      public void setNClob(int parameterIndex, Reader reader) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        thePreparedStatement.setNClob(parameterIndex, reader);
+      }
+      // end jdk 1.6 compatability
     }
     /**
      * A wrapper for a CallableStatement object. All operations are
@@ -1402,6 +1559,136 @@ public class DatabasePersistence
         return theCallableStatement.getURL(pn);
       }
       // end jdk 1.4 compatability
+      // begin jdk 1.6 compatability
+      public RowId getRowId(int parameterIndex) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getRowId(parameterIndex);
+      }
+      public RowId getRowId(String parameterName) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getRowId(parameterName);
+      }
+      public void setRowId(String parameterName, RowId x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setRowId(parameterName, x);
+      }
+      public void setNString(String parameterName, String value) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNString(parameterName, value);
+      }
+      public void setNCharacterStream(String parameterName, Reader value, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNCharacterStream(parameterName, value, length);
+      }
+      public void setNClob(String parameterName, NClob value) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNClob(parameterName, value);
+      }
+      public void setClob(String parameterName, Reader reader, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setClob(parameterName, reader, length);
+      }
+      public void setBlob(String parameterName, InputStream inputStream, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBlob(parameterName, inputStream, length);
+      }
+      public void setNClob(String parameterName, Reader reader, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNClob(parameterName, reader, length);
+      }
+      public NClob getNClob (int parameterIndex) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getNClob (parameterIndex);
+      }
+      public NClob getNClob (String parameterName) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getNClob (parameterName);
+      }
+      public void setSQLXML(String parameterName, SQLXML xmlObject) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setSQLXML(parameterName, xmlObject);
+      }
+      public SQLXML getSQLXML(int parameterIndex) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getSQLXML(parameterIndex);
+      }
+      public SQLXML getSQLXML(String parameterName) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getSQLXML(parameterName);
+      }
+      public String getNString(int parameterIndex) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getNString(parameterIndex);
+      }
+      public String getNString(String parameterName) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getNString(parameterName);
+      }
+      public java.io.Reader getNCharacterStream(int parameterIndex) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getNCharacterStream(parameterIndex);
+      }
+      public java.io.Reader getNCharacterStream(String parameterName) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getNCharacterStream(parameterName);
+      }
+      public java.io.Reader getCharacterStream(int parameterIndex) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getCharacterStream(parameterIndex);
+      }
+      public java.io.Reader getCharacterStream(String parameterName) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        return theCallableStatement.getCharacterStream(parameterName);
+      }
+      public void setBlob (String parameterName, Blob x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBlob (parameterName, x);
+      }
+      public void setClob (String parameterName, Clob x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setClob (parameterName, x);
+      }
+      public void setAsciiStream(String parameterName, java.io.InputStream x, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setAsciiStream(parameterName, x, length);
+      }
+      public void setBinaryStream(String parameterName, java.io.InputStream x, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBinaryStream(parameterName, x, length);
+      }
+      public void setCharacterStream(String parameterName, java.io.Reader reader, long length) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setCharacterStream(parameterName, reader, length);
+      }
+      public void setAsciiStream(String parameterName, java.io.InputStream x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setAsciiStream(parameterName, x);
+      }
+      public void setBinaryStream(String parameterName, java.io.InputStream x) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBinaryStream(parameterName, x);
+      }
+      public void setCharacterStream(String parameterName, java.io.Reader reader) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setCharacterStream(parameterName, reader);
+      }
+      public void setNCharacterStream(String parameterName, Reader value) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNCharacterStream(parameterName, value);
+      }
+      public void setClob(String parameterName, Reader reader) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setClob(parameterName, reader);
+      }
+      public void setBlob(String parameterName, InputStream inputStream) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setBlob(parameterName, inputStream);
+      }
+      public void setNClob(String parameterName, Reader reader) throws SQLException {
+        if (!active) throw new SQLException("getDatabaseConnection not called");
+        theCallableStatement.setNClob(parameterName, reader);
+      }
+      // end jdk 1.6 compatability
     }
   }
 }
