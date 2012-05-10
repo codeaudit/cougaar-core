@@ -578,6 +578,24 @@ public class DatabasePersistence
       c = realConnection;
     }
     
+//1.7:    // begin jdk1.7 compatibility
+//1.7:    public void setNetworkTimeout(java.util.concurrent.Executor executor, int milliseconds) throws SQLException {
+//1.7:      c.setNetworkTimeout(executor, milliseconds);
+//1.7:    }
+//1.7:
+//1.7:    public int getNetworkTimeout() throws SQLException {
+//1.7:      return c.getNetworkTimeout();
+//1.7:    }
+//1.7:
+//1.7:    public void abort(java.util.concurrent.Executor executor) throws SQLException {
+//1.7:      try {
+//1.7:	c.abort(executor);
+//1.7:      } catch (SQLException sqle) {
+//1.7:	throw sqle;
+//1.7:      }
+//1.7:    }
+//1.7:    // end jdk1.7 compatibility
+
     void closeStatement(WrappedStatement statement) throws SQLException {
       synchronized (statements) {
         statement.theStatement.close();
@@ -984,7 +1002,26 @@ public class DatabasePersistence
         return theStatement.isPoolable();
       }
       // end jdk 1.6 compatability
-    }
+
+//1.7:      // begin jdk1.7 compatibility
+//1.7:      public void closeOnCompletion() throws SQLException {
+//1.7:	try {
+//1.7:	  theStatement.closeOnCompletion();
+//1.7:	} catch (SQLException sqle) {
+//1.7:	  throw sqle;
+//1.7:	}
+//1.7:      }
+//1.7:
+//1.7:      public boolean isCloseOnCompletion() throws SQLException {
+//1.7:	try {
+//1.7:	  return theStatement.isCloseOnCompletion();
+//1.7:	} catch (SQLException sqle) {
+//1.7:	  throw sqle;
+//1.7:	}
+//1.7:      }
+//1.7:        // end jdk1.7 compatibility
+    } // end class WrappedStatement
+
     /**
      * A wrapper for a PreparedStatement object. All operations are
      * delegated to the wrapped object. The close operation in the
@@ -1689,6 +1726,42 @@ public class DatabasePersistence
         theCallableStatement.setNClob(parameterName, reader);
       }
       // end jdk 1.6 compatability
-    }
-  }
+
+//1.7:      // begin jdk1.7 compatibility with CallableStatement
+//1.7:      public <T> T getObject(String parameterName, Class<T> type) throws SQLException {
+//1.7:	try {
+//1.7:	  return theCallableStatement.getObject(parameterName, type);
+//1.7:	} catch (SQLException sqle) {
+//1.7:	  throw sqle;
+//1.7:	}
+//1.7:      }
+//1.7:
+//1.7:      public <T> T getObject(int parameterIndex, Class<T> type) throws SQLException {
+//1.7:	try {
+//1.7:	  return theCallableStatement.getObject(parameterIndex, type);
+//1.7:	} catch (SQLException sqle) {
+//1.7:	  throw sqle;
+//1.7:	}
+//1.7:      }
+      // end jdk1.7 compatibility
+    } // end class WrappedCallableStatement
+
+//1.7:    // begin jdk1.7 compatibility with Connection
+//1.7:    public void setSchema(String schema) throws SQLException {
+//1.7:      try {
+//1.7:	c.setSchema(schema);
+//1.7:      } catch (SQLException sqle) {
+//1.7:	throw sqle;
+//1.7:      }
+//1.7:    }
+//1.7:
+//1.7:    public String getSchema() throws SQLException {
+//1.7:      try {
+//1.7:	return c.getSchema();
+//1.7:      } catch (SQLException sqle) {
+//1.7:	throw sqle;
+//1.7:      }
+//1.7:    }
+//1.7:    // end jdk1.7 compatibility
+  } // end class WrappedConnection
 }
