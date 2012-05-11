@@ -56,7 +56,6 @@ import org.cougaar.glm.ldm.asset.*;
  * <p>
  * Usage is:<pre> 
  *   java \
- *     -Xbootclasspath/p:$COUGAAR_INSTALL_PATH/lib/javaiopatch.jar \
  *     -Djava.class.path=$COUGAAR_INSTALL_PATH/lib/bootstrap.jar \
  *     -Dorg.cougaar.install.path=$COUGAAR_INSTALL_PATH \
  *     -Dorg.cougaar.core.persistence.enable=true \
