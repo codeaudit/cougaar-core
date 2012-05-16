@@ -233,7 +233,7 @@ public class ComponentViewServlet extends ComponentServlet {
           " <code>"+
           "$COUGAAR_INSTALL_PATH/configs/common/SimpleAgent.xsl"+
           "</code>).  For more information about agent templates,"+
-          " see the <a href=\"http://docs.cougaar.org\">"+
+          " see the <a \"http://cougaar.org/doc/11_4/online/CDG_11_4.pdf\">"+
           "Cougaar Developers' Guide</a>.\n"+
           "<p>\n"+
           "<form method=\"GET\" action=\""+request.getRequestURI()+
