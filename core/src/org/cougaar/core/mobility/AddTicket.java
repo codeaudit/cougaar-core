@@ -38,7 +38,7 @@ import org.cougaar.core.mts.MessageAddress;
 /**
  * A ticket requesting agent creation.
  */
-public final class AddTicket extends AbstractTicket implements java.io.Serializable {
+public final class AddTicket extends AbstractTicket {
   private static final String DEFAULT_AGENT_CLASSNAME =
     "org.cougaar.core.agent.AgentImpl";
   private static final String AGENT_INSERTION_POINT =

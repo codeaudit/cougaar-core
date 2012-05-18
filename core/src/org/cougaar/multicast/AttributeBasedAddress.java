@@ -42,7 +42,6 @@ import org.cougaar.core.mts.MessageAttributes;
  */
 public class AttributeBasedAddress 
   extends MessageAddress
-  implements Externalizable
 {
   protected transient String myCommunityName;
   protected transient String myAttributeType; 

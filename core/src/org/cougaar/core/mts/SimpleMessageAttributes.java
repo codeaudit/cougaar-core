@@ -38,7 +38,7 @@ import java.util.Map;
  * {@link MessageAttributes}.
  */
 public class SimpleMessageAttributes    
-    implements MessageAttributes, AgentState, Serializable
+    implements MessageAttributes, AgentState
 {
   private final HashMap data;
   private transient HashMap local_data;

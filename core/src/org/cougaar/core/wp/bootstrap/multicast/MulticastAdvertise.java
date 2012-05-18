@@ -128,7 +128,7 @@ extends AdvertiseBase
     return new MulticastAdvertiser(bootObj);
   }
 
-  private class MulticastAdvertiser extends Advertiser implements Runnable {
+  private class MulticastAdvertiser extends Advertiser {
 
     private static final int LISTEN_TIMEOUT = 60000;
     private static final int PACKET_SIZE = 512;

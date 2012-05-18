@@ -61,7 +61,7 @@ import org.cougaar.util.log.LoggerFactory;
  * @see Relay
  */
 public class RelayLP
-implements LogicProvider, EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, ABAChangeLogicProvider
+implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, ABAChangeLogicProvider
 {
   private final RootPlan rootplan;
   private final MessageAddress self;

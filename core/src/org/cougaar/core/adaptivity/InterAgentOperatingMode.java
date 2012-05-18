@@ -44,7 +44,7 @@ import org.cougaar.core.util.UniqueObject;
  **/
 public class InterAgentOperatingMode
   extends OperatingModeImpl
-  implements Relay.Source, UniqueObject, java.io.Serializable 
+  implements Relay.Source 
 {
   // this can't be transient like other relays, cause not storing
   // target separately

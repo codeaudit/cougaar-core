@@ -57,7 +57,6 @@ import java.io.OutputStream;
  */
 public class BufferedFilePersistence
   extends FilePersistenceBase
-  implements PersistencePlugin
 {
   BufferedFileSystem bfs;
 

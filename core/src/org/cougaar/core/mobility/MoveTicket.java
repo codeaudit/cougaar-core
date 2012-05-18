@@ -31,7 +31,7 @@ import org.cougaar.core.mts.MessageAddress;
 /**
  * A ticket requesting agent mobility.
  */
-public class MoveTicket extends AbstractTicket implements java.io.Serializable {
+public class MoveTicket extends AbstractTicket {
 
   private final Object id;
   private final MessageAddress mobileAgent;

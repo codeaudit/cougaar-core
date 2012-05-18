@@ -32,7 +32,7 @@ package org.cougaar.core.adaptivity;
  * standing in for condition data or an operating mode and a Object
  * holding the value and a set of valid values
  */
-public class ConstraintPhrase extends ConstraintOpValue implements java.io.Serializable {
+public class ConstraintPhrase extends ConstraintOpValue {
   String proxyName;
   
   /**

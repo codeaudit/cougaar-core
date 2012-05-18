@@ -34,7 +34,7 @@ import org.cougaar.util.UnaryPredicate;
  * subclasses.
  */
 public class SimpleDeletionPolicy  
-  implements DeletionPolicy, org.cougaar.core.util.UniqueObject, java.io.Serializable {
+  implements DeletionPolicy, org.cougaar.core.util.UniqueObject {
   private String name;
   private UID myUID = null;
   private UnaryPredicate predicate;

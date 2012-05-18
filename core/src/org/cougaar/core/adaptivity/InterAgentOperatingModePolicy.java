@@ -45,7 +45,7 @@ import org.cougaar.util.log.Logging;
  **/
 public class InterAgentOperatingModePolicy
   extends OperatingModePolicy
-  implements Relay.Source, Relay.Target, java.io.Serializable
+  implements Relay.Source, Relay.Target
 {
   // this can't be transient like other relays, cause not storing
   // target separately

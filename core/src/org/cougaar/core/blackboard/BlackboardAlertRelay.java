@@ -43,7 +43,7 @@ import org.cougaar.core.util.UID;
  * are the sender or recipient.
  */
 public class BlackboardAlertRelay 
-implements SimpleRelay, Relay.Source, Relay.Target, Serializable {
+implements SimpleRelay, Relay.Source, Relay.Target {
 
   private final UID uid;
   private final MessageAddress source;

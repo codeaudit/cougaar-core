@@ -36,7 +36,7 @@ import org.cougaar.core.util.UniqueObject;
  * the target ("actor") is the local agent.
  */
 class LocalStepImpl
-implements Step, Serializable {
+implements Step {
 
   protected UID uid;
   protected StepOptions options;

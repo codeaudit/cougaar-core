@@ -50,7 +50,6 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public class AgentLoadServlet 
     extends MetricsServlet
-    implements Constants
 {
     private AgentStatusService agentStatusService; 
 

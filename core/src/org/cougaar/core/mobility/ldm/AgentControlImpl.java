@@ -42,7 +42,7 @@ import org.cougaar.core.util.UID;
  * {@link Relay}s.
  */
 class AgentControlImpl 
-implements AgentControl, Relay.Source, Relay.Target, Serializable {
+implements AgentControl, Relay.Source, Relay.Target {
 
   private static final ControlStatus NO_CONTROL_STATUS =
     new ControlStatus(NONE, null);

@@ -75,7 +75,7 @@ import org.cougaar.util.log.Logger;
  */
 public abstract class FilePersistenceBase
   extends PersistencePluginAdapter
-  implements PersistencePlugin, PersistenceNames
+  implements PersistencePlugin
 {
   private static final String NEWSEQUENCE = "newSequence";
   private static final String SEQUENCE = "sequence";

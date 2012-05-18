@@ -33,7 +33,7 @@ import org.cougaar.core.util.UniqueObject;
  * Package-private implementation for a script proc.
  */
 class ProcImpl
-implements Proc, Serializable {
+implements Proc {
 
   private final UID uid;
   private final UID scriptUID;

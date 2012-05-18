@@ -36,7 +36,7 @@ import org.cougaar.core.util.UniqueObject;
  * Package-private implementation for a script.
  */
 class ScriptImpl
-implements Script, Serializable {
+implements Script {
 
   protected final UID uid;
   protected final List entries;

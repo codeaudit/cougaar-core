@@ -40,8 +40,7 @@ import org.cougaar.core.persist.PersistenceOutputStream;
  * Package-private ticket to transfer an agent between nodes.
  */
 final class TransferTicket 
-extends AbstractTicket 
-implements Serializable {
+extends AbstractTicket {
 
   private final MoveTicket moveTicket;
   private final ComponentDescription desc;

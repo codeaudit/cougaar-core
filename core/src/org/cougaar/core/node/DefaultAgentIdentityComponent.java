@@ -260,7 +260,7 @@ implements Component
     }
 
   private static final class DefaultTransferableIdentity
-    implements TransferableIdentity, Serializable {
+    implements TransferableIdentity {
 
       private final String name;
       private final MessageAddress sourceNode;

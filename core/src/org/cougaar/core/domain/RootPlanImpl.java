@@ -46,7 +46,7 @@ import org.cougaar.util.UnaryPredicate;
  * Standard implementation of {@link RootPlan}. 
  */
 public class RootPlanImpl
-implements RootPlan, XPlan, SupportsDelayedLPActions
+implements RootPlan, SupportsDelayedLPActions
 {
   private Blackboard blackboard;
 

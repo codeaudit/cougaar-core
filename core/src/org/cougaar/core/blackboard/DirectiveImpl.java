@@ -38,7 +38,7 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public abstract class DirectiveImpl 
 extends ClaimableImpl
-implements Directive, NewDirective, Serializable
+implements NewDirective
 {
 
   protected MessageAddress source = null;

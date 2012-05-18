@@ -31,7 +31,7 @@ import org.cougaar.core.mts.MessageAddress;
 /**
  * A ticket requesting agent removal.
  */
-public final class RemoveTicket extends AbstractTicket implements java.io.Serializable {
+public final class RemoveTicket extends AbstractTicket {
 
   private final Object id;
   private final MessageAddress mobileAgent;

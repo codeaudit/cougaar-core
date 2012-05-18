@@ -39,7 +39,6 @@ import org.cougaar.core.component.ServiceBroker;
  */
 public class NodeResourcesServlet 
     extends MetricsServlet
-    implements Constants
 {
     public NodeResourcesServlet(ServiceBroker sb) {
 	super(sb);

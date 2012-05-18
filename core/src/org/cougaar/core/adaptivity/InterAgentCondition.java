@@ -45,7 +45,7 @@ import org.cougaar.util.log.Logging;
  **/
 public class InterAgentCondition
   extends OMCBase
-  implements Relay.Source, Relay.Target, Condition, UniqueObject
+  implements Relay.Source, Relay.Target, Condition
 {
 
   // this can't be transient like other relays, cause not storing

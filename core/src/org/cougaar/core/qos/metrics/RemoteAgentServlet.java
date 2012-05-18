@@ -44,7 +44,6 @@ import org.cougaar.core.service.wp.AddressEntry;
  */
 public class RemoteAgentServlet
     extends MetricsServlet
-    implements Constants
 {
 
     private static final String TOPOLOGY = "topology";
@@ -172,10 +171,6 @@ public class RemoteAgentServlet
 						   "CapacityUnused");
 	    Metric mMbps = metricsService.getValue(ipFlowPath+
 						   "CapacityMax");
-
-	    if(queue ==null) 
-		queue= new MetricImpl(new Double(0.00), 0,"units","test");
-
 
 	    Metric heard = metricsService.getValue(agentPath+
 						   "LastHeard");

@@ -58,7 +58,6 @@ import java.io.OutputStream;
  */
 public class FilePersistence
   extends FilePersistenceBase
-  implements PersistencePlugin
 {
   /**
    * Wrap a FileOutputStream to prove safe close semantics. Explicitly

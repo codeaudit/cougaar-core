@@ -35,7 +35,7 @@ import org.cougaar.core.util.UID;
  * Abstract base class for {@link SimpleRelay} implementations.
  */
 public abstract class SimpleRelayBase 
-implements SimpleRelay, Serializable {
+implements SimpleRelay {
 
   protected final UID uid;
   protected final MessageAddress source;
