@@ -426,7 +426,7 @@ extends ContainerSupport
       try {
         String cp = specifyContainmentPoint();
         ComponentDescription[] cds =
-          cds = cis.getComponentDescriptions(cname, cp);
+          cis.getComponentDescriptions(cname, cp);
         for (int i = 0; i < cds.length; i++) {
           l.add(cds[i]);
         }      

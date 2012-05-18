@@ -57,7 +57,7 @@ public class BlackboardAlert implements Serializable {
     }
     victimAgent = victim;
     attackerAgent = attacker;
-    this.description = description;
+    this.description = desc;
   }
 
   /**
