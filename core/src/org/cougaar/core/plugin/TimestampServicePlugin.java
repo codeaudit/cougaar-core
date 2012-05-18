@@ -48,6 +48,11 @@ extends ComponentPlugin
   
   private static final UnaryPredicate PRED =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         // for now accept all unique objects
         //

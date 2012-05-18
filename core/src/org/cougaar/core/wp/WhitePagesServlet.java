@@ -64,7 +64,12 @@ import org.cougaar.core.servlet.ComponentServlet;
  */
 public class WhitePagesServlet extends ComponentServlet {
 
-  // default "recursive_dump" depth-first recursion limit
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+// default "recursive_dump" depth-first recursion limit
   private static final int DEFAULT_LIMIT = 3;
 
   private LoggingService log;

@@ -39,7 +39,11 @@ import java.util.ListIterator;
 
 public class ConstrainingClause implements java.io.Serializable {
 
-  public static final ConstrainingClause TRUE_CLAUSE;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public static final ConstrainingClause TRUE_CLAUSE;
   public static final ConstrainingClause FALSE_CLAUSE;
   static {
     TRUE_CLAUSE = new ConstrainingClause();

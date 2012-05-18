@@ -31,7 +31,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class OMCRangeList implements Serializable {
-  public static final OMCRangeList ALL_DOUBLE_RANGE_LIST =
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public static final OMCRangeList ALL_DOUBLE_RANGE_LIST =
     new OMCRangeList(Double.MIN_VALUE, Double.MAX_VALUE);
 
   public static final OMCRangeList ALL_INTEGER_RANGE_LIST =

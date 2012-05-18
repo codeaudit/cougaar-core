@@ -29,7 +29,12 @@ package org.cougaar.core.adaptivity;
 
 public class PolicyKernel extends PlayBase {
 
-  public PolicyKernel(ConstrainingClause ifClause,
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public PolicyKernel(ConstrainingClause ifClause,
 		      ConstraintPhrase[] omConstraints) {
     super(ifClause, omConstraints);
   }

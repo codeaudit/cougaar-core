@@ -32,7 +32,12 @@ import org.cougaar.core.mts.MessageAddress;
  * Backwards-compatibility for {@link MoveTicket}.
  */
 public class Ticket extends MoveTicket {
-  public Ticket(
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public Ticket(
       Object id,
       MessageAddress mobileAgent,
       MessageAddress origNode,

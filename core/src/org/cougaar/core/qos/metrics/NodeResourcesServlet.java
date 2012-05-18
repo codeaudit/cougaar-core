@@ -40,7 +40,12 @@ import org.cougaar.core.component.ServiceBroker;
 public class NodeResourcesServlet 
     extends MetricsServlet
 {
-    public NodeResourcesServlet(ServiceBroker sb) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public NodeResourcesServlet(ServiceBroker sb) {
 	super(sb);
     }
 

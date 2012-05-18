@@ -44,7 +44,12 @@ import org.cougaar.core.util.UID;
 class AgentControlImpl 
 implements AgentControl, Relay.Source, Relay.Target {
 
-  private static final ControlStatus NO_CONTROL_STATUS =
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+private static final ControlStatus NO_CONTROL_STATUS =
     new ControlStatus(NONE, null);
 
   private final UID uid;
@@ -219,7 +224,11 @@ public String toString() {
   }
 
   private static class ControlStatus implements Serializable {
-    public final int statusCode;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public final int statusCode;
     public final Throwable stack;
     public ControlStatus(int statusCode, Throwable stack) {
       this.statusCode = statusCode;
@@ -254,6 +263,10 @@ public String toString() {
   private static class AgentControlImplFactory 
     implements Relay.TargetFactory, Serializable {
 
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       public static AgentControlImplFactory INSTANCE = 
         new AgentControlImplFactory();
 

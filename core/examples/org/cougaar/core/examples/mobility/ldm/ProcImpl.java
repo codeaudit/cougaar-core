@@ -33,7 +33,11 @@ import org.cougaar.core.util.UID;
 class ProcImpl
 implements Proc {
 
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
   private final UID scriptUID;
   private final long startTime;
   private long endTime;

@@ -49,7 +49,11 @@ public class RootControlPlugin extends ComponentPlugin
 
 
     private static class ExampleChildQualifier implements UnaryPredicate {
-	private LoggingService lsvc;
+	/**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+   private LoggingService lsvc;
 
 	ExampleChildQualifier(LoggingService lsvc) {
 	    this.lsvc = lsvc;

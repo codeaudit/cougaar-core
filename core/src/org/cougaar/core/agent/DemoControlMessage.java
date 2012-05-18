@@ -38,7 +38,11 @@ import org.cougaar.core.util.UID;
  */
 public final class DemoControlMessage extends Message {
 
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
 	private final ExecutionTimer.Parameters p;
   private final boolean ack;
 

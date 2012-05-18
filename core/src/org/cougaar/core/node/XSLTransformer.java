@@ -626,7 +626,11 @@ public String toString() {
    */
   public static class ParseException 
       extends Exception {
-        public ParseException(String s) {
+        /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+      public ParseException(String s) {
           super(s);
         }
         public ParseException(String s, Throwable t) {

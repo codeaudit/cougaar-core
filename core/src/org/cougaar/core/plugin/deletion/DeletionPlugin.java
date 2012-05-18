@@ -186,13 +186,23 @@ public void execute() {
     deletionTimeFormat = new SimpleDateFormat("MM/dd/yyyy HH:mm:ss");
   }
   protected static UnaryPredicate truePredicate = new UnaryPredicate() {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       return true;
     }
   };
   
   private static UnaryPredicate deletablePredicate =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
 	if (o instanceof Deletable) {
 	  Deletable d = (Deletable) o;
@@ -230,6 +240,11 @@ public void execute() {
   protected DeletionSchedulePolicy theDeletionSchedulePolicy;
 
   protected UnaryPredicate deletionPolicyPredicate = new UnaryPredicate() {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
 	return o instanceof DeletionPolicy;
       }
@@ -237,6 +252,11 @@ public void execute() {
 
   protected UnaryPredicate deletionSchedulePolicyPredicate =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
 	return o instanceof DeletionSchedulePolicy;
       }
@@ -421,7 +441,12 @@ public void load() {
   }
 
   private static class DefaultDeletionPolicy extends SimpleDeletionPolicy {
-    DefaultDeletionPolicy(long deletionDelay) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   DefaultDeletionPolicy(long deletionDelay) {
       super(deletionDelay);
     }
   }

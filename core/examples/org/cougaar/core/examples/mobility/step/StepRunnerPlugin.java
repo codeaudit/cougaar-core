@@ -955,7 +955,12 @@ protected void execute() {
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
           if (o instanceof Step) {
             Step step = (Step) o;
             MessageAddress target = step.getOptions().getTarget();
@@ -970,7 +975,12 @@ protected void execute() {
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
           if (o instanceof MoveAgent) {
             MoveAgent ma = (MoveAgent) o;
             MessageAddress a = ma.getSource();

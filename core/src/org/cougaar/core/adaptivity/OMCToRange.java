@@ -33,7 +33,11 @@ package org.cougaar.core.adaptivity;
  * is not).
  **/
 public class OMCToRange extends OMCRange {
-  private Comparable undecrementedMax;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private Comparable undecrementedMax;
 
   /**
    * Constructor from ints

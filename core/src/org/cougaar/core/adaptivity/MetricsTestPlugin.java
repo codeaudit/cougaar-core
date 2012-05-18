@@ -52,7 +52,12 @@ public class MetricsTestPlugin extends ServiceUserPlugin {
    * class which has no setter method.
    **/
   private static class MetricsTestCondition extends SensorCondition implements NotPersistable {
-    public MetricsTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public MetricsTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
       super(name, allowedValues, value);
     }
 

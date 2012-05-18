@@ -57,7 +57,11 @@ import org.cougaar.core.service.ServletService;
 public class MetricQueryServlet
     extends HttpServlet
 {
-  private MetricsService metricsService;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private MetricsService metricsService;
   private VariableEvaluator variableEvaluator;
   
   public MetricQueryServlet(ServiceBroker sb) {

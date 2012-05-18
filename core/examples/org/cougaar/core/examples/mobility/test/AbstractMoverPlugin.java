@@ -122,7 +122,12 @@ protected void execute() {
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
           if (o instanceof MoveAgent) {
             MoveAgent ma = (MoveAgent) o;
             return (agentId.equals(ma.getSource()));

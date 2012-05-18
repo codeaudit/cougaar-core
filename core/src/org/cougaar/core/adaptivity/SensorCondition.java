@@ -34,6 +34,10 @@ package org.cougaar.core.adaptivity;
  */
 public class SensorCondition extends OMCBase implements Condition {
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+/**
    * Constructor with no specified initial value. The initial value is
    * set to the effective value of the allowedValues.
    * @param name the name of this SensorCondition

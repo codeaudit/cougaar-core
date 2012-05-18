@@ -39,7 +39,11 @@ import java.util.TreeSet;
  * to publishChange the policy after making modifications.
  */
 public class DeletionSchedulePolicy implements Serializable {
-    private SortedSet deletionTimes = new TreeSet();
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private SortedSet deletionTimes = new TreeSet();
     private long period;
     private long phase;
     

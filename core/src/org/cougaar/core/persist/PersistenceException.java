@@ -32,7 +32,12 @@ package org.cougaar.core.persist;
  * operations. Primarily (exclusively) used during initialization.
  */
 public class PersistenceException extends Exception {
-  public PersistenceException() {
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public PersistenceException() {
   }
 
   public PersistenceException(String message) {

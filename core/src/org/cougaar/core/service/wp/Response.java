@@ -40,7 +40,12 @@ import org.cougaar.core.thread.SchedulableStatus;
  */
 public abstract class Response implements Callback, Serializable {
 
-  /** A marker exception for a request timeout failure */
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/** A marker exception for a request timeout failure */
   public static final String TIMEOUT = "timeout";
 
   private final Request request;
@@ -242,7 +247,11 @@ public String toString() {
 
   /** @see Request.Get */
   public static class Get extends Response {
-    public static final Object NULL = new Object() {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public static final Object NULL = new Object() {
       private Object readResolve() { return NULL; }
       @Override
       public String toString() { return "null_get"; }
@@ -298,7 +307,11 @@ public String toString() {
 
   /** @see Request.GetAll */
   public static class GetAll extends Response {
-    public GetAll(Request q) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public GetAll(Request q) {
       this((Request.GetAll) q);
     }
     public GetAll(Request.GetAll q) {
@@ -331,7 +344,11 @@ public String toString() {
 
   /** @see Request.List */
   public static class List extends Response {
-    public List(Request q) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public List(Request q) {
       this((Request.List) q);
     }
     public List(Request.List q) {
@@ -363,7 +380,11 @@ public String toString() {
 
   /** @see Request.Flush */
   public static class Flush extends Response {
-    public Flush(Request q) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public Flush(Request q) {
       this((Request.Flush) q);
     }
     public Flush(Request.Flush q) {
@@ -385,7 +406,11 @@ public String toString() {
 
   /** @see Request.Bind */
   public static class Bind extends Response {
-    public Bind(Request q) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public Bind(Request q) {
       this((Request.Bind) q);
     }
     public Bind(Request.Bind q) {
@@ -453,7 +478,11 @@ public String toString() {
 
   /** @see Request.Unbind */
   public static class Unbind extends Response {
-    public Unbind(Request q) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public Unbind(Request q) {
       this((Request.Unbind) q);
     }
     public Unbind(Request.Unbind q) {

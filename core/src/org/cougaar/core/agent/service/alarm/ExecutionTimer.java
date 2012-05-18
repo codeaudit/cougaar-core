@@ -138,7 +138,11 @@ public class ExecutionTimer extends Timer {
   public static final long DEFAULT_CHANGE_DELAY = 10000L;
 
   public static class Parameters implements Comparable, java.io.Serializable {
-    public final long theOffset;             // The offset (Ko)
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public final long theOffset;             // The offset (Ko)
     public final double theRate;             // The advancement rate (Km)
     public final long theChangeTime;         // The changeover time
 

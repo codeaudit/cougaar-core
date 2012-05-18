@@ -32,7 +32,11 @@ package org.cougaar.core.adaptivity;
  * relations between policy components.
  */
 public class ArithmeticOperator extends Operator {
-    private ArithmeticOperator(String op, int nOps, int lp, int rp) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private ArithmeticOperator(String op, int nOps, int lp, int rp) {
         super(op, nOps, lp, rp);
     }
 

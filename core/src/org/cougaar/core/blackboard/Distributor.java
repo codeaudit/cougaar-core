@@ -134,6 +134,11 @@ final class Distributor {
 
   private static final UnaryPredicate anythingP = 
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return (o != null);
       }

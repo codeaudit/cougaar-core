@@ -32,7 +32,12 @@ package org.cougaar.core.qos.metrics;
  */
 public class MetricImpl implements Metric, java.io.Serializable
 {
-    public static MetricImpl UndefinedMetric = 
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public static MetricImpl UndefinedMetric = 
 	new MetricImpl(0.0, 0.0, null, "undefined");
 
     private Object rawValue;

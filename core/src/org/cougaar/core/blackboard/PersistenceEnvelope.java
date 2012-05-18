@@ -36,7 +36,12 @@ package org.cougaar.core.blackboard;
  * subscription.
  */
 public class PersistenceEnvelope extends Envelope {
-  @Override
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+@Override
 protected boolean isVisible() { return false; }
 }
 

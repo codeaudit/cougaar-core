@@ -260,6 +260,10 @@ public void unload() {
   private static final class DefaultTransferableIdentity
     implements TransferableIdentity {
 
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       private final String name;
       private final MessageAddress sourceNode;
       private final MessageAddress targetNode;

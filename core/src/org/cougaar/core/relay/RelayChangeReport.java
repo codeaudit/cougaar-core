@@ -54,7 +54,11 @@ import org.cougaar.core.blackboard.ChangeReport;
  * targets.
  */
 public class RelayChangeReport implements ChangeReport {
-  private Collection oldTargets;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private Collection oldTargets;
 
   /**
    * Constructor from a Relay.Source. The about-to-become-old targets

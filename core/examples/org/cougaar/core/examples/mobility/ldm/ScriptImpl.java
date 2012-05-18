@@ -35,7 +35,11 @@ import org.cougaar.core.util.UID;
 class ScriptImpl
 implements Script {
 
-  protected final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+protected final UID uid;
   protected final List entries;
 
   public ScriptImpl(

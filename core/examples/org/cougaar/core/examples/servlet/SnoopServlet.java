@@ -67,7 +67,12 @@ import javax.servlet.http.HttpSession;
  */
 public class SnoopServlet extends HttpServlet {
 
-  @Override
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+@Override
 public void doPut(
       HttpServletRequest request, 
       HttpServletResponse response) throws ServletException, IOException {

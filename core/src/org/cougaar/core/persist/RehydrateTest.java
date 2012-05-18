@@ -125,6 +125,11 @@ public class RehydrateTest {
 
   protected UnaryPredicate createPredicate() {
     UnaryPredicate pred = new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return true;
       }

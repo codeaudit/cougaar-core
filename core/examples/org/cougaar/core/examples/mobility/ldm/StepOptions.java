@@ -35,7 +35,11 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public final class StepOptions implements Serializable {
 
-  private final Object ownerId;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final Object ownerId;
   private final MessageAddress source;
   private final MessageAddress target;
   private final Ticket ticket;

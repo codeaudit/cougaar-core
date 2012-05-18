@@ -37,4 +37,9 @@ package org.cougaar.core.service.identity;
 public class PendingRequestException
   extends IdentityException
 {
+
+   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
 }

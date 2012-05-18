@@ -36,7 +36,12 @@ import java.util.HashMap;
  */
 public final class Application implements Serializable {
 
-  private static final HashMap apps = new HashMap(13);
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+private static final HashMap apps = new HashMap(13);
        
   private String name;
   private transient int _hc;

@@ -184,7 +184,12 @@ public interface Relay extends UniqueObject {
    * all content-updates must pass the same Token instance.
    */
   class Token implements java.io.Serializable {
-    /** Restricted to infrastructure-only construction. */
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   /** Restricted to infrastructure-only construction. */
     Token() {} 
   }
 }

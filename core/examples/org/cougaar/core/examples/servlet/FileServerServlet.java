@@ -57,7 +57,12 @@ import org.cougaar.util.ConfigFinder;
  */
 public class FileServerServlet extends ComponentServlet {
 
-  @Override
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+@Override
 public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {

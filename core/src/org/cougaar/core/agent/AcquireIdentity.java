@@ -349,6 +349,11 @@ public void unload() {
 
   private static final TransferableIdentity NULL_MOBILE_IDENTITY =
     new TransferableIdentity() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       private Object readResolve() { return NULL_MOBILE_IDENTITY; }
     };
 }

@@ -31,7 +31,11 @@ package org.cougaar.core.adaptivity;
  * Defines boolean operator constants.
  */
 public class BooleanOperator extends Operator {
-    private BooleanOperator(String op, int nOps, int lp, int rp) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private BooleanOperator(String op, int nOps, int lp, int rp) {
         super(op, nOps, lp, rp);
     }
     public static final BooleanOperator AND = new BooleanOperator("&", 2, 5, 5);

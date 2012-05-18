@@ -32,7 +32,11 @@ import java.io.Serializable;
  * An opaque class to contain the persistence snapshot.
  */
 public class PersistenceObject implements Serializable {
-    private byte[] bytes;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private byte[] bytes;
     private String name;
     public PersistenceObject(String name, byte[] bytes) {
         this.bytes = bytes;

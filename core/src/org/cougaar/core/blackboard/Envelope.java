@@ -60,7 +60,11 @@ import java.util.List;
  */
 public class Envelope implements java.io.Serializable {
 
-  /** a set of changes to make to a subscriber's data structures */
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+/** a set of changes to make to a subscriber's data structures */
   private final List deltas = new ArrayList(5);
 
   /**

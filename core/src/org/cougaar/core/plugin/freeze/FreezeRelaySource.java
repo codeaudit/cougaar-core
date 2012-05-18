@@ -51,7 +51,11 @@ public class FreezeRelaySource
   extends SimpleUniqueObject
   implements Relay.Source, NotPersistable
 {
-  transient Map targets;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+transient Map targets;
 
   FreezeRelaySource(Set targets) {
     this.targets = new HashMap();

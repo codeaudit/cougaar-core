@@ -33,6 +33,11 @@ package org.cougaar.core.persist;
  * Actually, it doesn't throw this anymore.
  */
 public class PersistenceNotEnabledException extends Exception {
-    public PersistenceNotEnabledException() {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public PersistenceNotEnabledException() {
     }
 }

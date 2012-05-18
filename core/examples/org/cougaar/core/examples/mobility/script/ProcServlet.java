@@ -90,6 +90,11 @@ implements BlackboardClient
 
   protected static final UnaryPredicate PROC_PRED =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return (o instanceof Proc);
       }
@@ -97,6 +102,11 @@ implements BlackboardClient
 
   protected static final UnaryPredicate SCRIPT_PRED =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return (o instanceof Script);
       }
@@ -249,6 +259,11 @@ public void unload() {
       throw new IllegalArgumentException("null uid");
     }
     UnaryPredicate pred = new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return 
           ((o instanceof Script) &&
@@ -273,6 +288,11 @@ public void unload() {
       throw new IllegalArgumentException("null uid");
     }
     UnaryPredicate pred = new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return 
           ((o instanceof Proc) &&
@@ -297,6 +317,11 @@ public void unload() {
       throw new IllegalArgumentException("null uid");
     }
     UnaryPredicate pred = new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return 
           ((o instanceof Step) &&
@@ -347,7 +372,12 @@ public void unload() {
    */
   private class MyServlet extends HttpServlet {
 
-    @Override
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   @Override
    public void doGet(
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {

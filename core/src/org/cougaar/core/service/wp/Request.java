@@ -37,6 +37,11 @@ import java.io.Serializable;
 public abstract class Request implements Serializable {
 
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/**
    * The options flag to indicate no options.
    */
   public static final int NONE = 0;
@@ -145,7 +150,11 @@ public String toString() {
    * @see Request.GetAll get all entries with a given name
    */
   public static final class Get extends Request {
-    private final String name;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final String name;
     private final String type;
     private transient int _hc;
     public Get(
@@ -206,7 +215,11 @@ public String toString() {
    * @see Request.Get do a specific (name, type) lookup
    */
   public static final class GetAll extends Request {
-    private final String name;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final String name;
     public GetAll(
         int options,
         String name) {
@@ -251,7 +264,11 @@ public String toString() {
    * This is similar to a DNS zone transfer (AXFR) limited to depth=1.
    */
   public static final class List extends Request {
-    private final String suffix;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final String suffix;
     public List(
         int options,
         String suffix) {
@@ -332,7 +349,11 @@ public String toString() {
    */
   public static final class Flush extends Request {
 
-    private final String name;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final String name;
     private final long minAge;
     private final AddressEntry ae;
     private final boolean uncache;
@@ -448,7 +469,11 @@ public String toString() {
    */
   public static final class Bind extends Request {
 
-    private final AddressEntry ae;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final AddressEntry ae;
     private final boolean overWrite;
     private final boolean renewal;
 
@@ -527,7 +552,11 @@ public String toString() {
    * The client must pass the current value for the bound entry.
    */
   public static final class Unbind extends Request {
-    private final AddressEntry ae;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final AddressEntry ae;
     public Unbind(
         int options,
         AddressEntry ae) {

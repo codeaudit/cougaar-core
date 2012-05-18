@@ -108,7 +108,11 @@ public abstract class DecayingHistory
     //  Keep a history and pass on the now-snapshot to the next column
     //  after "length" number of elements have been added
     private class DecayingHistoryList extends LinkedList {
-	private int column;
+	/**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+   private int column;
 	private int length;
 	private int index;
 	private boolean full;

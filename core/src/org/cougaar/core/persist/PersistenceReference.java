@@ -34,7 +34,11 @@ import java.io.Serializable;
  * real objects. It is merely an Integer.
  */
 public class PersistenceReference implements Serializable {
-  private int id;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private int id;
   public PersistenceReference(int id) {
     this.id = id;
   }

@@ -34,7 +34,12 @@ import java.io.ObjectOutputStream;
  * complains if the {@link UID} is reset.
  */
 public abstract class SimpleUniqueObject implements UniqueObject {
-  /** The UID of the object */
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/** The UID of the object */
   protected UID uid;
 
   /**

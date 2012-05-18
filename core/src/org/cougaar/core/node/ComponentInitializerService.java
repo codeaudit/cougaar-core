@@ -65,7 +65,12 @@ public interface ComponentInitializerService extends Service {
    * Generic exception for component initializer failures.
    */
   public class InitializerException extends Exception {
-    public InitializerException(String msg, Throwable t) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public InitializerException(String msg, Throwable t) {
       super(msg, t);
     }
   }

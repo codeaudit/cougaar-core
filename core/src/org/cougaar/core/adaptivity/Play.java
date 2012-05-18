@@ -32,6 +32,11 @@ package org.cougaar.core.adaptivity;
  */
 public class Play extends PlayBase {
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/**
    * Constructor
    * @param ifClause representing the 'if' clause
    * @param playConstraints representing the 'then' clause

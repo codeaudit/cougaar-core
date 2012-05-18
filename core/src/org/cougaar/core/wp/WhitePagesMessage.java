@@ -35,7 +35,12 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public abstract class WhitePagesMessage
 extends Message {
-  public WhitePagesMessage(
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public WhitePagesMessage(
       MessageAddress source,
       MessageAddress target) {
     super(source, target);

@@ -63,7 +63,11 @@ import org.cougaar.core.util.UID;
  */
 public final class LeaseDenied implements Serializable {
 
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
   private final Object reason;
   private final Object data;
 

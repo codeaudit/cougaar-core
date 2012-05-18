@@ -47,7 +47,12 @@ public class InterAgentCondition
   implements Relay.Source, Relay.Target, Condition
 {
 
-  // this can't be transient like other relays, cause not storing
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+// this can't be transient like other relays, cause not storing
   // target separately
   private Set targets = Collections.EMPTY_SET;
 
@@ -147,6 +152,10 @@ public class InterAgentCondition
    **/
   private static class InterAgentConditionFactory 
     implements Relay.TargetFactory, java.io.Serializable {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       public static final InterAgentConditionFactory INSTANCE = 
         new InterAgentConditionFactory();
       private InterAgentConditionFactory() { }

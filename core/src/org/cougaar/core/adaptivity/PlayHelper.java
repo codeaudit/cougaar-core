@@ -391,7 +391,12 @@ public class PlayHelper {
   // Don't persist internally generated iaomp
   private static class PlayHelperInterAgentOperatingModePolicy extends InterAgentOperatingModePolicy {
 
-      // Constructors
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   // Constructors
     public PlayHelperInterAgentOperatingModePolicy(PolicyKernel pk) {
       super(pk);
     }

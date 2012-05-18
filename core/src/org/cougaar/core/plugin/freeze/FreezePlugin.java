@@ -50,6 +50,11 @@ public void setupSubscriptions() {
 
   protected static UnaryPredicate targetRelayPredicate =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return o instanceof FreezeRelayTarget;
       }
@@ -57,6 +62,11 @@ public void setupSubscriptions() {
 
   protected static UnaryPredicate sourceRelayPredicate =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return o instanceof FreezeRelaySource;
       }

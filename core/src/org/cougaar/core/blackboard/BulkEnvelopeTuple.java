@@ -35,7 +35,11 @@ import java.util.Iterator;
  * have been added to the blackboard.
  */
 public final class BulkEnvelopeTuple extends EnvelopeTuple {
-  private final Collection bulk;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final Collection bulk;
   @Override
 public Object getObject() { return bulk; }
 

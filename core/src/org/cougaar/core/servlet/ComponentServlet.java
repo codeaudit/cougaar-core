@@ -52,7 +52,12 @@ public abstract class ComponentServlet
 extends HttpServlet
 implements Component {
 
-  // default state model (no multiple inheritence!):
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+// default state model (no multiple inheritence!):
   private final GenericStateModel gsm = 
     new GenericStateModelAdapter() {};
 

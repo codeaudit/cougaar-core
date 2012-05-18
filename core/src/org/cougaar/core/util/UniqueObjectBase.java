@@ -30,7 +30,11 @@ package org.cougaar.core.util;
  * Minimal base class for UniqueObjects that use the UID for equality.
  */
 public class UniqueObjectBase implements UniqueObject {
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
 
   public UniqueObjectBase(UID uid) {
     if (uid == null) {

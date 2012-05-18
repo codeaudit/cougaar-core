@@ -57,7 +57,11 @@ public class SignedMessageSecurityManager implements MessageSecurityManager {
   }
 
   private static class SignedSecureMessage extends Message implements SecureMessage {
-    private SignedObject secret;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private SignedObject secret;
     //private java.security.cert.Certificate cert;
 
     SignedSecureMessage(Message m) {

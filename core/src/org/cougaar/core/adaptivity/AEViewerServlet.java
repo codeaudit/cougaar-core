@@ -54,7 +54,11 @@ extends ComponentServlet
 implements BlackboardClient
 {
 
-  public static final String FRAME = "frame";
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public static final String FRAME = "frame";
   public static final String AE_FRAME = "ae";
 
   public static final String OPERATINGMODE = "OperatingMode";
@@ -74,7 +78,12 @@ implements BlackboardClient
 
   private static UnaryPredicate conditionPredicate = 
     new UnaryPredicate() { 
-	public boolean execute(Object o) {
+	/**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
 	  if (o instanceof Condition) {
 	    return true;
 	  }
@@ -84,7 +93,12 @@ implements BlackboardClient
 
   private static UnaryPredicate omPredicate = 
     new UnaryPredicate() { 
-	public boolean execute(Object o) {
+	/**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
 	  if (o instanceof OperatingMode) {
 	    return true;
 	  }
@@ -94,7 +108,12 @@ implements BlackboardClient
 
   private static UnaryPredicate omPolicyPredicate = 
     new UnaryPredicate() { 
-	public boolean execute(Object o) {
+	/**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
 	  if (o instanceof OperatingModePolicy) {
 	    return true;
 	  }
@@ -502,7 +521,11 @@ public void doGet(HttpServletRequest request, HttpServletResponse response) {
   }
 
   private class UIDPredicate implements UnaryPredicate { 
-    String uid;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   String uid;
     public UIDPredicate(String uidString) {
       uid = uidString;
     }
@@ -519,7 +542,11 @@ public void doGet(HttpServletRequest request, HttpServletResponse response) {
   }
 
   private class OMByNamePredicate implements UnaryPredicate { 
-    String name;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   String name;
     public OMByNamePredicate(String omName) {
       name = omName;
     }

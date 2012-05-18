@@ -569,7 +569,11 @@ public void execute() {
   }
 
   protected static final class AgentControlPredicate implements UnaryPredicate {
-    private final UID pluginId;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final UID pluginId;
     public AgentControlPredicate(UID pluginId) {
       this.pluginId = pluginId;
     }

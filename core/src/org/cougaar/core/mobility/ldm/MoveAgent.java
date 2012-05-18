@@ -86,6 +86,10 @@ public interface MoveAgent extends UniqueObject {
   final class Status implements Serializable {
 
     /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   /**
      * Status codes:
      */
     public static final int OKAY = 200;

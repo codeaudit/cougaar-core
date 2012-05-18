@@ -31,7 +31,11 @@ package org.cougaar.core.domain;
  * A runtime exception thrown by a {@link Factory}.
  */
 public class FactoryException extends RuntimeException {
-  private Exception inner = null;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private Exception inner = null;
 
   public FactoryException(String s) {
     super(s);

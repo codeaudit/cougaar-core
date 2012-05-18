@@ -31,7 +31,11 @@ package org.cougaar.core.adaptivity;
  * Defines boolean operator constants.
  */
 public class Operator implements java.io.Serializable {
-    public static final int MAXP = 10;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public static final int MAXP = 10;
     protected String op;
     protected int lp;
     protected int rp;

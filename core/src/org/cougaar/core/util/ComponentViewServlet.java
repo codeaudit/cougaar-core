@@ -101,7 +101,12 @@ import org.cougaar.core.servlet.ComponentServlet;
  */
 public class ComponentViewServlet extends ComponentServlet {
 
-  private LoggingService log;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+private LoggingService log;
 
   private ComponentView view;
 

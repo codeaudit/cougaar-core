@@ -37,7 +37,12 @@ import org.cougaar.core.persist.NotPersistable;
 class AckDirectiveMessage extends ClusterMessage
   implements NotPersistable
 {
-  public AckDirectiveMessage(MessageAddress theDirectiveSource,
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public AckDirectiveMessage(MessageAddress theDirectiveSource,
                              MessageAddress theDirectiveDestination,
                              int theSequenceNumber,
                              long anIncarnationNumber)

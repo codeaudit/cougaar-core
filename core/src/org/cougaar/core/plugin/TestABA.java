@@ -53,6 +53,11 @@ public class TestABA extends ComponentPlugin {
   private MyRelay myRelay;
   private UnaryPredicate relayPredicate =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return o instanceof MyRelay;
       }
@@ -106,7 +111,11 @@ public void execute() {
   private static class MyRelay extends SimpleUniqueObject
     implements Relay.Source, Relay.Target, Relay.TargetFactory
   {
-    transient Set targets;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   transient Set targets;
     transient MessageAddress source;
 
     MyRelay(Set targets) {

@@ -40,7 +40,11 @@ import java.util.EventObject;
  */
 public class CommunityChangeEvent extends EventObject {
 
-  // Defines the type of change
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+// Defines the type of change
   public static final int ADD_COMMUNITY                = 1;
   public static final int REMOVE_COMMUNITY             = 2;
   public static final int COMMUNITY_ATTRIBUTES_CHANGED = 3;

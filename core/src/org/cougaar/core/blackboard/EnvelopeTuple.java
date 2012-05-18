@@ -33,7 +33,12 @@ import org.cougaar.util.StackElements;
  * object.
  */
 public abstract class EnvelopeTuple implements java.io.Serializable {
-  public abstract int getAction();
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public abstract int getAction();
   abstract public Object getObject();
   public boolean isAdd() { return false; }
   public boolean isRemove() { return false; }

@@ -54,7 +54,12 @@ public abstract class ServletFrameset
 extends HttpServlet
 {
 
-  // url paramter
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+// url paramter
   protected static final String FRAME="frame";
 
   // values for the FRAME url parameter

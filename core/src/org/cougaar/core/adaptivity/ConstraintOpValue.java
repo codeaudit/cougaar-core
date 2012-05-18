@@ -32,7 +32,11 @@ package org.cougaar.core.adaptivity;
  * valid values to compare against.
  **/
 public class ConstraintOpValue implements java.io.Serializable {
-  ConstraintOperator operator;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+ConstraintOperator operator;
   OMCRangeList allowedValues;
   
   /**

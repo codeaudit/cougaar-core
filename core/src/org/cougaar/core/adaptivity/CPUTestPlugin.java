@@ -77,7 +77,12 @@ public class CPUTestPlugin extends ServiceUserPlugin {
    * class which has no setter method.
    **/
   private static class CPUTestCondition extends SensorCondition implements NotPersistable {
-    public CPUTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public CPUTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
       super(name, allowedValues, value);
     }
 

@@ -40,7 +40,11 @@ public class RMIAccessImpl
 extends UnicastRemoteObject
 implements RMIAccess {
 
-  private final BundlesProvider bp;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final BundlesProvider bp;
 
   public RMIAccessImpl(
       BundlesProvider bp,

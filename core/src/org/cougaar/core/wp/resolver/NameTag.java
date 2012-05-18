@@ -38,7 +38,11 @@ import java.io.Serializable;
  */
 public final class NameTag implements Serializable {
 
-  private final String name;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final String name;
   private final Object obj;
 
   public NameTag(String name, Object obj) {

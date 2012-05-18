@@ -47,7 +47,11 @@ import org.cougaar.core.util.UID;
  */
 public final class Bundle implements Serializable {
 
-  private final String name;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final String name;
   private final UID uid;
   private final long ttd;
   private final Map entries;

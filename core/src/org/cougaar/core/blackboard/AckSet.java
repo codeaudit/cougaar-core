@@ -41,7 +41,12 @@ import java.io.Serializable;
  * zero don't require storage.
  */
 class AckSet implements Serializable {
-  /** The sequence number of the first zero bit. */
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/** The sequence number of the first zero bit. */
   private int minSequence = 0;
 
   /** The sequence number corresponding to bit 0 of the bits array */

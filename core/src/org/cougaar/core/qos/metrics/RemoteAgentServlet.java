@@ -46,7 +46,11 @@ public class RemoteAgentServlet
     extends MetricsServlet
 {
 
-    private static final String TOPOLOGY = "topology";
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private static final String TOPOLOGY = "topology";
     private static String localHost;
 
     static {

@@ -64,7 +64,12 @@ public class AdaptivityEngine extends ServiceUserPlugin {
                OperatingModeService.Listener,
                UnaryPredicate
   {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       return (this == o);
     }
 

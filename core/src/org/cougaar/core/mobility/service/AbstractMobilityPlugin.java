@@ -70,7 +70,12 @@ public abstract class AbstractMobilityPlugin
   private static final UnaryPredicate AGENT_CONTROL_PRED = 
     new AgentControlPredicate();
   private static final class AgentControlPredicate implements UnaryPredicate {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       return (o instanceof AgentControl);
     }
   }

@@ -56,7 +56,12 @@ import org.cougaar.core.servlet.ComponentServlet;
  * just like a regular Cougaar plugin.
  */
 public class HelloServlet extends ComponentServlet {
-  @Override
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+@Override
 public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {

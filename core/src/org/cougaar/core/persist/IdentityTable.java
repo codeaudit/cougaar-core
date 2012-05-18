@@ -54,6 +54,11 @@ import org.cougaar.util.log.Logger;
 class IdentityTable {
   static class MyArrayList extends ArrayList {
     /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   /**
      * Strangely enough, ArrayLists cannot be resized; this extension
      * adds setSize(). 
      * @param newSize the new size.  

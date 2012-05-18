@@ -31,7 +31,11 @@ package org.cougaar.core.mobility;
  * Base class for mobility failure exceptions.
  */
 public class MobilityException extends RuntimeException {
-  public MobilityException(String s) {
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public MobilityException(String s) {
     super(s);
   }
   public MobilityException(String s, Throwable t) {

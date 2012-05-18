@@ -41,6 +41,11 @@ public class NodeMessage
   // 
 
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/**
    * Constructor
    * <p>
    * @param s The MessageAddress of creator node 

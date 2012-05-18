@@ -32,7 +32,11 @@ package org.cougaar.core.blackboard;
  * removed from the blackboard.
  */
 class RemoveEnvelopeTuple extends EnvelopeTuple {
-  private final Object object;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final Object object;
   @Override
 public Object getObject() { return object; }
   public RemoveEnvelopeTuple(Object o) {

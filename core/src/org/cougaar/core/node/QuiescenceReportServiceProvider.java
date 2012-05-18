@@ -72,6 +72,11 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
   // Predicate to get the quiscence states for agents that have enabled
   // their QRS and have not been marked as dead (duplicated elsewhere)
   private UnaryPredicate enabledQuiescenceStatePredicate = new UnaryPredicate() {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
 	QuiescenceState qs = (QuiescenceState)o;
         return (qs.isEnabled() && qs.isAlive());

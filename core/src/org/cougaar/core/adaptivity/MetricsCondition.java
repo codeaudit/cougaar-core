@@ -31,7 +31,11 @@ import org.cougaar.core.qos.metrics.MetricsService;
 import org.cougaar.core.qos.metrics.VariableEvaluator;
 
 public abstract class MetricsCondition implements Condition {
-  public static final java.lang.String METRICS_PREFIX = "metrics:";
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public static final java.lang.String METRICS_PREFIX = "metrics:";
   public static final java.lang.String METRICS_DOUBLE_PREFIX = METRICS_PREFIX + "double:";
   public static final java.lang.String METRICS_STRING_PREFIX = METRICS_PREFIX + "string:";
   public static final java.lang.String METRICS_INTEGER_PREFIX = METRICS_PREFIX + "int:";
@@ -106,7 +110,12 @@ public java.lang.String toString() {
   public abstract Comparable getValue();
 
   public static class Double extends MetricsCondition {
-    public Double(java.lang.String name,
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public Double(java.lang.String name,
                   MetricsService metricsService,
                   VariableEvaluator variableEvaluator)
     {
@@ -133,7 +142,12 @@ public java.lang.String toString() {
   }
 
   public static class Default extends Double {
-    public Default(java.lang.String name,
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public Default(java.lang.String name,
                    MetricsService metricsService,
                    VariableEvaluator variableEvaluator)
     {
@@ -142,7 +156,12 @@ public java.lang.String toString() {
   }
 
   public static class Integer extends MetricsCondition {
-    public Integer(java.lang.String name,
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public Integer(java.lang.String name,
                    MetricsService metricsService,
                    VariableEvaluator variableEvaluator)
     {
@@ -160,7 +179,12 @@ public java.lang.String toString() {
   }
 
   public static class Long extends MetricsCondition {
-    public Long(java.lang.String name,
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public Long(java.lang.String name,
                 MetricsService metricsService,
                 VariableEvaluator variableEvaluator)
     {
@@ -178,7 +202,12 @@ public java.lang.String toString() {
   }
 
   public static class String extends MetricsCondition {
-    public String(java.lang.String name,
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public String(java.lang.String name,
                   MetricsService metricsService,
                   VariableEvaluator variableEvaluator)
     {
@@ -196,7 +225,12 @@ public java.lang.String toString() {
   }
 
   public static class Boolean extends MetricsCondition {
-    public Boolean(java.lang.String name,
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public Boolean(java.lang.String name,
                    MetricsService metricsService,
                    VariableEvaluator variableEvaluator)
     {

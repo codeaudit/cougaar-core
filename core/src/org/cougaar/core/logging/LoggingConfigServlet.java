@@ -62,7 +62,12 @@ protected Servlet createServlet() {
 
   private class MyServlet extends HttpServlet {
 
-    @Override
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   @Override
    public void doGet(
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {

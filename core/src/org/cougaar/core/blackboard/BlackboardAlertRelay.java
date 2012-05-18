@@ -46,7 +46,11 @@ import org.cougaar.core.util.UID;
 public class BlackboardAlertRelay 
 implements SimpleRelay, Relay.Source, Relay.Target {
 
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
   private final MessageAddress source;
   private final MessageAddress target;
 
@@ -179,6 +183,10 @@ public String toString() {
 
   private static class BlackboardAlertRelayFactory 
     implements Relay.TargetFactory, Serializable {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       private final MessageAddress target;
       public BlackboardAlertRelayFactory(MessageAddress target) {
         this.target = target;

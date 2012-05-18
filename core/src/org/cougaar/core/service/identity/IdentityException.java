@@ -36,4 +36,9 @@ package org.cougaar.core.service.identity;
 public class IdentityException
   extends Exception
 {
+
+   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
 }

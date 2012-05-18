@@ -33,6 +33,11 @@ package org.cougaar.core.adaptivity;
  **/
 public class OMCPoint extends OMCRange {
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/**
    * Constructor from an int
    **/
   public OMCPoint(int v) {

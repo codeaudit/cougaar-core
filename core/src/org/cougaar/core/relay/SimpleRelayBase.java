@@ -35,7 +35,11 @@ import org.cougaar.core.util.UID;
 public abstract class SimpleRelayBase 
 implements SimpleRelay {
 
-  protected final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+protected final UID uid;
   protected final MessageAddress source;
   protected final MessageAddress target;
 

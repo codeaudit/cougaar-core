@@ -44,7 +44,11 @@ public class MetricsWriterServlet
     extends HttpServlet
     implements Constants
 {
-    private MetricsUpdateService metricsUpdateService;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private MetricsUpdateService metricsUpdateService;
   
     public MetricsWriterServlet(ServiceBroker sb) {
 	// Register our servlet with servlet service

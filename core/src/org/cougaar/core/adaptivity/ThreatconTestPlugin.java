@@ -53,7 +53,12 @@ public class ThreatconTestPlugin extends ServiceUserPlugin {
    * class which has no setter method.
    **/
   private static class ThreatconTestCondition extends SensorCondition implements NotPersistable {
-    public ThreatconTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public ThreatconTestCondition(String name, OMCRangeList allowedValues, Comparable value) {
       super(name, allowedValues, value);
     }
 

@@ -40,7 +40,11 @@ class MoveAgentAdapter
 extends AgentControlImpl 
 implements MoveAgent {
 
-  private Status myStatus;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private Status myStatus;
 
   public MoveAgentAdapter(
       UID uid,

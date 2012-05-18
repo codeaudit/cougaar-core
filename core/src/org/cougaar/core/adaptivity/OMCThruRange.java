@@ -34,6 +34,11 @@ package org.cougaar.core.adaptivity;
  **/
 public class OMCThruRange extends OMCRange {
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/**
    * Constructor from ints
    **/
   public OMCThruRange(int min, int max) {

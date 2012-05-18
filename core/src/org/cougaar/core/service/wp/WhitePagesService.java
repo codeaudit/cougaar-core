@@ -237,6 +237,10 @@ public abstract class WhitePagesService implements Service {
 
   public static final class TimeoutException 
     extends InterruptedException {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       private final boolean b;
       public TimeoutException(boolean b) {
         super("Timeout on "+(b ? "Request" : "Response"));

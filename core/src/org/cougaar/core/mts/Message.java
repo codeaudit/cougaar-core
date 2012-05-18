@@ -40,7 +40,12 @@ public abstract class Message
   implements Serializable 
 {
 
-  private static final MessageAddress sink = MessageAddress.NULL_SYNC;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+private static final MessageAddress sink = MessageAddress.NULL_SYNC;
 
   // sender:
   private MessageAddress theOriginator;

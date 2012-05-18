@@ -64,6 +64,11 @@ extends ComponentPlugin
 
   private static final UnaryPredicate PROCESS_PRED =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return (o instanceof Proc);
       }
@@ -71,6 +76,11 @@ extends ComponentPlugin
 
   private static final UnaryPredicate SCRIPT_PRED =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return (o instanceof Script);
       }
@@ -582,7 +592,12 @@ protected void execute() {
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
           if (o instanceof Step) {
             Step step = (Step) o;
             MessageAddress target = step.getOptions().getTarget();

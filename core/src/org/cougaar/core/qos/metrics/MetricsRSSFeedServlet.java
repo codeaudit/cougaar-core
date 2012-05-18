@@ -49,7 +49,12 @@ public class MetricsRSSFeedServlet
     extends HttpServlet
     implements Constants
 {
-    private static final DateFormat DateFormatter = 
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   private static final DateFormat DateFormatter = 
 	DateFormat.getDateTimeInstance(DateFormat.FULL, DateFormat.FULL);
 
     private MetricsService metricsService;

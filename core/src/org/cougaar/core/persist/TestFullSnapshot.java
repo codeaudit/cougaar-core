@@ -39,7 +39,11 @@ public class TestFullSnapshot extends ComponentPlugin {
   private LoggingService logger;
 
   private static class Item implements Serializable {
-    byte[] bytes = new byte[10000];
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   byte[] bytes = new byte[10000];
   }
 
   @Override
@@ -96,7 +100,12 @@ public void execute() {
     long heap = rt.totalMemory() - rt.freeMemory();
     if (logger.isShoutEnabled())
       logger.shout(blackboard.query(new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
           return true;
         }
       }).size() + " objects on blackboard, heap = " + heap);

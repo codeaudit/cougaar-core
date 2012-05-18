@@ -157,7 +157,12 @@ public void unload() {
   }
 
   private UnaryPredicate myThreadQualifier = new UnaryPredicate() {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       Schedulable schedulable = (Schedulable) o;
       Object consumer = schedulable.getConsumer();
       return rules.allow(consumer);
@@ -267,6 +272,11 @@ public void execute() {
 
   private class MyServlet extends HttpServlet {
     /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   /**
      * @see javax.servlet.http.HttpServlet#service(HttpServletRequest, HttpServletResponse)
      */
     @Override

@@ -37,7 +37,11 @@ package org.cougaar.core.blackboard;
  * in-sync with the rest of the world.
  */
 public final class InitializeSubscriptionEnvelope extends Envelope {
-  private transient Subscription subscription;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private transient Subscription subscription;
   InitializeSubscriptionEnvelope(Subscription subscription) {
     this.subscription = subscription;
   }

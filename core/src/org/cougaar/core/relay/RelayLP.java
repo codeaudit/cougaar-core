@@ -515,6 +515,11 @@ implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, AB
         (cid==null?"all agents":cid.toString()));
     }
     UnaryPredicate pred = new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return o instanceof Relay;
       }
@@ -609,6 +614,11 @@ implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, AB
   // ABAChange implementation
   private static final UnaryPredicate relaySourcePred =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
 	// FIXME: Somehow require it really is a source from here?
         return o instanceof Relay.Source;

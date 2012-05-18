@@ -47,7 +47,11 @@ class RemoteStepImpl
 extends LocalStepImpl
 implements Relay.Source, Relay.Target {
 
-  private transient Set _targets;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private transient Set _targets;
 
   public RemoteStepImpl(
       UID uid,
@@ -118,6 +122,10 @@ public String toString() {
   private static class RemoteStepImplFactory 
     implements Relay.TargetFactory, Serializable {
 
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       public static RemoteStepImplFactory INSTANCE = 
         new RemoteStepImplFactory();
 

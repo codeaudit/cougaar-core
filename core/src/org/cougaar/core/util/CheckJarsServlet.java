@@ -58,7 +58,12 @@ import org.cougaar.core.servlet.ComponentServlet;
  */
 public class CheckJarsServlet extends ComponentServlet {
 
-  @Override
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+@Override
 public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {

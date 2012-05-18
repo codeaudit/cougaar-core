@@ -36,7 +36,11 @@ import org.cougaar.core.util.UID;
  * send responses back to the {@link Relay.Source}.
  */
 public abstract class RelayDirective extends DirectiveImpl {
-  protected final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+protected final UID uid;
 
   public RelayDirective(UID uid) {
     this.uid = uid;
@@ -49,7 +53,11 @@ public abstract class RelayDirective extends DirectiveImpl {
   // utility methods
   
   public static class Add extends RelayDirective {
-    private Object content;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private Object content;
     private Relay.TargetFactory tf;
 
     public Add(UID uid, Object content, Relay.TargetFactory tf) {
@@ -70,7 +78,11 @@ public abstract class RelayDirective extends DirectiveImpl {
   }
 
   public static class Change extends RelayDirective {
-    private Object content;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private Object content;
     private Relay.TargetFactory tf;
 
     public Change(UID uid, Object content, Relay.TargetFactory tf) {
@@ -91,7 +103,11 @@ public abstract class RelayDirective extends DirectiveImpl {
   }
 
   public static class Remove extends RelayDirective {
-    public Remove(UID uid) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public Remove(UID uid) {
       super(uid);
     }
     @Override
@@ -101,7 +117,11 @@ public abstract class RelayDirective extends DirectiveImpl {
   }
 
   public static class Response extends RelayDirective {
-    private Object response;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private Object response;
     public Response(UID uid, Object response) {
       super(uid);
       this.response = response;

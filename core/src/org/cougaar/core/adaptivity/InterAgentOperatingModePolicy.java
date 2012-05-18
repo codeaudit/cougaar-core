@@ -47,7 +47,11 @@ public class InterAgentOperatingModePolicy
   extends OperatingModePolicy
   implements Relay.Source, Relay.Target
 {
-  // this can't be transient like other relays, cause not storing
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+// this can't be transient like other relays, cause not storing
   // target separately
   private Set targets = Collections.EMPTY_SET;
   protected MessageAddress source;
@@ -187,7 +191,11 @@ public class InterAgentOperatingModePolicy
   private static class InterAgentPolicyFactory 
     implements Relay.TargetFactory, java.io.Serializable 
   {
-    public static final InterAgentPolicyFactory INSTANCE = 
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public static final InterAgentPolicyFactory INSTANCE = 
       new InterAgentPolicyFactory();
     private InterAgentPolicyFactory() { }
     public Relay.Target create(UID uid, 

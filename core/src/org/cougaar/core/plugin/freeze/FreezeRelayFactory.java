@@ -46,7 +46,11 @@ import org.cougaar.core.util.UID;
 public class FreezeRelayFactory
   implements Relay.TargetFactory, NotPersistable, Serializable
 {
-  private static FreezeRelayFactory instance;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private static FreezeRelayFactory instance;
 
   public static synchronized Relay.TargetFactory getTargetFactory() {
     if (instance == null) {

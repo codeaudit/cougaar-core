@@ -58,7 +58,12 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
 
   private static UnaryPredicate policyPredicate = 
     new UnaryPredicate() {
-	public boolean execute(Object o) {
+	/**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
 	  if (o instanceof OperatingModePolicy) {
             if (o instanceof InterAgentOperatingModePolicy) {
               InterAgentOperatingModePolicy iaomp =
@@ -74,7 +79,11 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
   private IncrementalSubscription policySubscription;
 
   private class OMPredicate implements UnaryPredicate {
-    private HashSet omnames;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private HashSet omnames;
 
     public OMPredicate() {
       omnames = new HashSet(13);

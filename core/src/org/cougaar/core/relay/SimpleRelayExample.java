@@ -200,7 +200,11 @@ protected void execute() {
    * local address matches either the source or target.
    */ 
   private static class MyPred implements UnaryPredicate {
-    private final MessageAddress agentId;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final MessageAddress agentId;
     public MyPred(MessageAddress agentId) {
       this.agentId = agentId;
     }

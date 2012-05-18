@@ -35,7 +35,12 @@ public class OperatingModeImpl extends OMCBase implements OperatingMode {
   //  private List listeners = new ArrayList(1);
 
   
-  public OperatingModeImpl(String name, OMCRangeList allowedValues) {
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public OperatingModeImpl(String name, OMCRangeList allowedValues) {
     super(name, allowedValues, allowedValues.getEffectiveValue());
   }
   public OperatingModeImpl(String name, OMCRangeList allowedValues, Comparable value) {

@@ -42,7 +42,11 @@ public abstract class ServletMultiFrameset
 extends ServletFrameset
 {
 
-  // values for the FRAME url parameter
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+// values for the FRAME url parameter
   private static final String INFO_FRAME="infoFrame";
   private static final String SELECT_FRAME="selectFrame";
   private static final String RELOAD_FRAME="reloadFrame";

@@ -32,7 +32,11 @@ package org.cougaar.core.adaptivity;
  * relations between policy components.
  */
 public class ConstraintOperator extends Operator {
-    private ConstraintOperator(String op) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private ConstraintOperator(String op) {
         super(op, 2, 4, 4);
     }
 

@@ -46,7 +46,11 @@ public class FreezeRelayTarget
   extends SimpleUniqueObject
   implements Relay.Target, NotPersistable
 {
-  transient MessageAddress sourceAddress;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+transient MessageAddress sourceAddress;
   transient Set response;
   transient Token token;
 

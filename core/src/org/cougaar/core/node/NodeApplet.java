@@ -66,7 +66,12 @@ import org.cougaar.core.service.AppletService;
  */
 public class NodeApplet extends Applet {
 
-  private static final String[] REQUIRED_PROPS = new String[] {
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+private static final String[] REQUIRED_PROPS = new String[] {
     "properties",
     "-Dorg.cougaar.society.file",
     "-Dorg.cougaar.node.name",

@@ -250,7 +250,12 @@ public final class StateDumpServiceComponent
 	    BlackboardQueryService svc = sb.getService(this, BlackboardQueryService.class, null);
 	    if (svc != null) {
 		UnaryPredicate pred = new UnaryPredicate() {
-			public boolean execute(Object o) {
+			/**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+         public boolean execute(Object o) {
 			    return (o instanceof UniqueObject);
 			}
 		    };

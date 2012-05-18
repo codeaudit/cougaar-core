@@ -36,7 +36,11 @@ import org.cougaar.util.StackElements;
  */
 public final class PublisherInfo implements Serializable {
 
-  private final String publisher;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final String publisher;
   private final StackElements add_stack;
   private final Set change_stacks;
 

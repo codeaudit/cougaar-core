@@ -36,7 +36,11 @@ import org.cougaar.core.util.UID;
  */
 public final class TicketIdentifier implements Serializable {
 
-  private UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private UID uid;
 
   // package-private constructor!!!
   TicketIdentifier(UID uid) {

@@ -31,7 +31,11 @@ package org.cougaar.core.blackboard;
  * blackboard interactions.
  */
 public class BlackboardException extends RuntimeException {
-  public BlackboardException(String s) { super(s); }
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public BlackboardException(String s) { super(s); }
   public BlackboardException(String s, Throwable t) { super(s, t); }
   public BlackboardException() { super(); }
 }

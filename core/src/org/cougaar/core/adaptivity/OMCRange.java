@@ -34,7 +34,11 @@ import java.io.Serializable;
  * exceed low.
  **/
 public class OMCRange implements Serializable {
-  protected Comparable min, max;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+protected Comparable min, max;
 
   /**
    * Constructor for int values

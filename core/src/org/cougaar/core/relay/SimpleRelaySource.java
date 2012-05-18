@@ -61,7 +61,11 @@ public final class SimpleRelaySource
 extends SimpleRelayBase
 implements Relay.Source {
 
-  private Set targets;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private Set targets;
   private Relay.TargetFactory factory;
 
   // constructor:
@@ -107,6 +111,10 @@ public void setReply(Object reply) {
   // factory method, which creates the target-side instance:
   private static class MyFactory 
     implements Relay.TargetFactory, Serializable {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       private final MessageAddress target;
       public MyFactory(MessageAddress target) {
         this.target = target;

@@ -35,7 +35,12 @@ import org.cougaar.core.mts.MessageAddress;
  * stack context.
  */
 public abstract class OwnedUniqueObject extends SimpleUniqueObject {
-  protected MessageAddress owner;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+protected MessageAddress owner;
 
   private transient Throwable allocationContext;
 

@@ -36,7 +36,11 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public class BlackboardAlert implements Serializable {
   
-  private String sensorName, description;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private String sensorName, description;
   private long compromisedTimeStamp = 0;
   private MessageAddress victimAgent;
   private MessageAddress attackerAgent = null;

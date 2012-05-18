@@ -53,7 +53,11 @@ import org.cougaar.core.servlet.ComponentServlet;
  * <code>Node.AgentManager.Agent.PluginManager.Servlet</code>
  */
 public class QuiescenceStateServlet extends ComponentServlet {
-  private LoggingService log = null;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private LoggingService log = null;
   private AgentQuiescenceStateService aqs = null;
   private String node = null;
 

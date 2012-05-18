@@ -34,7 +34,11 @@ package org.cougaar.core.adaptivity;
  * control of the component establishing the Condition.
  **/
 public class OMCBase implements java.io.Serializable {
-  private String name;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private String name;
   private Comparable value;
   private OMCRangeList allowedValues;
 

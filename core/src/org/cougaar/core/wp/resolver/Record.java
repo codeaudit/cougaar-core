@@ -53,7 +53,11 @@ import org.cougaar.core.wp.Timestamp;
  */
 public final class Record implements Serializable {
 
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
   private final long ttd;
   private final Object data;
 

@@ -44,11 +44,20 @@ import java.security.cert.Certificate;
 public abstract class Cert implements Serializable {
 
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+/**
    * A "null" cert indicates that the client should contact the
    * entry address with no security (ie "in the open").
    */
   public static final Cert NULL = new Cert() {
-    private Object readResolve() { return NULL; }
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private Object readResolve() { return NULL; }
     @Override
    public String toString() { return "null_cert"; }
   };
@@ -60,7 +69,11 @@ public abstract class Cert implements Serializable {
    * The cert provider agent will never specify a PROXY cert.
    */
   public static final Cert PROXY = new Cert() {
-    private Object readResolve() { return PROXY; }
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private Object readResolve() { return PROXY; }
     @Override
    public String toString() { return "proxy_cert"; }
   };
@@ -69,7 +82,11 @@ public abstract class Cert implements Serializable {
    * A "direct" cert contains a JAAS Crypto certificate.
    */
   public static final class Direct extends Cert {
-    private final Certificate cert;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final Certificate cert;
     private transient int _hc;
     public Direct(Certificate cert) { 
       this.cert = cert;
@@ -102,7 +119,11 @@ public abstract class Cert implements Serializable {
    * authority, or a yellow pages.
    */
   public static final class Indirect extends Cert {
-    private final String query;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final String query;
     public Indirect(String query) {
       this.query = query;
       if (query == null) {

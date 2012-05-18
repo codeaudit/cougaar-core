@@ -33,7 +33,11 @@ import java.io.Serializable;
 public class ScriptLabel 
 implements Script.Entry, Serializable 
 {
-  private String name;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private String name;
   public ScriptLabel(String name) {
     this.name = name;
   }

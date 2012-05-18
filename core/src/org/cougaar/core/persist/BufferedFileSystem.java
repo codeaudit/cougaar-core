@@ -190,7 +190,12 @@ public class BufferedFileSystem implements Runnable {
   }
 
   private static class BufferedFileException extends RuntimeException {
-    public BufferedFileException(IOException t) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public BufferedFileException(IOException t) {
       super("Buffered IOException", t);
     }
   }

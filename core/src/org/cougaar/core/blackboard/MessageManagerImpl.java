@@ -98,7 +98,12 @@ class MessageManagerImpl implements MessageManager, Serializable {
    * another agent.
    */
   private class AgentInfo implements java.io.Serializable {
-    /** The MessageAddress of the remote agent */
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   /** The MessageAddress of the remote agent */
     private MessageAddress agentIdentifier;
 
     private long remoteIncarnationNumber = 0L;
@@ -286,7 +291,11 @@ class MessageManagerImpl implements MessageManager, Serializable {
    * should next be sent.
    */
   private class TimestampedMessage implements Comparable, java.io.Serializable {
-    protected transient long timestamp = System.currentTimeMillis();
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   protected transient long timestamp = System.currentTimeMillis();
     private transient int nTries = 0;
 
     protected transient DirectiveMessage theMessage;

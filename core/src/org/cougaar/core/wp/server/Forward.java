@@ -37,7 +37,11 @@ import org.cougaar.core.wp.resolver.Record;
  */
 public final class Forward implements Serializable {
 
-  private final Lease lease;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final Lease lease;
   private final Record record;
 
   public Forward(

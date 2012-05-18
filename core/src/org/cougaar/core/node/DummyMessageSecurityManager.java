@@ -60,6 +60,10 @@ public class DummyMessageSecurityManager implements MessageSecurityManager
     extends Message
     implements SecureMessage 
     {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
       protected Message m;
 
       private DummySecureMessage(Message m) {

@@ -41,7 +41,11 @@ import org.cougaar.core.service.ServletService;
  */
 public abstract class BaseServlet extends HttpServlet 
 {
-  private MessageAddress nodeID;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private MessageAddress nodeID;
 
   public BaseServlet(ServiceBroker sb) {
     ServletService servletService = sb.getService(this, ServletService.class, null);

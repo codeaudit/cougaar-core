@@ -102,7 +102,12 @@ public class OperatingModeServiceProvider
   }
 
   private static UnaryPredicate operatingModePredicate = new UnaryPredicate() {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       return o instanceof OperatingMode;
     }
   };

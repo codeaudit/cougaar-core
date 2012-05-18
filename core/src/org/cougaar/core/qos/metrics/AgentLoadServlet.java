@@ -51,7 +51,11 @@ import org.cougaar.core.mts.MessageAddress;
 public class AgentLoadServlet 
     extends MetricsServlet
 {
-    private AgentStatusService agentStatusService; 
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private AgentStatusService agentStatusService; 
 
     public AgentLoadServlet(ServiceBroker sb) {
 	super(sb);

@@ -38,7 +38,11 @@ import org.cougaar.core.wp.WhitePagesMessage;
  */
 public final class WPQuery extends WhitePagesMessage {
 
-  public static final int LOOKUP  = 0;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public static final int LOOKUP  = 0;
   public static final int MODIFY  = 1;
   public static final int FORWARD = 2;
   public static final int PING = 3;

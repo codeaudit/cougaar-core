@@ -34,7 +34,11 @@ import org.cougaar.core.blackboard.Subscriber;
  * Persistence state for a blackboard {@link Subscriber}.
  */
 public class PersistenceSubscriberState implements java.io.Serializable {
-  public String clientName;	// The name of the client of the subscriber
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public String clientName;	// The name of the client of the subscriber
   public String subscriberName;		// The name of the subscriber
   public List pendingEnvelopes;
   public List transactionEnvelopes;

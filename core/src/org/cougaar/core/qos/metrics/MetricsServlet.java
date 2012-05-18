@@ -48,7 +48,11 @@ public abstract class MetricsServlet
     implements Constants
 {
 
-    protected WhitePagesService wpService;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   protected WhitePagesService wpService;
     protected MetricsService metricsService;
     protected final DecimalFormat f4_2 = new DecimalFormat("#0.00");
     protected final DecimalFormat f6_3 = new DecimalFormat("##0.000");

@@ -33,7 +33,11 @@ package org.cougaar.core.adaptivity;
  * holding the value and a set of valid values
  */
 public class ConstraintPhrase extends ConstraintOpValue {
-  String proxyName;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+String proxyName;
   
   /**
    * @param name of the input source, e.g., condition name

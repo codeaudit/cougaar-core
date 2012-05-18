@@ -127,7 +127,11 @@ protected Set getTargetNames() {
   }
 
   private class FreezeControlServlet extends HttpServlet {
-    @Override
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   @Override
    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
       doPostOrGet(request, response, false);
     }

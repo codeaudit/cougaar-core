@@ -611,7 +611,11 @@ public void unload() {
       }
     }
   private static final class AgentMessageTransportState implements java.io.Serializable {
-    public List unsentMessages;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public List unsentMessages;
     public AgentState mtsState;
   }
   /**

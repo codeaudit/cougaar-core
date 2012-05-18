@@ -43,7 +43,11 @@ import org.cougaar.core.util.UID;
 
 public class OperatingModePolicy implements Policy, Publishable  {
 
-  private UID uid = null;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private UID uid = null;
   private String policyName = "";
   private String authority;
   private PolicyKernel policy;

@@ -37,7 +37,11 @@ public class ScriptStep
 implements Script.Entry, Serializable 
 {
 
-  // flag modifiers; for infrastructure use only!
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+// flag modifiers; for infrastructure use only!
   public static final int ADD_PAUSE     = (1 <<  0);
   public static final int REL_PAUSE     = (1 <<  1);
   public static final int PRI_PAUSE     = (1 <<  2);

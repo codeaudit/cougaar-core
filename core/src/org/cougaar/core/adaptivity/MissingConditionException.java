@@ -28,7 +28,11 @@ package org.cougaar.core.adaptivity;
 
 
 public class MissingConditionException extends RuntimeException {
-  public MissingConditionException() {
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public MissingConditionException() {
     super();
   }
   public MissingConditionException(String msg) {

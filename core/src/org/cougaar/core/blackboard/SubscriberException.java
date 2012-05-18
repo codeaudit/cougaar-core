@@ -31,6 +31,10 @@ package org.cougaar.core.blackboard;
  * An exception thrown by a {@link Subscriber}.
  */
 public class SubscriberException extends RuntimeException {
-  public SubscriberException() { super(); }
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public SubscriberException() { super(); }
   public SubscriberException(String s) { super(s); }
 }

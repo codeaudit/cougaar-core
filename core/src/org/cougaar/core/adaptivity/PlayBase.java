@@ -37,7 +37,11 @@ package org.cougaar.core.adaptivity;
  **/
 public class PlayBase implements java.io.Serializable {
 
-  private ConstrainingClause ifClause;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private ConstrainingClause ifClause;
   private ConstraintPhrase[] operatingModeConstraints;
 
   /**

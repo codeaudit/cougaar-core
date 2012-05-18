@@ -43,7 +43,11 @@ import org.cougaar.core.mts.MessageAddress;
 public class ClusterMessage 
   extends Message
 {
-  protected long theIncarnationNumber;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+protected long theIncarnationNumber;
 
   /**
    * @param s The MessageAddress of creator agent 

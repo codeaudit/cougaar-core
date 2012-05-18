@@ -32,5 +32,10 @@ package org.cougaar.core.mobility;
  * move.
  */
 public abstract class AbstractTicket implements java.io.Serializable {
-  public AbstractTicket() {}
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+public AbstractTicket() {}
 }

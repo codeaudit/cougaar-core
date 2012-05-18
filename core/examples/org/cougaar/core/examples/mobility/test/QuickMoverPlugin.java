@@ -70,7 +70,11 @@ extends AbstractMoverPlugin
 
   // remember where we are in the list of MOVES
   private static class MyState implements Serializable {
-    String id;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   String id;
     int i;
   }
 
@@ -105,6 +109,11 @@ protected void setupSubscriptions() {
 
   private MyState findState() {
     UnaryPredicate pred = new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return 
           ((o instanceof MyState) &&

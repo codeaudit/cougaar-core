@@ -33,7 +33,11 @@ import java.io.Serializable;
 public class ScriptGoto 
 implements Script.Entry, Serializable 
 {
-  private String name;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private String name;
   private int idx;
   public ScriptGoto(String name, int idx) {
     this.name = name;

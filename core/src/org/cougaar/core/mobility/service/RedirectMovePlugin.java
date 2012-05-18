@@ -396,7 +396,12 @@ protected void execute() {
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
           if (o instanceof AgentControl) {
             AgentControl control = (AgentControl) o;
             MessageAddress target = control.getTarget();
@@ -413,7 +418,12 @@ protected void execute() {
       final MessageAddress agentId) {
     return 
       new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
           if (o instanceof AgentControl) {
             AgentControl control = (AgentControl) o;
             MessageAddress source = control.getSource();

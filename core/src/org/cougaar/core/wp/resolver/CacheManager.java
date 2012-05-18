@@ -487,6 +487,11 @@ public void unload() {
           // find any pending "get" requests
           final String predType = type;
           UnaryPredicate pred = new UnaryPredicate() {
+            /**
+             * 
+             */
+            private static final long serialVersionUID = 1L;
+
             public boolean execute(Object o) {
               if (!(o instanceof Response)) {
                 return false;
@@ -1874,7 +1879,11 @@ public void unload() {
   }
 
   class LRUMap extends LinkedHashMap {
-    public LRUMap(int initialSize) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public LRUMap(int initialSize) {
       super(initialSize, 0.75f, true);
     }
     @Override

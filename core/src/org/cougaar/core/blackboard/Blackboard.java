@@ -142,10 +142,20 @@ protected Envelope createEnvelope() {
 
   private static final class PlanEnvelopeImpl 
     extends Envelope implements PlanEnvelope {
+
+   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
     }
 
   private static final class TimestampedPlanEnvelopeImpl
     extends TimestampedEnvelope implements PlanEnvelope {
+      /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
       @Override
       public boolean isBlackboard() { return true; }
     }
@@ -191,7 +201,12 @@ protected EnvelopeTuple clientChangedObject(Object o, List changes) {
   /** is the object non-null? */
   private static final UnaryPredicate anythingP = new AnythingPredicate();
   private static final class AnythingPredicate implements UnaryPredicate {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       return (o != null);
     }
   }
@@ -223,7 +238,11 @@ protected EnvelopeTuple clientChangedObject(Object o, List changes) {
   }
 
   private static class AllObjectsSet extends HashSet {
-    Map stacks = createStackMap();
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   Map stacks = createStackMap();
     protected Map createStackMap() {
       if (isSavePriorPublisher) {
         return new HashMap();

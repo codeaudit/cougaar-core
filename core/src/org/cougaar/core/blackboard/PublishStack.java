@@ -31,7 +31,11 @@ package org.cougaar.core.blackboard;
  * tracking of blackboard objects and their publishers.
  */
 public class PublishStack extends Throwable {
-  public BlackboardClient theClient = BlackboardClient.current.getClient();
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public BlackboardClient theClient = BlackboardClient.current.getClient();
   private static String getClientName() {
     BlackboardClient aClient = BlackboardClient.current.getClient();
     if (aClient != null) {

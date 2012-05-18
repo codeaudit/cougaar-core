@@ -74,7 +74,11 @@ public class BlackboardPersistence implements Persistence {
     };
 
   private static class MyMetaData implements Serializable {
-    List undistributedEnvelopes;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   List undistributedEnvelopes;
     List subscriberStates;
     MessageManager messageManager;
     Object quiescenceMonitorState;

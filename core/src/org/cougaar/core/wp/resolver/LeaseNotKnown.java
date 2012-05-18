@@ -53,7 +53,11 @@ import org.cougaar.core.util.UID;
  */
 public final class LeaseNotKnown implements Serializable {
 
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
 
   public LeaseNotKnown(UID uid) {
     this.uid = uid;

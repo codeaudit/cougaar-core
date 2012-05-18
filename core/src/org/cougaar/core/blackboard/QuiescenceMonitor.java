@@ -66,7 +66,11 @@ class QuiescenceMonitor {
   private boolean isQuiescent = false;
   private String messageNumbersChangedFor = null;
   private static class State implements Serializable {
-    State(Map imn, Map omn, boolean isQ) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   State(Map imn, Map omn, boolean isQ) {
       outgoingMessageNumbers = omn;
       incomingMessageNumbers = imn;
       isQuiescent = isQ;

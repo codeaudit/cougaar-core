@@ -34,7 +34,11 @@ import java.util.List;
  * blackboard has been modified.
  */
 public class ChangeEnvelopeTuple extends EnvelopeTuple {
-  private final Object object;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final Object object;
   @Override
 public Object getObject() { return object; }
   private final List changes;

@@ -37,7 +37,11 @@ package org.cougaar.core.blackboard;
  * operation seems to be in conflict.
  */
 public class PublishException extends IllegalArgumentException {
-  public PublishStack priorStack;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public PublishStack priorStack;
   public boolean priorStackUnavailable;
   private String specialMessage = null;
   public PublishException(String msg) {

@@ -39,7 +39,11 @@ import java.util.Map;
 public class SimpleMessageAttributes    
     implements MessageAttributes, AgentState
 {
-  private final HashMap data;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final HashMap data;
   private transient HashMap local_data;
 
   public SimpleMessageAttributes() {

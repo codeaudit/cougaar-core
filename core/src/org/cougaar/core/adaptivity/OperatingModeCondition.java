@@ -31,7 +31,11 @@ public class OperatingModeCondition
     extends OperatingModeImpl
     implements Condition
 {
-  public OperatingModeCondition(String name, OMCRangeList allowedValues) {
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public OperatingModeCondition(String name, OMCRangeList allowedValues) {
     super(name, allowedValues, allowedValues.getEffectiveValue());
   }
   public OperatingModeCondition(String name, OMCRangeList allowedValues, Comparable value) {

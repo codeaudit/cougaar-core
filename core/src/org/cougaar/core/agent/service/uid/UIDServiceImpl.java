@@ -96,7 +96,11 @@ final class UIDServiceImpl implements UIDService {
     }
   }
   private static class UIDServerPersistenceState implements PersistenceState {
-    public long count;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public long count;
     public UIDServerPersistenceState(long count) {
       this.count = count;
     }

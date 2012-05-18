@@ -54,7 +54,12 @@ public class AddAgentExamplePlugin extends ComponentPlugin {
   
   protected UnaryPredicate AGENT_CONTROL_PRED =
     new UnaryPredicate() {
-	public boolean execute(Object o) {
+	/**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
 	  return (o instanceof AgentControl);
 	}
       };

@@ -51,7 +51,11 @@ import org.cougaar.core.servlet.ServletFrameset;
  */
 final class TopServlet extends ServletFrameset {
 
-    private static final long THRESHOLD = 1000;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private static final long THRESHOLD = 1000;
     private ThreadStatusService statusService;
     private ThreadControlService controlService;
 

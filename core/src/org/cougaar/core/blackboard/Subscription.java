@@ -105,7 +105,12 @@ public abstract class Subscription {
   /** stack tracker which selects the first frame that isn't core/lib stuff */
   private static final CallerTracker pTracker = 
     CallerTracker.getPredicateTracker(new UnaryPredicate() {
-        public boolean execute(Object x) {
+        /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object x) {
           String sn = (String) x;
           if (sn.startsWith("org.cougaar.core.") ||
               sn.startsWith("org.cougaar.lib.")) {

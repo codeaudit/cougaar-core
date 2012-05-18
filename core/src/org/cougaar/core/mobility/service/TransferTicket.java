@@ -42,7 +42,11 @@ import org.cougaar.core.persist.PersistenceOutputStream;
 final class TransferTicket 
 extends AbstractTicket {
 
-  private final MoveTicket moveTicket;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final MoveTicket moveTicket;
   private final ComponentDescription desc;
   private Object state;
 

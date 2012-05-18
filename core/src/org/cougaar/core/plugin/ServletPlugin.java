@@ -301,6 +301,11 @@ protected void execute() {
    */
   protected HttpServlet createServlet() {
     return new HttpServlet() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       @Override
       protected void service(
           HttpServletRequest req, HttpServletResponse resp

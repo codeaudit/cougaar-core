@@ -39,7 +39,11 @@ public final class SimpleRelayTarget
 extends SimpleRelayBase
 implements Relay.Target {
 
-  // constructor:
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+// constructor:
   public SimpleRelayTarget(
       UID uid,
       MessageAddress source,

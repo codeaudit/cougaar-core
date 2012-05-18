@@ -197,7 +197,11 @@ public class PersistenceServiceComponent
   }
 
   private static class ClientStuff extends RehydrationData implements Serializable {
-    public void addAssociation(PersistenceAssociation pAssoc) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   public void addAssociation(PersistenceAssociation pAssoc) {
       envelope.addObject(pAssoc.getObject());
     }
     public void setObjects(List l) {

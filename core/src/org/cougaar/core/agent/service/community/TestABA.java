@@ -67,7 +67,12 @@ public void setParameter(Object o) {
 protected void setupSubscriptions() {
     sub = (IncrementalSubscription) blackboard.subscribe(
         new UnaryPredicate() {
-          public boolean execute(Object o) {
+          /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+         public boolean execute(Object o) {
             return (o instanceof Relay);
           }
         });

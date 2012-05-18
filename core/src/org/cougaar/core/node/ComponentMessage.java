@@ -37,7 +37,11 @@ import org.cougaar.core.mts.MessageAddress;
 public class ComponentMessage 
 extends Message {
 
-  /** the operations */
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+/** the operations */
   public static final int ADD     = 0;
   public static final int REMOVE  = 1;
   public static final int SUSPEND = 2;

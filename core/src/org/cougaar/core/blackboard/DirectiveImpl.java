@@ -40,7 +40,11 @@ extends ClaimableImpl
 implements NewDirective
 {
 
-  protected MessageAddress source = null;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+protected MessageAddress source = null;
   protected MessageAddress destination = null;
 
   /** 

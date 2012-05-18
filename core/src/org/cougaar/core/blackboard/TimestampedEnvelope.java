@@ -41,7 +41,12 @@ import org.cougaar.util.StackElements;
  */
 public class TimestampedEnvelope extends Envelope {
 
-  // weakly cache "publishAdd" stacks
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+// weakly cache "publishAdd" stacks
   private static final Map stacks = new WeakHashMap();
 
   private String name;
@@ -133,7 +138,11 @@ public String toString() {
   }
 
   private static final class Add extends AddEnvelopeTuple {
-    private StackElements se;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private StackElements se;
     public Add(Object o, StackElements se) {
       super(o);
       this.se = se;
@@ -142,7 +151,11 @@ public String toString() {
    public StackElements getStack() { return se; }
   }
   private static final class Change extends ChangeEnvelopeTuple {
-    private StackElements se;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private StackElements se;
     public Change(Object o, List changes, StackElements se) {
       super(o, changes);
       this.se = se;
@@ -151,7 +164,11 @@ public String toString() {
    public StackElements getStack() { return se; }
   }
   private static final class Remove extends RemoveEnvelopeTuple {
-    private StackElements se;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private StackElements se;
     public Remove(Object o, StackElements se) {
       super(o);
       this.se = se;

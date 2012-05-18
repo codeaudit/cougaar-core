@@ -49,7 +49,11 @@ import org.cougaar.core.wp.Timestamp;
  */
 public final class Lease implements Serializable {
 
-  private final UID uid;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final UID uid;
   private final long ttd;
 
   public Lease(UID uid, long ttd) {

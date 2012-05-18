@@ -33,7 +33,12 @@ import org.cougaar.core.service.DataProtectionKey;
  * {@link DataProtectionInputStreamStub}.
  */
 public class DataProtectionKeyStub implements DataProtectionKey {
-  private static java.util.Random random = new java.util.Random();
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+private static java.util.Random random = new java.util.Random();
 
   byte xor = (byte) random.nextInt();
 

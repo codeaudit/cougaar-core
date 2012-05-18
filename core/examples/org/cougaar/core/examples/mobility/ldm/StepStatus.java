@@ -35,6 +35,10 @@ import org.cougaar.core.mobility.ldm.MoveAgent;
 public final class StepStatus implements Serializable {
 
   /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+/**
    * State constants.
    */
   public static final int UNSEEN  = 0;

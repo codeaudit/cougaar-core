@@ -36,7 +36,11 @@ import java.net.URI;
  */
 public final class AddressEntry implements Serializable {
 
-  private final String name;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final String name;
   private final String type;
   private final URI uri;
   private final Cert cert;

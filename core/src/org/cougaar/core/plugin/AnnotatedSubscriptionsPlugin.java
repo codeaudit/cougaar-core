@@ -173,7 +173,12 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
                 final Method tester = testerMethod;
                 final Class<?> testerArgClass = tester.getParameterTypes()[0];
                 predicate = new UnaryPredicate() {
-                    public boolean execute(Object o) {
+                    /**
+                   * 
+                   */
+                  private static final long serialVersionUID = 1L;
+
+                  public boolean execute(Object o) {
                         if (!testerArgClass.isAssignableFrom(o.getClass())) {
                             return false;
                         }

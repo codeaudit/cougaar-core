@@ -33,7 +33,11 @@ import org.cougaar.core.mts.MessageAddress;
  */
 public final class RemoveTicket extends AbstractTicket {
 
-  private final Object id;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private final Object id;
   private final MessageAddress mobileAgent;
   private final MessageAddress destNode;
 

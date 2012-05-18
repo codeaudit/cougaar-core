@@ -256,7 +256,11 @@ public void readExternal(final ObjectInput in)
    * A {@link Directive} with associated {@link ChangeReport}s. 
    */
   public static final class DirectiveWithChangeReports implements Directive {
-    private final Directive real;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final Directive real;
     private final Collection changes;
     public DirectiveWithChangeReports(Directive d, Collection cc) {
       real = d;

@@ -46,7 +46,11 @@ public class PersistenceControlPlugin extends ServiceUserPlugin {
     extends OperatingModeImpl
     implements NotPersistable
   {
-    String mediaName;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   String mediaName;
     String controlName;
 
     MyOperatingMode(String mediaName, String controlName, OMCRangeList values) {
@@ -64,6 +68,11 @@ public class PersistenceControlPlugin extends ServiceUserPlugin {
 
   private static UnaryPredicate myOperatingModePredicate =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         return o instanceof MyOperatingMode;
       }

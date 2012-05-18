@@ -32,7 +32,11 @@ package org.cougaar.core.blackboard;
  * subscription mechanisms.
  */
 public class SubscriptionException extends BlackboardException {
-  public SubscriptionException(String s) { super(s); }
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+public SubscriptionException(String s) { super(s); }
   public SubscriptionException(String s, Throwable t) { super(s, t); }
   public SubscriptionException() { super(); }
 }

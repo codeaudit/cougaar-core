@@ -144,6 +144,11 @@ public void unload() {
 
   private UnaryPredicate myThreadQualifier =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) {
         Schedulable schedulable = (Schedulable) o;
         Object consumer = schedulable.getConsumer();

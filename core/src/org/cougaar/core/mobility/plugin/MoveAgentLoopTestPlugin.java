@@ -44,7 +44,12 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
     
     protected static final UnaryPredicate AGENT_CONTROL_PRED =
         new UnaryPredicate() {
-        public boolean execute(Object o) {
+        /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
+      public boolean execute(Object o) {
             return (o instanceof AgentControl);
         }
     };
@@ -122,6 +127,11 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
             throw new IllegalArgumentException("null uid");
         }
         UnaryPredicate pred = new UnaryPredicate() {
+            /**
+          * 
+          */
+         private static final long serialVersionUID = 1L;
+
             public boolean execute(Object o) {
                 return 
                 ((o instanceof AgentControl) &&

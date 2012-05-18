@@ -88,6 +88,11 @@ public class TodoSubscription extends Subscription {
   // this is never used, but is required by our super class
   private static final UnaryPredicate FALSE_P =
     new UnaryPredicate() {
+      /**
+       * 
+       */
+      private static final long serialVersionUID = 1L;
+
       public boolean execute(Object o) { return false; }
     };
 
@@ -254,7 +259,11 @@ protected void privateChange(Object o, List changes, boolean isVisible) {
 
   private static final class TodoEnvelope extends Envelope {
 
-    private final String name;
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+   private final String name;
     private final Object o;
     private final boolean isBulk;
 

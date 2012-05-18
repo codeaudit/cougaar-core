@@ -54,7 +54,12 @@ implements RootPlan, SupportsDelayedLPActions
   private static final UnaryPredicate uniqueObjectP =
     new UniqueObjectPredicate();
   private static final class UniqueObjectPredicate implements UnaryPredicate {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       return (o instanceof UniqueObject) && (((UniqueObject) o).getUID() != null);
     }
   }

@@ -35,14 +35,23 @@ import org.cougaar.util.UnaryPredicate;
  */
 public class SimpleDeletionPolicy  
   implements DeletionPolicy, org.cougaar.core.util.UniqueObject {
-  private String name;
+  /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+private String name;
   private UID myUID = null;
   private UnaryPredicate predicate;
   private long deletionDelay;
   private int priority;
 
   private static class DefaultDeletionPolicyPredicate implements UnaryPredicate {
-    public boolean execute(Object o) {
+    /**
+    * 
+    */
+   private static final long serialVersionUID = 1L;
+
+   public boolean execute(Object o) {
       return true;
     }
   };
