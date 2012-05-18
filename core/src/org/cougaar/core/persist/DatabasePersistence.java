@@ -382,6 +382,23 @@ public class DatabasePersistence
       fatalException(e);
     }
   }
+  
+  @Override
+  public boolean checkOwnership()
+        throws PersistenceException {
+     return true;
+  }
+
+  @Override
+  public void lockOwnership()
+        throws PersistenceException {
+  }
+
+  @Override
+  public void unlockOwnership()
+        throws PersistenceException {
+  }
+
 
   // consider replacing superclass with 
   //   org.cougaar.util.LinkedByteOutputStream

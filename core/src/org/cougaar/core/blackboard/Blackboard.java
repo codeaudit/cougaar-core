@@ -746,7 +746,7 @@ public class Blackboard extends Subscriber
     return privateGetPublishedChanges();
   }
 
-  public PersistenceObject getPersistenceObject() throws PersistenceNotEnabledException {
+  public PersistenceObject getPersistenceObject() {
     return myDistributor.getPersistenceObject();
   }
 
@@ -778,13 +778,7 @@ public class Blackboard extends Subscriber
   }
 
   protected Persistence createPersistence() {
-    try {
-      return BlackboardPersistence.find(myServiceBroker);
-    }
-    catch (PersistenceException e) {
-      e.printStackTrace();
-    }
-    return null;
+     return BlackboardPersistence.find(myServiceBroker);
   }
  
   

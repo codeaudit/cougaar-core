@@ -221,7 +221,7 @@ public class RehydrateTest {
   }
 
   private PersistenceEnvelope rehydrateBlackboard(
-      ) throws PersistenceException {
+      ) {
     Object state = null;
     Persistence persistence = BlackboardPersistence.find(sb);
     PersistenceEnvelope rehydrationEnvelope = new PersistenceEnvelope();

@@ -152,7 +152,7 @@ public final class ServletUtil {
    */
   public static void parseParams(
       ParamVisitor vis, 
-      HttpServletRequest req) throws IOException
+      HttpServletRequest req)
   {  
     Map m = req.getParameterMap();
     parseParams(vis, m);

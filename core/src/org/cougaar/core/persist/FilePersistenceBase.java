@@ -178,7 +178,7 @@ public abstract class FilePersistenceBase
   public void unlockOwnership() throws PersistenceException {
     try {
       mutex.unlock();
-    } catch (IOException ioe) {
+    } catch (SecurityException ioe) {
       throw new PersistenceException("unlockOwnership exception", ioe);
     }
   }

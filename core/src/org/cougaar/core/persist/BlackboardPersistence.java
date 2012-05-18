@@ -81,7 +81,6 @@ public class BlackboardPersistence implements Persistence {
   }
 
   public static Persistence find(ServiceBroker sb)
-    throws PersistenceException
   {
     return new BlackboardPersistence(sb);
   }

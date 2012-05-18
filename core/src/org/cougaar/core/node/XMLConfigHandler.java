@@ -217,8 +217,7 @@ public class XMLConfigHandler extends DefaultHandler {
 
   // our element handlers:
 
-  private void startNode(Attributes atts)
-    throws SAXException {
+  private void startNode(Attributes atts) {
     if (processedNode) {
       return;
     }
@@ -267,8 +266,7 @@ public class XMLConfigHandler extends DefaultHandler {
     }
   }
 
-  private void endNode()
-    throws SAXException {
+  private void endNode() {
     if (thisNode) {
       if (logger.isInfoEnabled()) {
         logger.info("finished node "+currentNode);
@@ -284,8 +282,7 @@ public class XMLConfigHandler extends DefaultHandler {
     }
   }
 
-  private void startAgent(Attributes atts)
-    throws SAXException {
+  private void startAgent(Attributes atts) {
 
     if (!thisNode) {
       boolean anyNode = (nodename == null || nodename.equals("*"));
@@ -328,8 +325,7 @@ public class XMLConfigHandler extends DefaultHandler {
     }
   }
 
-  private void endAgent()
-    throws SAXException {
+  private void endAgent() {
     if (thisAgent) {
       if (logger.isDebugEnabled()) {
         logger.debug("finished agent "+currentAgent);
@@ -345,8 +341,7 @@ public class XMLConfigHandler extends DefaultHandler {
     }
   }
 
-  private void startComponent(Attributes atts)
-    throws SAXException {
+  private void startComponent(Attributes atts) {
 
     if (currentList == null) {
       throw new RuntimeException(
@@ -364,8 +359,7 @@ public class XMLConfigHandler extends DefaultHandler {
     currentComponent.put("insertionpoint", getValue(atts, "insertionpoint"));
   }
 
-  private void endComponent()
-    throws SAXException {
+  private void endComponent() {
 
     if (currentComponent.isEmpty()) {
       throw new RuntimeException(
@@ -378,8 +372,7 @@ public class XMLConfigHandler extends DefaultHandler {
     currentList.add(desc);
   }
 
-  private void startArgument(Attributes atts)
-    throws SAXException {
+  private void startArgument(Attributes atts) {
     if (currentComponent.isEmpty()) {
       throw new RuntimeException(
           "Argument ("+atts+") not in component!");
@@ -404,8 +397,7 @@ public class XMLConfigHandler extends DefaultHandler {
     }
   }
 
-  private void endArgument()
-    throws SAXException {
+  private void endArgument() {
     if (!inArgument) {
       throw new RuntimeException("Not in argument?");
     }

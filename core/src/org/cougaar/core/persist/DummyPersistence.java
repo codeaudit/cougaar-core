@@ -109,4 +109,20 @@ public class DummyPersistence
   {
     return null;
   }
+
+  @Override
+  public boolean checkOwnership()
+        throws PersistenceException {
+     return true;
+  }
+
+  @Override
+  public void lockOwnership()
+        throws PersistenceException {
+  }
+
+  @Override
+  public void unlockOwnership()
+        throws PersistenceException {
+  }
 }

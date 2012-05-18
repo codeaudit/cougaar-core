@@ -323,7 +323,7 @@ implements BlackboardClient
         writeResponse();
       }
 
-      private void parseParams() throws IOException {
+      private void parseParams() {
 
         // action:
         action = request.getParameter(ACTION_PARAM);
@@ -505,7 +505,7 @@ implements BlackboardClient
       }
 
       private void writeHeader(
-          PrintWriter out) throws IOException {
+          PrintWriter out) {
         out.print("<html><head><title>");
         out.print(localAgent);
         out.print(
@@ -528,7 +528,7 @@ implements BlackboardClient
       }
 
       private void writeForm(
-          PrintWriter out) throws IOException {
+          PrintWriter out) {
         // begin form
         out.print("<form name=\"f\" method=\"GET\" action=\"");
         out.print(request.getRequestURI());

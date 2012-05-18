@@ -210,7 +210,7 @@ public class PersistenceInputStream extends ObjectInputStream implements Persist
    * @return the object to be filled in.
    */
   protected Object newInstanceFromDesc(ObjectStreamClass desc) 
-    throws InstantiationException, IllegalAccessException, java.lang.reflect.InvocationTargetException  {
+    throws InstantiationException, IllegalAccessException  {
     Class clazz = desc.forClass();
     if (references != null &&
 	clazz != PersistenceReference.class &&

@@ -154,7 +154,7 @@ public class Subscriber {
     return result;
   }
 
-  public void persistNow() throws PersistenceNotEnabledException {
+  public void persistNow() {
     boolean inTransaction = (transactionLock.getBusyFlagOwner() == Thread.currentThread());
     if (inTransaction) closeTransaction();
     theDistributor.persistNow();

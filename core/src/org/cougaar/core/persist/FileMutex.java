@@ -72,7 +72,7 @@ public class FileMutex {
     }
   }
 
-  public void unlock() throws IOException {
+  public void unlock() {
     commonFile.delete();
   }
 

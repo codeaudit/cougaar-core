@@ -95,7 +95,7 @@ public class ColorServlet extends ComponentServlet {
       writeResponse();
     }
 
-    private void parseParams() throws IOException {
+    private void parseParams() {
       firstColor = getParameter(FIRST_COLOR_PARAM, "black");
       secondColor = getParameter(SECOND_COLOR_PARAM, COLORS[0]);
     }

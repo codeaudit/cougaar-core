@@ -138,17 +138,17 @@ public abstract class BlackboardServlet extends ComponentPlugin {
   /** Basic servlet methods */
   protected void doGet(
       HttpServletRequest req, HttpServletResponse resp
-      ) throws ServletException, IOException {
+      ) throws IOException {
     notSupported(req, resp, "GET");
   }
   protected void doPost(
       HttpServletRequest req, HttpServletResponse resp
-      ) throws ServletException, IOException {
+      ) throws IOException {
     notSupported(req, resp, "POST");
   }
   protected void doPut(
       HttpServletRequest req, HttpServletResponse resp
-      ) throws ServletException, IOException {
+      ) throws IOException {
     notSupported(req, resp, "PUT");
   }
 

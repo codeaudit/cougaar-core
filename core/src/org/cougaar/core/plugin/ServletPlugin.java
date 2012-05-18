@@ -312,7 +312,7 @@ public abstract class ServletPlugin extends ComponentPlugin {
   /** Basic servlet methods */
   protected void service(
       HttpServletRequest req, HttpServletResponse resp
-      ) throws ServletException, IOException {
+      ) throws IOException {
     String method = req.getMethod();
     if ("GET".equals(method)) {
       doGet(req, resp);
@@ -329,17 +329,17 @@ public abstract class ServletPlugin extends ComponentPlugin {
   }
   protected void doGet(
       HttpServletRequest req, HttpServletResponse resp
-      ) throws ServletException, IOException {
+      ) throws IOException {
     notSupported(req, resp);
   }
   protected void doPost(
       HttpServletRequest req, HttpServletResponse resp
-      ) throws ServletException, IOException {
+      ) throws IOException {
     notSupported(req, resp);
   }
   protected void doPut(
       HttpServletRequest req, HttpServletResponse resp
-      ) throws ServletException, IOException {
+      ) throws IOException {
     notSupported(req, resp);
   }
 
