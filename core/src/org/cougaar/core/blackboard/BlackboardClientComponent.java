@@ -170,8 +170,8 @@ public abstract class BlackboardClientComponent
     agentIdentificationService = ais;
     MessageAddress an;
     if ((ais != null) &&
-        ((an = ais.getMessageAddress()) instanceof MessageAddress)) {
-      agentId = (MessageAddress) an;
+        ((an = ais.getMessageAddress()) != null)) {
+      agentId = an;
       //    } else { // Revocation -- nothing more to do 
     }
   }
