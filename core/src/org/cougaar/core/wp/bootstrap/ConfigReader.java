@@ -359,7 +359,6 @@ public class ConfigReader {
     }
     if (type == null && 
         scheme == null &&
-        suri != null &&
         suri.endsWith(":5555")) {
       // trim off the old psp server port
       if (logger.isWarnEnabled()) {

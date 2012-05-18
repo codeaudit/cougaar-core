@@ -213,13 +213,11 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
 
     if (changeTime != null && changeTime.length() > 0) {
       long l_changeTime = 0;
-      if (changeTime != null) {
-        try {
-          l_changeTime = Long.parseLong(changeTime);
-        } catch (NumberFormatException nfe) {
-          System.err.println("Bad change time");
-          nfe.printStackTrace();
-        }
+      try {
+         l_changeTime = Long.parseLong(changeTime);
+      } catch (NumberFormatException nfe) {
+         System.err.println("Bad change time");
+         nfe.printStackTrace();
       }
       demoControlService.setNodeTime(newTime, d_rate, l_changeTime);
     } else {

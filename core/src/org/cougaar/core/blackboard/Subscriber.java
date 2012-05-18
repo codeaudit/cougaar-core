@@ -190,9 +190,9 @@ public class Subscriber {
               //                   OutboxEnvelope e = (OutboxEnvelope) envelope;
               //                   currentClient = e.theClient;
               //                 }
-              if (currentClient == null) {
+//              if (currentClient == null) {
                 currentClient = BlackboardClient.current.getClient();
-              }
+//              }
               String thisPublisher = null;
               if (currentClient != null) {
                 thisPublisher = currentClient.getBlackboardClientName();
@@ -220,10 +220,7 @@ public class Subscriber {
               }
             } 
             catch (RuntimeException ire) {
-              BlackboardClient currentClient = null;
-              if (currentClient == null) {
-                currentClient = BlackboardClient.current.getClient();
-              }
+              BlackboardClient currentClient = BlackboardClient.current.getClient();
               String thisPublisher = null;
               if (currentClient != null) {
                 thisPublisher = currentClient.getBlackboardClientName();
