@@ -26,8 +26,6 @@
 
 package org.cougaar.core.relay;
 
-import java.io.Serializable;
-
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 

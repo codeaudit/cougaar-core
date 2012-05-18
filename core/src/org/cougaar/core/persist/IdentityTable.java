@@ -31,8 +31,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
 
-import org.cougaar.util.log.Logger;
 import org.cougaar.util.GC;
+import org.cougaar.util.log.Logger;
 
 /**
  * Identifies all objects that have been (or are about to be) written

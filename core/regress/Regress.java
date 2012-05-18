@@ -24,7 +24,8 @@
  * </copyright>
  */
 
-import junit.framework.*;
+import junit.framework.Test;
+import junit.framework.TestSuite;
 
 /**
  * This is the class run by the nightly build process to run JUnit tests.<br>

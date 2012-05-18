@@ -26,11 +26,9 @@
 
 package org.cougaar.core.wp.resolver;
 
-import org.cougaar.core.agent.Agent; // inlined
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.Request;

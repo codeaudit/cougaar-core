@@ -26,6 +26,7 @@
 package org.cougaar.core.examples.mobility.ldm;
 
 import java.io.Serializable;
+
 import org.cougaar.core.mobility.Ticket;
 
 /**

@@ -25,17 +25,13 @@
  */
 package org.cougaar.core.examples.mobility.script;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.blackboard.CollectionSubscription;
+
 import org.cougaar.core.blackboard.IncrementalSubscription;
-import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.examples.mobility.ldm.MobilityTestFactory;
 import org.cougaar.core.examples.mobility.ldm.Proc;
 import org.cougaar.core.examples.mobility.ldm.Script;
@@ -47,18 +43,13 @@ import org.cougaar.core.examples.mobility.ldm.StepOptions;
 import org.cougaar.core.examples.mobility.ldm.StepStatus;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
-import org.cougaar.core.mobility.ldm.MoveAgent;
-import org.cougaar.core.mobility.ldm.MoveAgent.Status;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.AgentIdentificationService;
-import org.cougaar.core.service.AlarmService;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
 
 /**

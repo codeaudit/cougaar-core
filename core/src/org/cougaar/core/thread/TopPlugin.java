@@ -27,7 +27,6 @@
 package org.cougaar.core.thread;
 
 import java.util.Timer;
-import java.util.TimerTask; // imported only for javadoc
 
 import org.cougaar.core.component.ParameterizedComponent;
 import org.cougaar.core.component.ServiceBroker;

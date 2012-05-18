@@ -20,12 +20,12 @@
  */
 package org.cougaar.core.persist;
 
-import java.io.PrintStream;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.RegisterContext;
 import org.cougaar.core.agent.service.uid.UIDServiceComponent;
@@ -37,7 +37,6 @@ import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceBrokerSupport;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;

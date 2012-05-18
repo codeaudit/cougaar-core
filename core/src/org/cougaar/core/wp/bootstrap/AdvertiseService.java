@@ -27,6 +27,7 @@
 package org.cougaar.core.wp.bootstrap;
 
 import java.util.Map;
+
 import org.cougaar.core.component.Service;
 
 /**

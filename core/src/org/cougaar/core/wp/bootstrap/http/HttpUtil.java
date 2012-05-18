@@ -29,6 +29,7 @@ package org.cougaar.core.wp.bootstrap.http;
 import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;

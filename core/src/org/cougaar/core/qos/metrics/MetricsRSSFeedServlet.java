@@ -43,7 +43,6 @@ import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;
-import org.cougaar.core.qos.metrics.Constants;
 import org.cougaar.core.service.ServletService;
 
 public class MetricsRSSFeedServlet

@@ -27,8 +27,8 @@
 package org.cougaar.core.node;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ServiceBroker;

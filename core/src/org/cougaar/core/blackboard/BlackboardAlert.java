@@ -27,6 +27,7 @@
 package org.cougaar.core.blackboard;
 
 import java.io.Serializable;
+
 import org.cougaar.core.mts.MessageAddress;
 
 /**

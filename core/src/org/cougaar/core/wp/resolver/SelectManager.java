@@ -33,10 +33,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
@@ -46,7 +46,6 @@ import org.cougaar.core.wp.Parameters;
 import org.cougaar.core.wp.Timestamp;
 import org.cougaar.core.wp.bootstrap.BootstrapService;
 import org.cougaar.core.wp.bootstrap.ServersService;
-import org.cougaar.core.wp.resolver.SelectService.Client;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.RarelyModifiedList;
 

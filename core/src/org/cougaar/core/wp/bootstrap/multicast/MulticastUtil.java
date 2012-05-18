@@ -28,6 +28,7 @@ package org.cougaar.core.wp.bootstrap.multicast;
 
 import java.net.URI;
 import java.util.Map;
+
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.bootstrap.Bundle;
 

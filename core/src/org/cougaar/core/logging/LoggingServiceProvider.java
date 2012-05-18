@@ -26,20 +26,17 @@
 
 package org.cougaar.core.logging;
 
-import java.util.Properties;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
 import org.cougaar.util.log.LoggerController;
 import org.cougaar.util.log.LoggerControllerProxy;
-import org.cougaar.util.log.LoggerFactory;
 import org.cougaar.util.log.LoggerProxy;
-
-import java.util.Map;
-import java.util.WeakHashMap;
+import org.cougaar.util.log.Logging;
 
 /**
  * This service provider provides the {@link LoggingService}, which

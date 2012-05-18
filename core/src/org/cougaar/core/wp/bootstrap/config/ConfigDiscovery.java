@@ -28,9 +28,9 @@ package org.cougaar.core.wp.bootstrap.config;
 
 import java.util.Iterator;
 import java.util.Map;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.thread.Schedulable;

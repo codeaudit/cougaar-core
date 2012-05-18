@@ -25,8 +25,6 @@
  */
 package org.cougaar.core.examples.mobility.ldm;
 
-import org.cougaar.core.mobility.Ticket;
-import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
 

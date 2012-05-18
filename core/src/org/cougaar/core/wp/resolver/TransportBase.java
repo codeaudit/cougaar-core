@@ -27,13 +27,12 @@
 package org.cougaar.core.wp.resolver;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
+
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageHandler;

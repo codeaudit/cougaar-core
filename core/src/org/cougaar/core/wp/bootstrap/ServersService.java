@@ -27,6 +27,7 @@
 package org.cougaar.core.wp.bootstrap;
 
 import java.util.Set;
+
 import org.cougaar.core.component.Service;
 import org.cougaar.core.mts.MessageAddress;
 

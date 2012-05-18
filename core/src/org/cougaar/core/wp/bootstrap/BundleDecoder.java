@@ -28,11 +28,10 @@ package org.cougaar.core.wp.bootstrap;
 
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.FileInputStream;
 import java.io.ObjectInputStream;
-import java.io.Reader;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.security.cert.Certificate;
@@ -42,9 +41,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Cert;
 import org.cougaar.core.util.UID;
+
 import sun.misc.BASE64Decoder;
 
 /**

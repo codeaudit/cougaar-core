@@ -26,18 +26,10 @@
 
 package org.cougaar.core.node;
 
-import org.cougaar.core.service.SuicideService;
-
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.agent.service.alarm.ExecutionTimer;
-import org.cougaar.core.agent.service.alarm.RealTimer;
-import org.cougaar.core.agent.service.alarm.Timer;
+import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.BindingSite;
-import org.cougaar.core.component.Component;
-import org.cougaar.core.node.NodeControlService;
+import org.cougaar.core.service.SuicideService;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;

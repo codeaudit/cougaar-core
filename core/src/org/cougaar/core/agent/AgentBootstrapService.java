@@ -27,6 +27,7 @@
 package org.cougaar.core.agent;
 
 import java.util.List;
+
 import org.cougaar.core.component.Service;
 
 /**

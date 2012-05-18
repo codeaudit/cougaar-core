@@ -29,7 +29,6 @@ package org.cougaar.core.wp.resolver;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;

@@ -32,8 +32,8 @@ import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
+
 import org.cougaar.bootstrap.SystemProperties;
-import org.xml.sax.ContentHandler;
 
 /**
  * Utility class used by the {@link

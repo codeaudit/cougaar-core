@@ -26,12 +26,10 @@
 
 package org.cougaar.core.relay;
 
-import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 
 import org.cougaar.core.blackboard.IncrementalSubscription;
-import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.MessageAddress;

@@ -30,22 +30,16 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.URI;
-import java.util.Collection;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.service.LoggingService;
+
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.thread.Schedulable;
@@ -53,7 +47,6 @@ import org.cougaar.core.thread.SchedulableStatus;
 import org.cougaar.core.wp.bootstrap.Bundle;
 import org.cougaar.core.wp.bootstrap.ConfigService;
 import org.cougaar.core.wp.bootstrap.DiscoveryBase;
-import org.cougaar.core.wp.bootstrap.DiscoveryService;
 
 /**
  * This component discovers bundles by sending a UDP multicast and

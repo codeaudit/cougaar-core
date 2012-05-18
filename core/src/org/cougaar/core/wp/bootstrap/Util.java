@@ -26,14 +26,13 @@
 
 package org.cougaar.core.wp.bootstrap;
 
-import java.io.PrintStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
-import java.net.URI;
 import java.net.UnknownHostException;
 import java.util.Enumeration;
 import java.util.Map;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.util.log.Logger;

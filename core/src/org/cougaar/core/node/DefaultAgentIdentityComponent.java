@@ -26,8 +26,6 @@
 
 package org.cougaar.core.node;
 
-import java.io.Serializable;
-
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;

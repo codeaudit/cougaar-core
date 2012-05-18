@@ -31,11 +31,11 @@ import java.net.InetAddress;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.blackboard.BlackboardForAgent;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;

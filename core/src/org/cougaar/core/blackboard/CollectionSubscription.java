@@ -26,7 +26,6 @@
 
 package org.cougaar.core.blackboard;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Enumeration;

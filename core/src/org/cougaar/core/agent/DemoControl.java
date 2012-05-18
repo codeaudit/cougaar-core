@@ -32,6 +32,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.service.MessageSwitchService;
 import org.cougaar.core.agent.service.alarm.Alarm;
@@ -39,7 +40,6 @@ import org.cougaar.core.agent.service.alarm.ExecutionTimer;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.mts.Message;
 import org.cougaar.core.mts.MessageAddress;
@@ -52,8 +52,8 @@ import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.UIDService;
 import org.cougaar.core.service.wp.WhitePagesService;
 import org.cougaar.core.thread.SchedulableStatus;
-import org.cougaar.core.wp.ListAllNodes;
 import org.cougaar.core.util.UID;
+import org.cougaar.core.wp.ListAllNodes;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**

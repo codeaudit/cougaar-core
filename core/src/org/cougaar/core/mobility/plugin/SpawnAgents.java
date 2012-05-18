@@ -34,9 +34,9 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.blackboard.IncrementalSubscription;
-import org.cougaar.core.domain.Factory;
 import org.cougaar.core.mobility.AddTicket;
 import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.MobilityFactory;

@@ -29,8 +29,6 @@ package org.cougaar.core.node;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.AgentQuiescenceStateService;

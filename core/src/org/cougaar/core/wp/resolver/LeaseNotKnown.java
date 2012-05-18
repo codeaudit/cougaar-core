@@ -27,6 +27,7 @@
 package org.cougaar.core.wp.resolver;
 
 import java.io.Serializable;
+
 import org.cougaar.core.util.UID;
 
 /**

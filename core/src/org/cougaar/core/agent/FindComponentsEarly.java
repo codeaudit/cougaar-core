@@ -28,6 +28,7 @@ package org.cougaar.core.agent;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
@@ -39,7 +40,7 @@ import org.cougaar.core.persist.PersistenceIdentity;
 import org.cougaar.core.persist.PersistenceService;
 import org.cougaar.core.persist.RehydrationData;
 import org.cougaar.core.service.LoggingService;
-import org.cougaar.util.GenericStateModel; // inlined
+import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**

@@ -27,6 +27,7 @@
 package org.cougaar.core.service;
 
 import java.io.InputStream;
+
 import org.cougaar.core.component.Service;
 import org.w3c.dom.Document;
 

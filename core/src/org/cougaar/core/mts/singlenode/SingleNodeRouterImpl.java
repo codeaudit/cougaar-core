@@ -25,20 +25,17 @@
  */
 
 package org.cougaar.core.mts.singlenode;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceProvider;
+import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.Message;
-import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageTransportClient;
-import org.cougaar.core.service.LoggingService;
-import org.cougaar.core.mts.AgentState;
 import org.cougaar.core.mts.SimpleMessageAttributes;
-import org.cougaar.core.service.wp.WhitePagesService;
-import org.cougaar.core.service.wp.AddressEntry;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.Iterator;
+import org.cougaar.core.service.LoggingService;
 
 /**
  * The message router implementation.

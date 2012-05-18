@@ -29,18 +29,15 @@ package org.cougaar.core.wp.bootstrap.http;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
+
 import org.cougaar.core.service.ServletService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.bootstrap.AdvertiseBase;

@@ -30,8 +30,6 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceAvailableEvent;
 import org.cougaar.core.component.ServiceAvailableListener;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceListener;
-import org.cougaar.core.component.ServiceRevokedListener;
 
 /**
  * A utility class to hide late-binding {@link Service} lookups.

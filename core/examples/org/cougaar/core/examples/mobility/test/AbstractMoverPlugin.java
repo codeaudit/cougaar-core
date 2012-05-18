@@ -29,6 +29,7 @@ package org.cougaar.core.examples.mobility.test;
 import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
+
 import org.cougaar.core.blackboard.CollectionSubscription;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.mobility.Ticket;

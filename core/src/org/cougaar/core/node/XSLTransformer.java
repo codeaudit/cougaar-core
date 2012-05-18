@@ -31,13 +31,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
-import javax.xml.transform.Result;
+
 import javax.xml.transform.Source;
 import javax.xml.transform.Templates;
 import javax.xml.transform.Transformer;
@@ -52,6 +50,7 @@ import javax.xml.transform.sax.TemplatesHandler;
 import javax.xml.transform.sax.TransformerHandler;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.ConfigFinder;
 import org.cougaar.util.log.Logger;

@@ -27,8 +27,8 @@
 package org.cougaar.core.mts;
 
 import java.io.FilterInputStream;
-import java.io.InputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * Filtered {@link InputStream} used by security.

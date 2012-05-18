@@ -26,7 +26,6 @@
 
 package org.cougaar.core.plugin;
 
-import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
 import org.cougaar.core.service.BlackboardService;
 

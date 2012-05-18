@@ -32,7 +32,6 @@ import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Set;
 
 import org.cougaar.util.Empty;
 import org.cougaar.util.Enumerator;

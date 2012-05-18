@@ -29,7 +29,6 @@ package org.cougaar.core.wp.bootstrap;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
 
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.Service;

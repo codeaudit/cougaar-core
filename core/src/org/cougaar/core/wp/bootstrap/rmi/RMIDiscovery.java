@@ -30,11 +30,7 @@ import java.net.URI;
 import java.rmi.registry.Registry;
 import java.rmi.server.RMISocketFactory;
 import java.util.Map;
-import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
+
 import org.cougaar.core.service.SocketFactoryService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.bootstrap.Bundle;

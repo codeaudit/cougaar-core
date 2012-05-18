@@ -30,16 +30,16 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
-import java.net.URI;
 import java.net.URLEncoder;
 import java.security.cert.Certificate;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Set;
+
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.Cert;
 import org.cougaar.core.util.UID;
+
 import sun.misc.BASE64Encoder;
 
 /**

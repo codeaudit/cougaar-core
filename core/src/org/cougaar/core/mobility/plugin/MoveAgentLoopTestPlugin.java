@@ -1,8 +1,6 @@
 package org.cougaar.core.mobility.plugin;
 
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.Set;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.component.ServiceBroker;
@@ -10,13 +8,10 @@ import org.cougaar.core.mobility.AbstractTicket;
 import org.cougaar.core.mobility.MoveTicket;
 import org.cougaar.core.mobility.ldm.AgentControl;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
-import org.cougaar.core.mts.AgentStatusService;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.plugin.ParameterizedPlugin;
-import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.AlarmService;
-import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.util.UID;

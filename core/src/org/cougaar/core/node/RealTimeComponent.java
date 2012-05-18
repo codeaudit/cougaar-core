@@ -28,17 +28,15 @@ package org.cougaar.core.node;
 
 import java.util.HashSet;
 import java.util.Set;
-import org.cougaar.core.agent.service.alarm.Timer;
+
 import org.cougaar.core.agent.service.alarm.RealTimer;
+import org.cougaar.core.agent.service.alarm.Timer;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.node.service.RealTimeService;
 import org.cougaar.core.service.ThreadService;
 import org.cougaar.util.GenericStateModelAdapter;
-import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
 
 /**
  * This component advertises the {@link RealTimeService}, which

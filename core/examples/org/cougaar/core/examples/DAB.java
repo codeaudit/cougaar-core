@@ -25,16 +25,13 @@
  */
 package org.cougaar.core.examples;
 
-import org.cougaar.core.blackboard.*;
-import java.util.*;
-import java.lang.reflect.*;
-import org.cougaar.core.component.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.mts.MessageAddress;
-
-import org.cougaar.util.log.*;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceFilter;
+import org.cougaar.core.component.ServiceFilterBinder;
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /** DAB is a Dummy Agent Binder, an example wrapping binder for
  * agents to be used as a trivial example to code writers.

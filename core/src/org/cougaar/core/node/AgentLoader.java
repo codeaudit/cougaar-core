@@ -27,13 +27,12 @@
 package org.cougaar.core.node;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.agent.AgentContainer;
 import org.cougaar.core.blackboard.BlackboardForAgent;
@@ -42,7 +41,6 @@ import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;

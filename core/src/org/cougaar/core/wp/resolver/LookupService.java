@@ -27,6 +27,7 @@
 package org.cougaar.core.wp.resolver;
 
 import java.util.Map;
+
 import org.cougaar.core.component.Service;
 
 /**

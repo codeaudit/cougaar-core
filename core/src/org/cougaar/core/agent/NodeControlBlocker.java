@@ -31,7 +31,6 @@ import org.cougaar.core.component.NullService;
 import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.node.NodeIdentificationService;

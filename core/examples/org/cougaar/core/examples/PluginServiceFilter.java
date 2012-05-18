@@ -25,15 +25,20 @@
  */
 package org.cougaar.core.examples;
 
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.domain.*;
-import org.cougaar.core.blackboard.*;
-import org.cougaar.core.persist.*;
-import org.cougaar.core.blackboard.*;
+import java.util.Collection;
+
+import org.cougaar.core.blackboard.Subscriber;
+import org.cougaar.core.blackboard.SubscriberException;
+import org.cougaar.core.blackboard.Subscription;
+import org.cougaar.core.blackboard.SubscriptionWatcher;
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceFilter;
+import org.cougaar.core.component.ServiceFilterBinder;
+import org.cougaar.core.persist.Persistence;
 import org.cougaar.core.service.BlackboardService;
+import org.cougaar.util.UnaryPredicate;
 
 /** A plugin's view of its parent component (Container).
  * Add a line like the following to a cluster.ini file:

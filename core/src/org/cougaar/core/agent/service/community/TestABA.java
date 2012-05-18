@@ -27,6 +27,7 @@
 package org.cougaar.core.agent.service.community;
 
 import java.util.Collection;
+
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.relay.Relay;

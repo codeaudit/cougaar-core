@@ -26,10 +26,9 @@
 
 package org.cougaar.core.wp.resolver;
 
-import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.Map;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.util.UID;
 import org.cougaar.util.log.Logger;

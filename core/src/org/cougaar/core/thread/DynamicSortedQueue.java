@@ -30,8 +30,8 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-import org.cougaar.util.log.Logger;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.log.Logger;
 
 /**
  * A simple queue, built on array list, that uses a Comparator to

@@ -27,27 +27,22 @@
 package org.cougaar.core.examples.mobility.script;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLDecoder;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
-import java.util.List;
+
 import javax.servlet.Servlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+
 import org.cougaar.core.blackboard.BlackboardClient;
-import org.cougaar.core.examples.mobility.ldm.*;
-import org.cougaar.core.mobility.Ticket;
-import org.cougaar.core.mobility.ldm.MobilityFactory;
+import org.cougaar.core.examples.mobility.ldm.MobilityTestFactory;
+import org.cougaar.core.examples.mobility.ldm.Script;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;

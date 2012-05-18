@@ -26,7 +26,6 @@
 
 package org.cougaar.core.wp;
 
-import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.Arguments;
 
 /**

@@ -27,24 +27,18 @@
 package org.cougaar.core.node;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Iterator;
 import java.util.List;
 
-import org.w3c.dom.Document;
-
+import org.cougaar.core.component.ComponentSupport;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.service.ConfigurationService;
-
-import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.agent.Agent;
-import org.cougaar.core.component.*;
-import org.cougaar.util.log.*;
 import org.cougaar.util.ConfigFinder;
+import org.w3c.dom.Document;
 
 /**
  * This component advertises the {@link ConfigurationService},

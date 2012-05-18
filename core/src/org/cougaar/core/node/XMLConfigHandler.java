@@ -27,12 +27,12 @@
 package org.cougaar.core.node;
 
 import java.io.CharArrayWriter;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.util.Strings;
 import org.cougaar.util.log.Logger;

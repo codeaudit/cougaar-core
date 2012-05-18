@@ -26,9 +26,9 @@
 
 package org.cougaar.core.wp.bootstrap;
 
-import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;

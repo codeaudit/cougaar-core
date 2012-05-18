@@ -27,9 +27,9 @@
 package org.cougaar.core.domain;
 
 import org.cougaar.core.blackboard.BlackboardServesDomain;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
-import org.cougaar.core.component.Service;
 
 /**
  * The "root" plan provides blackboard access to {@link Domain}

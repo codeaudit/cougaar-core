@@ -26,14 +26,14 @@
 
 package org.cougaar.core.node;
 
+import java.applet.Applet;
+import java.applet.AppletContext;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Event;
 import java.awt.Graphics;
 import java.awt.LayoutManager;
-import java.applet.Applet;
-import java.applet.AppletContext;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;

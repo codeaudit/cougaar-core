@@ -26,12 +26,10 @@
 
 package org.cougaar.core.wp.resolver;
 
-import org.cougaar.core.agent.Agent; // inlined
-import org.cougaar.core.component.ComponentDescription;
+import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ContainerSupport;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
 import org.cougaar.core.service.AgentIdentificationService;

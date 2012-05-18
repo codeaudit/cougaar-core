@@ -26,11 +26,11 @@
 
 package org.cougaar.core.thread;
 
-import org.cougaar.util.log.Logger;
-import org.cougaar.util.log.Logging;
-
 import java.util.Timer;
 import java.util.TimerTask;
+
+import org.cougaar.util.log.Logger;
+import org.cougaar.util.log.Logging;
 
 /**
  * The standard implementation of {@link Schedulable}.  The trivial

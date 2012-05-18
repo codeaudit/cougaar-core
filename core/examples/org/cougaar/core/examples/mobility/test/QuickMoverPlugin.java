@@ -29,8 +29,9 @@ package org.cougaar.core.examples.mobility.test;
 import java.io.Serializable;
 import java.util.Collection;
 import java.util.Iterator;
-import org.cougaar.core.mobility.ldm.MoveAgent;
+
 import org.cougaar.core.mobility.Ticket;
+import org.cougaar.core.mobility.ldm.MoveAgent;
 import org.cougaar.util.UnaryPredicate;
 
 /**

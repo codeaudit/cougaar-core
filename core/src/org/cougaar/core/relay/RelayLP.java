@@ -42,7 +42,6 @@ import org.cougaar.core.blackboard.Directive;
 import org.cougaar.core.blackboard.EnvelopeTuple;
 import org.cougaar.core.domain.ABAChangeLogicProvider;
 import org.cougaar.core.domain.EnvelopeLogicProvider;
-import org.cougaar.core.domain.LogicProvider;
 import org.cougaar.core.domain.MessageLogicProvider;
 import org.cougaar.core.domain.RestartLogicProvider;
 import org.cougaar.core.domain.RootPlan;

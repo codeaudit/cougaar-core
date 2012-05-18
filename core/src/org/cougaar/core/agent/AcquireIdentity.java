@@ -28,9 +28,9 @@ package org.cougaar.core.agent;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.persist.PersistenceClient;
 import org.cougaar.core.persist.PersistenceIdentity;

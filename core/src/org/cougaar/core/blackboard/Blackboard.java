@@ -47,8 +47,6 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.MessageAttributes;
 import org.cougaar.core.persist.BlackboardPersistence;
 import org.cougaar.core.persist.Persistence;
-import org.cougaar.core.persist.PersistenceException;
-import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.persist.PersistenceObject;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.DomainForBlackboardService;

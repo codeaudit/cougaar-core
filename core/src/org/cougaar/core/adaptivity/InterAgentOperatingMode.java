@@ -32,7 +32,6 @@ import java.util.Set;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.relay.Relay;
 import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
 
 /**
  * A remotely-controlled Condition. Allows an adaptivity engine in one

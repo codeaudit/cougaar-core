@@ -27,10 +27,9 @@
 package org.cougaar.core.agent;
 
 import java.net.InetAddress;
-import java.net.URI;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;

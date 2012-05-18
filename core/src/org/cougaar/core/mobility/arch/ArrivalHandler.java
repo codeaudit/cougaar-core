@@ -27,9 +27,6 @@
 package org.cougaar.core.mobility.arch;
 
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.mobility.MoveTicket;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
 
 /**
  * Handle a request to accept a mobile agent at the target node. 

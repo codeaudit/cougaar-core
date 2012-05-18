@@ -36,12 +36,11 @@ import java.util.Map;
 
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.persist.Persistence;
-import org.cougaar.core.persist.PersistenceNotEnabledException;
+import org.cougaar.util.CallerTracker;
 import org.cougaar.util.LockFlag;
 import org.cougaar.util.UnaryPredicate;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;
-import org.cougaar.util.CallerTracker;
 
 /**
  * The standard implementation of the {@link

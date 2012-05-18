@@ -29,8 +29,9 @@ package org.cougaar.core.agent.service.community;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import org.cougaar.core.mts.MessageAddress;
+
 import org.cougaar.core.component.ComponentSupport;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.community.CommunityResponse;

@@ -28,6 +28,7 @@ package org.cougaar.core.thread;
 
 import java.util.ArrayList;
 import java.util.List;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;

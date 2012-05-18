@@ -26,12 +26,9 @@
 
 package org.cougaar.core.mobility;
 
-import java.io.Serializable;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import org.cougaar.core.agent.Agent; // inlined
+
+import org.cougaar.core.agent.Agent;
 import org.cougaar.core.component.ComponentDescription;
 import org.cougaar.core.mts.MessageAddress;
 

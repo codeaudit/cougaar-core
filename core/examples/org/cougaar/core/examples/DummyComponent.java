@@ -26,14 +26,13 @@
 
 package org.cougaar.core.examples;
 
-import org.cougaar.core.plugin.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.blackboard.*;
-import org.cougaar.util.*;
-import java.util.*;
-import org.cougaar.core.service.*;
-import org.cougaar.core.node.*;
-import org.cougaar.core.agent.*;
+import java.util.Collection;
+import java.util.Iterator;
+
+import org.cougaar.core.component.ComponentSupport;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.node.NodeIdentificationService;
+import org.cougaar.core.service.AgentIdentificationService;
 
 /** A very simple Component which can be plugged into just about any
  * non-descriminating insertion points in the system.  When loaded, it

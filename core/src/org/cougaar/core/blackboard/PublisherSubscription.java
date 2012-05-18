@@ -33,10 +33,11 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.cougaar.util.StackElements;
-import org.cougaar.util.UnaryPredicate;
+
 import org.cougaar.core.util.UID;
 import org.cougaar.core.util.UniqueObject;
+import org.cougaar.util.StackElements;
+import org.cougaar.util.UnaryPredicate;
 
 /**
  * A subscription that tracks the plugin publisher and add/change stacks for

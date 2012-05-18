@@ -26,14 +26,14 @@
 package org.cougaar.core.examples;
 
 import java.net.InetAddress;
-import java.util.*;
-import org.cougaar.util.*;
-import org.cougaar.core.agent.*;
-import org.cougaar.core.component.*;
-import org.cougaar.core.domain.*;
-import org.cougaar.core.blackboard.*;
-import org.cougaar.core.node.*;
+
+import org.cougaar.core.component.BinderFactory;
+import org.cougaar.core.component.ContainerAPI;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceFilter;
+import org.cougaar.core.component.ServiceFilterBinder;
 import org.cougaar.core.mts.MessageAddress;
+import org.cougaar.core.node.NodeIdentificationService;
 
 /**
  * A filter for agent-to-node services.

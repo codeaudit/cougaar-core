@@ -40,10 +40,10 @@ import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.AlarmService;
 import org.cougaar.core.service.BlackboardService;
 import org.cougaar.core.service.SchedulerService;
+import org.cougaar.core.service.SuicideService;
 import org.cougaar.util.SyncTriggerModelImpl;
 import org.cougaar.util.Trigger;
 import org.cougaar.util.TriggerModel;
-import org.cougaar.core.service.SuicideService;
 
 /**
  * This component is a standard base class for {@link Component}s

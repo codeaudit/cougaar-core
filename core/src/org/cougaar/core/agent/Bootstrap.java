@@ -26,17 +26,16 @@
 
 package org.cougaar.core.agent;
 
-import java.util.Arrays;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ComponentDescription;
-import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.node.ComponentInitializerService;
-import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.Logging;

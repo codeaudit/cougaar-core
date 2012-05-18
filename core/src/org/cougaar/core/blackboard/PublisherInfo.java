@@ -28,6 +28,7 @@ package org.cougaar.core.blackboard;
 
 import java.io.Serializable;
 import java.util.Set;
+
 import org.cougaar.util.StackElements;
 
 /**

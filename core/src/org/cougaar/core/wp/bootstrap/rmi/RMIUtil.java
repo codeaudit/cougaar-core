@@ -31,16 +31,14 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import java.rmi.ConnectException;
 import java.rmi.NotBoundException;
-import java.rmi.Remote;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.ExportException;
-import java.rmi.server.RMIClientSocketFactory;
-import java.rmi.server.RMIServerSocketFactory;
 import java.rmi.server.RMISocketFactory;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.LoggingService;

@@ -26,9 +26,8 @@
 
 package org.cougaar.core.service;
 
-import org.cougaar.core.mts.MessageAddress;
-
 import org.cougaar.core.component.Service;
+import org.cougaar.core.mts.MessageAddress;
 
 /**
  * This service allows a component to query the agents registered

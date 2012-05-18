@@ -26,22 +26,13 @@
 
 package org.cougaar.core.wp.bootstrap.http;
 
-import java.io.BufferedReader;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import org.cougaar.bootstrap.SystemProperties;
-import org.cougaar.core.component.ServiceBroker;
-import org.cougaar.core.component.ServiceRevokedListener;
-import org.cougaar.core.mts.MessageAddress;
-import org.cougaar.core.service.LoggingService;
+
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.wp.bootstrap.Bundle;
 import org.cougaar.core.wp.bootstrap.ConfigService;

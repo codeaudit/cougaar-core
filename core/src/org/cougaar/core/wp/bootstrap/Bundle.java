@@ -26,10 +26,11 @@
 
 package org.cougaar.core.wp.bootstrap;
 
-import java.io.InputStream;
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.Map;
+
 import org.cougaar.core.util.UID;
 
 /**

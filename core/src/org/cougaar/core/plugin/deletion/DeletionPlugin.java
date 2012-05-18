@@ -36,7 +36,6 @@ import java.util.TreeSet;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.blackboard.CollectionSubscription;
-import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.logging.LoggingServiceWithPrefix;
 import org.cougaar.core.persist.PersistenceNotEnabledException;
 import org.cougaar.core.plugin.ComponentPlugin;

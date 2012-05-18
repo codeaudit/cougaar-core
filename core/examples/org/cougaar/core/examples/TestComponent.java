@@ -26,8 +26,9 @@
 
 package org.cougaar.core.examples;
 
-import org.cougaar.core.component.*;
-import org.cougaar.core.node.*;
+import org.cougaar.core.component.ComponentSupport;
+import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.node.NodeIdentificationService;
 import org.cougaar.core.service.AgentIdentificationService;
 
 /** Trivial component which does nothing but print a message when it is loaded and 

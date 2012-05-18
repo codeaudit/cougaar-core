@@ -27,10 +27,11 @@
 package org.cougaar.core.node;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
+
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.util.log.Logger;
 
