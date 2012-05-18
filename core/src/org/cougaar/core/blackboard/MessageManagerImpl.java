@@ -258,7 +258,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
       return ++currentTransmitSequenceNumber;
     }
 
-    public int getCurrentReceiveSequenceNumber() {
+    @SuppressWarnings("unused")
+   public int getCurrentReceiveSequenceNumber() {
       return currentReceiveSequenceNumber;
     }
 

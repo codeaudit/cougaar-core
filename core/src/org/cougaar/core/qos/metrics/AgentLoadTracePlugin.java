@@ -157,10 +157,6 @@ public class AgentLoadTracePlugin
 	}
     }
     
-    private long relativeTimeMillis() {
-	return System.currentTimeMillis()-start;
-    }
-    
     private void dump() {
 	Iterator itr = agents.iterator();
 	while (itr.hasNext()) {

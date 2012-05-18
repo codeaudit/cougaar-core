@@ -564,6 +564,7 @@ public void unload() {
     implements DemoControlService.Callback {
       private final Object lock = new Object();
       private boolean isComplete = false;
+      @SuppressWarnings("unused")
       public boolean isComplete() {
         synchronized (lock) {
           return isComplete;
@@ -617,9 +618,12 @@ public void unload() {
   private final class DemoControlSI implements DemoControlService {
     // alarm service:
     private void die() { throw new UnsupportedOperationException(); }
-    public long currentTimeMillis() { die(); return -1; }
-    public void addAlarm(Alarm alarm) { die(); }
-    public void addRealTimeAlarm(Alarm alarm) { die(); }
+    @SuppressWarnings("unused")
+   public long currentTimeMillis() { die(); return -1; }
+    @SuppressWarnings("unused")
+   public void addAlarm(Alarm alarm) { die(); }
+    @SuppressWarnings("unused")
+   public void addRealTimeAlarm(Alarm alarm) { die(); }
 
     // demo service:
     public double getExecutionRate() {

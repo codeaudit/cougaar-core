@@ -1080,9 +1080,11 @@ protected void unregisterAgent(
       public void onRemoval() {
       }
 
+      @SuppressWarnings("unused")
       public void setPendingModel(GenericStateModel model) {
       }
 
+      @SuppressWarnings("unused")
       public GenericStateModel takePendingModel() {
         return null;
       }

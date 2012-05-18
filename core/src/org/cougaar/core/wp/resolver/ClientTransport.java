@@ -1272,15 +1272,6 @@ protected void receiveNow(Message msg) {
         retrySize++;
       }
     }
-    private void receiveNow(WPAnswer wpa) {
-      synchronized (lock) {
-        if (wpa == null) {
-          return;
-        }
-        Map m = wpa.getMap();
-        receiveNow(m);
-      }
-    }
     private void receiveNow(Map m) {
       synchronized (lock) {
         receiveCount++;

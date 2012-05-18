@@ -539,13 +539,6 @@ public boolean add(Object o) {
     return sp;
   }
 
-  private void revoke_service(Class clazz, ServiceProvider sp) {
-    if (sp != null) {
-      ServiceBroker sb = getServiceBroker();
-      sb.revokeService(clazz, sp);
-    }
-  }
-
   private static final class SimpleServiceProvider
       implements ServiceProvider {
     private final Class clazz;

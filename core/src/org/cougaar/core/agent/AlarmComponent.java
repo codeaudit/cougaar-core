@@ -133,17 +133,29 @@ public void unload() {
     }
     // demo service:
     private void die() { throw new UnsupportedOperationException(); }
-    public MessageAddress getMessageAddress() { die(); return null; }
-    public void setSocietyTime(long time) { die(); }
-    public void setSocietyTime(long time, boolean leaveRunning) { die(); }
-    public void setSocietyTimeRate(double newRate) { die(); }
-    public void advanceSocietyTime(long timePeriod) { die(); }
-    public void advanceSocietyTime(long timePeriod, boolean leaveRunning) { die(); }
-    public void advanceSocietyTime(long timePeriod, double newRate) { die(); }
-    public void advanceSocietyTime(ExecutionTimer.Change[] changes) { die(); }
-    public void advanceNodeTime(long timePeriod, double newRate) {die();}
-    public void setNodeTime(long time, double newRate) {die();}
-    public void setNodeTime(long time, double newRate, long changeTime) {die();}
-    public double getExecutionRate() { die(); return -1; }
+    @SuppressWarnings("unused")
+   public MessageAddress getMessageAddress() { die(); return null; }
+    @SuppressWarnings("unused")
+   public void setSocietyTime(long time) { die(); }
+    @SuppressWarnings("unused")
+   public void setSocietyTime(long time, boolean leaveRunning) { die(); }
+    @SuppressWarnings("unused")
+   public void setSocietyTimeRate(double newRate) { die(); }
+    @SuppressWarnings("unused")
+   public void advanceSocietyTime(long timePeriod) { die(); }
+    @SuppressWarnings("unused")
+   public void advanceSocietyTime(long timePeriod, boolean leaveRunning) { die(); }
+    @SuppressWarnings("unused")
+   public void advanceSocietyTime(long timePeriod, double newRate) { die(); }
+    @SuppressWarnings("unused")
+   public void advanceSocietyTime(ExecutionTimer.Change[] changes) { die(); }
+    @SuppressWarnings("unused")
+   public void advanceNodeTime(long timePeriod, double newRate) {die();}
+    @SuppressWarnings("unused")
+   public void setNodeTime(long time, double newRate) {die();}
+    @SuppressWarnings("unused")
+   public void setNodeTime(long time, double newRate, long changeTime) {die();}
+    @SuppressWarnings("unused")
+   public double getExecutionRate() { die(); return -1; }
   }
 }

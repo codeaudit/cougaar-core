@@ -160,17 +160,6 @@ public void load() {
     record_agent_name(bootstrap_desc);
   }
 
-  private List parse_external_components(Object obj) {
-    Object o = obj;
-    if (o instanceof Object[]) {
-      o = Arrays.asList((Object[]) o);
-    }
-    if (o != null && !(o instanceof List)) {
-      o = Collections.singletonList(o);
-    }
-    return (List) o;
-  }
-
   private ComponentDescription getBootstrapDescription(Object o) {
     if (o instanceof ComponentDescription) {
       // explicit comp-desc

@@ -35,7 +35,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
-import org.cougaar.core.blackboard.CollectionSubscription;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.examples.mobility.ldm.Step;
 import org.cougaar.core.examples.mobility.ldm.StepOptions;
@@ -51,8 +50,6 @@ import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.wp.AddressEntry;
 import org.cougaar.core.service.wp.WhitePagesService;
-import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -982,26 +979,6 @@ protected void execute() {
           return false;
         }
       };
-  }
-
-  private static UniqueObject query(
-      CollectionSubscription sub,
-      UID uid) {
-    Collection real = sub.getCollection();
-    int n = real.size();
-    if (n > 0) {
-      for (Iterator iter = real.iterator(); iter.hasNext(); ) {
-        Object o = iter.next();
-        if (o instanceof UniqueObject) {
-          UniqueObject uo = (UniqueObject) o;
-          UID x = uo.getUID();
-          if (uid.equals(x)) {
-            return uo;
-          }
-        }
-      }
-    }
-    return null;
   }
 
   private static class WPInfo {

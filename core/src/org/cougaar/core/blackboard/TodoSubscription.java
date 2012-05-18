@@ -271,7 +271,9 @@ protected void privateChange(Object o, List changes, boolean isVisible) {
 
     public String getName() { return name; }
     public Object getObject() { return o; }
-    public boolean isBulk() { return isBulk; }
+    
+    @SuppressWarnings("unused")
+   public boolean isBulk() { return isBulk; }
 
     @Override
    public String toString() { return "TodoEnvelope for "+name; }

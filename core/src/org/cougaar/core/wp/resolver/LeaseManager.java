@@ -968,10 +968,12 @@ public void unload() {
       responses = NO_RESPONSES;
     }
 
-    public String getAgent() {
+    @SuppressWarnings("unused")
+   public String getAgent() {
       return agent;
     }
-    public Record getRecord() {
+    @SuppressWarnings("unused")
+   public Record getRecord() {
       return record;
     }
     public boolean isBound() {

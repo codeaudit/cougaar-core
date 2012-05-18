@@ -398,27 +398,6 @@ protected Advertiser createAdvertiser(Object bootObj) {
       }
     }
 
-    private boolean validateReplyTo(String host, int port) {
-      boolean ret = true;
-
-      // check for dummy address
-      if (ret && host.equals("0.0.0.0")) {
-        ret = false;
-      }
-
-      // assume that the return address is valid!
-
-      if (!ret) {
-        if (log.isInfoEnabled()) {
-          log.info(
-              "Ignoring request from invalid reply-to="+
-              host+":"+port);
-        }
-      }
-
-      return ret;
-    }
-
     private String getReply() {
       Map bundles = getBundles();
 

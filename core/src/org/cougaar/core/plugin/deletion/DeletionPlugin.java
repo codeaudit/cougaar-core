@@ -162,7 +162,6 @@ public void execute() {
 
   protected void checkDeletables() {
     Collection deletables = blackboard.query(deletablePredicate);
-    deletablesLoop:
     for (Iterator i = deletables.iterator(); i.hasNext();) {
       Deletable element = (Deletable) i.next();
       policiesLoop:

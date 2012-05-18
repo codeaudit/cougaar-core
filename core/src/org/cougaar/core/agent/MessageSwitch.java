@@ -647,7 +647,8 @@ public void unload() {
         resubmitPendingMessages(mh);
       }
     }
-    public void removeMessageHandler(MessageHandler mh) {
+    @SuppressWarnings("unused")
+   public void removeMessageHandler(MessageHandler mh) {
       synchronized (handlers) {
         handlers.remove(mh);
       }

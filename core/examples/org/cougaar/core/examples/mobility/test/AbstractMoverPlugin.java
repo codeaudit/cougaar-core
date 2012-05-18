@@ -30,7 +30,6 @@ import java.util.Collection;
 import java.util.Enumeration;
 import java.util.Iterator;
 
-import org.cougaar.core.blackboard.CollectionSubscription;
 import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.mobility.Ticket;
 import org.cougaar.core.mobility.ldm.MobilityFactory;
@@ -40,7 +39,6 @@ import org.cougaar.core.plugin.ComponentPlugin;
 import org.cougaar.core.service.DomainService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.util.UID;
-import org.cougaar.core.util.UniqueObject;
 import org.cougaar.util.UnaryPredicate;
 
 /**
@@ -114,24 +112,6 @@ protected void execute() {
         MoveAgent ma = (MoveAgent) iter.next();
         if (ma.getUID().equals(moveAgentUID)) {
           return ma;
-        }
-      }
-    }
-    return null;
-  }
-
-  private static UniqueObject query(CollectionSubscription sub, UID uid) {
-    Collection real = sub.getCollection();
-    int n = real.size();
-    if (n > 0) {
-      for (Iterator iter = real.iterator(); iter.hasNext(); ) {
-        Object o = iter.next();
-        if (o instanceof UniqueObject) {
-          UniqueObject uo = (UniqueObject) o;
-          UID x = uo.getUID();
-          if (uid.equals(x)) {
-            return uo;
-          }
         }
       }
     }
