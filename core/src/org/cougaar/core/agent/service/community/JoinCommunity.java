@@ -156,7 +156,6 @@ public void stop() {
   }
 
   private void leave(String community) {
-    CommunityResponseListener crl = null;
     if (log.isInfoEnabled()) {
       log.info("Leaving"+community);
     }

@@ -420,7 +420,6 @@ protected void execute() {
     Object id = ticket.getIdentifier();
 
     if (log.isDebugEnabled()) {
-      long nowTime = System.currentTimeMillis();
       log.debug(todd+
           "Start step "+step.getUID());
     }

@@ -223,7 +223,7 @@ public void init() {
       for (int i = 0; i < XML_DRIVERS.length; i++) {
         String s = XML_DRIVERS[i];
         try {
-          Class c = Class.forName(s);
+         Class.forName(s);
         } catch (Exception e) {
           continue;
         }

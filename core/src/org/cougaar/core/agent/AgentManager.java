@@ -76,9 +76,6 @@ public class AgentManager
     "org.cougaar.core.agent.AgentImpl";
   private static final String AGENT_INSERTION_POINT =
     Agent.INSERTION_POINT;
-  private static final String BOOTSTRAP_CLASSNAME =
-    "org.cougaar.core.agent.Bootstrap";
-
   private static final String NODE_AGENT_CLASSNAME_PROPERTY =
       "org.cougaar.core.node.classname";
 

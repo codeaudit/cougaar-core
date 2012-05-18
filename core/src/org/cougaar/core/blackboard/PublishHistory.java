@@ -129,16 +129,9 @@ public class PublishHistory {
     if (now < nextCheckItems) return;
     nextCheckItems = now + 60000L;
     deleteItem.lastTime = now - 60000L;
-    int removeCount = 0;
     for (Iterator i = items.headSet(deleteItem).iterator(); i.hasNext(); ) {
       i.remove();
-      removeCount++;
     }
-    /*
-    if (removeCount > 0) {
-      System.out.println("PublishHistory removed " + removeCount + " items");
-    }
-    */
   }
 
   /**

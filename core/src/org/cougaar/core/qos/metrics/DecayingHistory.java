@@ -158,7 +158,6 @@ public abstract class DecayingHistory
 
     // History for each column/exponent 
     private DecayingHistoryList[] history;
-    private int total_count = 0;
 
     public DecayingHistory(int rows, int columns, int basePeriod)
     {
@@ -198,6 +197,5 @@ public abstract class DecayingHistory
 	}
         // Added to history
 	history[0].addSnapShot(new_elt);
-	++total_count;
     }
 }

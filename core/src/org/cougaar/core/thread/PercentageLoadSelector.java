@@ -55,7 +55,6 @@ public class PercentageLoadSelector
     private static final String TARGETS_PROP = "org.cougaar.thread.targets";
     private Map<String,ConsumerRecord> records = new HashMap<String,ConsumerRecord>();
     private Properties properties = new Properties();
-    private int total = 0;
     private Comparator<Scheduler> comparator;
     private TreeSet<Scheduler> orderedChildren;
 
@@ -111,14 +110,12 @@ public class PercentageLoadSelector
     }
 
     public void rightGiven(String consumer) {
-	++total;
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	++rec.outstanding;
     }
 		
     public void rightReturned(String consumer) {
-	--total; 
 	ConsumerRecord rec = findRecord(consumer);
 	rec.accumulate();
 	--rec.outstanding;

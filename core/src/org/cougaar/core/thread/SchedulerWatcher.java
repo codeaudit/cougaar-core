@@ -54,7 +54,6 @@ public class SchedulerWatcher
 
     private class ConsumerRecord {
 	// Static
-	Object consumer;
 	String name;
 	String prefix;
 	//instantanous
@@ -62,7 +61,6 @@ public class SchedulerWatcher
 	int pending;
 	//Accumalators
 	long accumalate_timestamp;
-	long count;    // accumalator counts 
 	long queued;   // exit counts
 	long ran;      // exit counts
 	// Integrators
@@ -72,7 +70,6 @@ public class SchedulerWatcher
 	long  snapshot_timestamp;
 	double snapshot_sumOutstanding;
 	double snapshot_sumPending;
-	double snapshot_count;
 	double snapshot_ran;
 	double snapshot_queued;
 	//Rates
@@ -84,7 +81,6 @@ public class SchedulerWatcher
 
 	ConsumerRecord(Object consumer) {
 	    // System.err.println("%%%% new ConsumerRecord for " +consumer);
-	    this.consumer = consumer;
 	    this.name = consumer.toString();
 	    this.prefix = "Agent" +KEY_SEPR+ agentName
 		+KEY_SEPR+ "Plugin" +KEY_SEPR+ this.name +KEY_SEPR;
@@ -123,7 +119,6 @@ public class SchedulerWatcher
 	    snapshot_timestamp = now;
 	    snapshot_sumOutstanding = sumOutstanding;
 	    snapshot_sumPending = sumPending;
-	    snapshot_count = count;
 	    snapshot_ran = ran;
 	    snapshot_queued = queued;
 
@@ -146,7 +141,6 @@ public class SchedulerWatcher
 
 
 	synchronized void accumulate() {
-	    ++count;
 	    long now = System.currentTimeMillis();
 	    if (accumalate_timestamp > 0) {
 		double deltaT = now - accumalate_timestamp;

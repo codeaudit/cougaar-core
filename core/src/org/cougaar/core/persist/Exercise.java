@@ -48,7 +48,6 @@ public class Exercise extends ServiceUserPlugin {
 
   private static class Item implements Serializable {
     int serializationTime;
-    int anotherInt;
 
     public Item(int st) {
       serializationTime = st;

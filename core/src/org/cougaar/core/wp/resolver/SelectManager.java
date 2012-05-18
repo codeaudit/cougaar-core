@@ -358,7 +358,6 @@ public void unload() {
     Iterator iter = entries.entrySet().iterator();
     for (int i = 0; i < n; i++) {
       Map.Entry me = (Map.Entry) iter.next();
-      String name = (String) me.getKey();
       Entry e = (Entry) me.getValue();
       MessageAddress addr = e.getMessageAddress();
       if (logger.isDebugEnabled()) {

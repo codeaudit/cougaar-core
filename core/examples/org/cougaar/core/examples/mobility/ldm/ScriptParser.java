@@ -202,8 +202,6 @@ class ScriptParser {
     }
 
     List ret = new ArrayList();
-    int maxGotoIdx = -1;
-    int maxGotoLine = -1;
     boolean hasNamedGotos = false;
     Map labels = new HashMap(5);
     for (int i = 0; ; i++) {

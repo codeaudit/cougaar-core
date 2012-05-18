@@ -43,7 +43,6 @@ public class TestFullSnapshot extends ComponentPlugin {
     * 
     */
    private static final long serialVersionUID = 1L;
-   byte[] bytes = new byte[10000];
   }
 
   @Override

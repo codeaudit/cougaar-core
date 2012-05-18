@@ -55,9 +55,6 @@ extends GenericStateModelAdapter
 implements Component
 {
 
-  private static final String AGENT_IP = "Node.AgentManager.Agent";
-  private static final String AGENT_IP_PREFIX = AGENT_IP+".";
-
   private String agentName;
 
   private ServiceBroker sb;

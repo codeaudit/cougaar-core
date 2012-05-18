@@ -212,7 +212,6 @@ public class PersistenceServiceComponent
   private class PersistencePluginInfo {
     PersistencePlugin ppi;
     long nextPersistenceTime;
-    int deltaCount = 0;
     SequenceNumbers cleanupSequenceNumbers = null;
 
     PersistencePluginInfo(PersistencePlugin ppi) {
@@ -1226,7 +1225,6 @@ public void unload() {
 	  return null;          // We are dead. Don't persist
 	}
 	if (sequenceNumbers.current == sequenceNumbers.first) full = true;
-	currentPersistPluginInfo.deltaCount++;
 	this.full = full;    // Global full flag for duration of persist
 	// Now gather everything to persist from our clients. Side
 	// effect updates identityTable and if !full, associationsToPersist.

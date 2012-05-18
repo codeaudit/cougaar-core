@@ -423,8 +423,7 @@ public void execute() {
     }
     // extract agent strings, set local options (e.g. loopback)
     List l = new ArrayList();
-    int i = 0;
-    for (Iterator iter = parameters.iterator(); iter.hasNext(); i++) {
+    for (Iterator iter = parameters.iterator(); iter.hasNext();) {
       String s = (String) iter.next();
       int sep = s.indexOf('=');
       String key;

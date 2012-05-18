@@ -53,7 +53,6 @@ public class AgentLoadTracePlugin
     private DecimalFormat formatter = new DecimalFormat("###,#00.0#");
     private boolean first_time = true;
     private ArrayList agents;
-    private long start;
     private static final int BASE_PERIOD = 10; //10SecAVG
     private AgentStatusService agentStatusService=null; 
     
@@ -89,7 +88,6 @@ public class AgentLoadTracePlugin
     
 
     private void collectNames() {
-	start = System.currentTimeMillis();
 	Set localAgents = getLocalAgents();
 	if (localAgents == null) { 
 	    return;

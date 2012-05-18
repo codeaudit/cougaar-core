@@ -1304,7 +1304,8 @@ public void unload() {
     public final long minTTD;
     public final long maxTTD;
     public final int minSize;
-    public final int initSize;
+    @SuppressWarnings("unused")
+   public final int initSize;
     public final int maxSize;
 
     public CacheConfig(Object o) {

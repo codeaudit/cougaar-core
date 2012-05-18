@@ -212,7 +212,6 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
         private long period;
         private boolean expired = false;
         private boolean forward=true;
-        private AgentControl forwardAgentControl,backwardAgentControl;
                 
         public Mover(long period) {
             super();

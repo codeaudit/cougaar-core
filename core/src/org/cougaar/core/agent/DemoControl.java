@@ -455,9 +455,8 @@ public void unload() {
     // receive ack, make sure we sent it
     MessageAddress sender = dcm.getOriginator();
     UID uid = dcm.getUID();
-    ExecutionTimer.Parameters p = dcm.getParameters();
+    dcm.getParameters();
     DemoControlService.Callback cb;
-    Object result;
     long rtt;
     Map resultMap;
     synchronized (lock) {

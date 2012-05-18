@@ -439,15 +439,4 @@ public void load() {
     alarm = createAlarm(nextAlarm);
     getAlarmService().addAlarm(alarm);
   }
-
-  private static class DefaultDeletionPolicy extends SimpleDeletionPolicy {
-    /**
-    * 
-    */
-   private static final long serialVersionUID = 1L;
-
-   DefaultDeletionPolicy(long deletionDelay) {
-      super(deletionDelay);
-    }
-  }
 }
