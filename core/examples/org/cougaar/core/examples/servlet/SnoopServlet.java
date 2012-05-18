@@ -67,19 +67,22 @@ import javax.servlet.http.HttpSession;
  */
 public class SnoopServlet extends HttpServlet {
 
-  public void doPut(
+  @Override
+public void doPut(
       HttpServletRequest request, 
       HttpServletResponse response) throws ServletException, IOException {
     doGet(request, response);
   }
 
-  public void doPost(
+  @Override
+public void doPost(
       HttpServletRequest request, 
       HttpServletResponse response) throws ServletException, IOException {
     doGet(request, response);
   }
 
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest request, 
       HttpServletResponse response) throws ServletException, IOException {
     PrintWriter out = response.getWriter();

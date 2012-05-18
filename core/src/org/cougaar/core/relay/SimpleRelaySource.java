@@ -81,7 +81,8 @@ implements Relay.Source {
 
   // prevent "setReply", since this is the source-side instance.
   // Only "updateResponse" from the target can change the reply.
-  public void setReply(Object reply) {
+  @Override
+public void setReply(Object reply) {
     throw new UnsupportedOperationException(
         "Unable to modify the reply on the sender-side, "+
         " it can only be modified at the target ("+target+")");

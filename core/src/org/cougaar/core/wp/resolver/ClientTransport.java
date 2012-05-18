@@ -173,7 +173,8 @@ extends TransportBase
     config = new ClientTransportConfig(o);
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     configure(null);
@@ -183,7 +184,6 @@ extends TransportBase
     }
 
     protectS =
-      (WhitePagesProtectionService)
       sb.getService(this, WhitePagesProtectionService.class, null);
     if (logger.isDebugEnabled()) {
       logger.debug("White pages protection service: "+protectS);
@@ -217,8 +217,7 @@ extends TransportBase
         "White pages client transport send queue checker");
 
     // register to select servers
-    selectService = (SelectService)
-      sb.getService(myClient, SelectService.class, null);
+    selectService = sb.getService(myClient, SelectService.class, null);
     if (selectService == null) {
       throw new RuntimeException(
           "Unable to obtain SelectService");
@@ -233,7 +232,8 @@ extends TransportBase
     sb.addService(ModifyService.class, modifySP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (modifySP != null) {
       sb.revokeService(ModifyService.class, modifySP);
       modifySP = null;
@@ -262,7 +262,8 @@ extends TransportBase
     super.unload();
   }
 
-  protected void foundMessageTransport() {
+  @Override
+protected void foundMessageTransport() {
     // super.foundMessageTransport();
     synchronized (myLock) {
       long now = System.currentTimeMillis();
@@ -915,7 +916,8 @@ extends TransportBase
   // receive:
   //
 
-  protected boolean shouldReceive(Message m) {
+  @Override
+protected boolean shouldReceive(Message m) {
     if (m instanceof WPAnswer) {
       WPAnswer wpa = (WPAnswer) m;
       int action = wpa.getAction();
@@ -927,7 +929,8 @@ extends TransportBase
     return false;
   }
 
-  protected void receiveNow(Message msg) {
+  @Override
+protected void receiveNow(Message msg) {
     if (logger.isDetailEnabled()) {
       logger.detail("receiving message: "+msg);
     }
@@ -1170,7 +1173,8 @@ extends TransportBase
       this.target = target;
     }
     
-    public String toString() {
+    @Override
+   public String toString() {
       long now = System.currentTimeMillis();
       return toString(now);
     }
@@ -1295,19 +1299,25 @@ extends TransportBase
 
   private abstract class SPBase extends ServiceProviderBase {
     protected abstract int getAction();
-    protected void register(Object client) {
+    @Override
+   protected void register(Object client) {
       ClientTransport.this.register(getAction(), client);
     }
-    protected void unregister(Object client) {
+    @Override
+   protected void unregister(Object client) {
       ClientTransport.this.unregister(getAction(), client);
     }
   }
 
   private class PingSP extends SPBase {
-    protected int getAction() { return WPQuery.PING; }
-    protected Class getServiceClass() { return PingService.class; }
-    protected Class getClientClass() { return PingService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return WPQuery.PING; }
+    @Override
+   protected Class getServiceClass() { return PingService.class; }
+    @Override
+   protected Class getClientClass() { return PingService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements PingService {
       public SI(Object client) { super(client); }
       public void ping(MessageAddress addr, long deadline) {
@@ -1316,10 +1326,14 @@ extends TransportBase
     }
   }
   private class LookupSP extends SPBase {
-    protected int getAction() { return WPQuery.LOOKUP; }
-    protected Class getServiceClass() { return LookupService.class; }
-    protected Class getClientClass() { return LookupService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return WPQuery.LOOKUP; }
+    @Override
+   protected Class getServiceClass() { return LookupService.class; }
+    @Override
+   protected Class getClientClass() { return LookupService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements LookupService {
       public SI(Object client) { super(client); }
       public void lookup(Map m) {
@@ -1328,10 +1342,14 @@ extends TransportBase
     }
   }
   private class ModifySP extends SPBase {
-    protected int getAction() { return WPQuery.MODIFY; }
-    protected Class getServiceClass() { return ModifyService.class; }
-    protected Class getClientClass() { return ModifyService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return WPQuery.MODIFY; }
+    @Override
+   protected Class getServiceClass() { return ModifyService.class; }
+    @Override
+   protected Class getClientClass() { return ModifyService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements ModifyService {
       public SI(Object client) { super(client); }
       public void modify(Map m) {

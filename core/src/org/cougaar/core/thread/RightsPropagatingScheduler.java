@@ -43,7 +43,8 @@ public class RightsPropagatingScheduler extends Scheduler
     }
 
     
-    boolean requestRights(Scheduler requestor) {
+    @Override
+   boolean requestRights(Scheduler requestor) {
 	TreeNode parent_node = getTreeNode().getParent();
 	boolean result;
 	if (parent_node == null) {
@@ -60,7 +61,8 @@ public class RightsPropagatingScheduler extends Scheduler
     }
 
     
-    void releaseRights(Scheduler consumer) { 
+    @Override
+   void releaseRights(Scheduler consumer) { 
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
@@ -114,7 +116,8 @@ public class RightsPropagatingScheduler extends Scheduler
 	return handoff;
     }
 
-    SchedulableObject getNextPending() {
+    @Override
+   SchedulableObject getNextPending() {
 	int initialIndex = currentIndex;
 	List<TreeNode> children = getTreeNode().getChildren();
 	SchedulableObject handoff = null;

@@ -47,11 +47,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    RehydrateLoadService rls = (RehydrateLoadService)
-      sb.getService(this, RehydrateLoadService.class, null);
+    RehydrateLoadService rls = sb.getService(this, RehydrateLoadService.class, null);
     if (rls == null) {
       throw new RuntimeException(
           "Unable to obtain RehydrateLoadService");

@@ -79,7 +79,8 @@ public final class RecordIsValid implements Serializable {
     return ttd;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "(record-is-valid uid="+uid+" ttd="+ttd+")";
   }
 

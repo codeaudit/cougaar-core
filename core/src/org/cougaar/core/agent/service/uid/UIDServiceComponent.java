@@ -50,13 +50,13 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get the local agent address
     MessageAddress agentAddr = null;
-    AgentIdentificationService agentIdS = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService agentIdS = sb.getService(this, AgentIdentificationService.class, null);
     if (agentIdS != null) {
       agentAddr = agentIdS.getMessageAddress();
       sb.releaseService(this, AgentIdentificationService.class, agentIdS);
@@ -70,7 +70,8 @@ implements Component
     sb.addService(UIDService.class, uidSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // revoke our service
     if (uidSP != null) {
       sb.revokeService(UIDService.class, uidSP);

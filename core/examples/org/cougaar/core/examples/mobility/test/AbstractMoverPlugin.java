@@ -79,7 +79,8 @@ extends ComponentPlugin
      }
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     agentId = getAgentIdentifier();
 
     // watch for changed MoveAgent objects
@@ -88,7 +89,8 @@ extends ComponentPlugin
           createMovePredicate(agentId));
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     if (moveAgentSub.hasChanged()) {
       // watch for changes
       Enumeration en = moveAgentSub.getChangedList();

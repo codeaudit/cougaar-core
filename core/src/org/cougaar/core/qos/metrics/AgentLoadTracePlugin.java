@@ -169,22 +169,19 @@ public class AgentLoadTracePlugin
 	}
     }
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
 
-	metricsService = (MetricsService)
-	    sb.getService(this, MetricsService.class, null);
+	metricsService = sb.getService(this, MetricsService.class, null);
 
-	loggingService = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
+	loggingService = sb.getService(this, LoggingService.class, null);
 	
-	agentStatusService = (AgentStatusService)
-	    sb.getService(this, AgentStatusService.class, null);
+	agentStatusService = sb.getService(this, AgentStatusService.class, null);
 	
-	ThreadService tsvc = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
+	ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 
 	Poller poller = new Poller();
 	Schedulable sched = tsvc.getThread(this, 
@@ -213,10 +210,12 @@ public class AgentLoadTracePlugin
 	}
     }
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
     }
 
 }

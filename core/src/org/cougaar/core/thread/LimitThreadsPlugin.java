@@ -55,14 +55,13 @@ public class LimitThreadsPlugin
 	this.sb = sb;
     }
 
-    public void load() 
+    @Override
+   public void load() 
     {
 	super.load();
 					  
-	ThreadControlService tsvc = (ThreadControlService) 
-	    sb.getService(this, ThreadControlService.class, null);
-	LoggingService lsvc = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
+	ThreadControlService tsvc = sb.getService(this, ThreadControlService.class, null);
+	LoggingService lsvc = sb.getService(this, LoggingService.class, null);
 
 
 	int lane = (int) getParameter("lane", tsvc.getDefaultLane());

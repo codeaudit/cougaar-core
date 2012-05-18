@@ -51,7 +51,8 @@ public class TestABA extends ComponentPlugin {
 
   private IncrementalSubscription sub;
 
-  public void setParameter(Object o) {
+  @Override
+public void setParameter(Object o) {
     args = new Arguments(o);
   }
 
@@ -62,7 +63,8 @@ public class TestABA extends ComponentPlugin {
     this.uids = uids;
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     sub = (IncrementalSubscription) blackboard.subscribe(
         new UnaryPredicate() {
           public boolean execute(Object o) {
@@ -85,7 +87,8 @@ public class TestABA extends ComponentPlugin {
     }
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     if (log.isInfoEnabled() && sub.hasChanged()) {
       for (int i = 0; i < 3; i++) {
         Collection c =

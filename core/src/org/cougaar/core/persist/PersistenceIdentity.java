@@ -38,10 +38,12 @@ public class PersistenceIdentity implements Serializable {
   public PersistenceIdentity(String id) {
     this.id = id;
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return id.hashCode();
   }
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (this == o) return true;
     if (o instanceof PersistenceIdentity) {
       PersistenceIdentity that = (PersistenceIdentity) o;
@@ -49,7 +51,8 @@ public class PersistenceIdentity implements Serializable {
     }
     return false;
   }
-  public String toString() {
+  @Override
+public String toString() {
     return id;
   }
 }

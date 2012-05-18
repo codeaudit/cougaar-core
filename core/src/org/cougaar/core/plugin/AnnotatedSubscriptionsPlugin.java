@@ -29,13 +29,15 @@ public abstract class AnnotatedSubscriptionsPlugin extends ParameterizedPlugin {
         new HashMap<String, IncrementalSubscription>();
     private final List<Invoker> invokers = new ArrayList<Invoker>();
     
-    protected void execute() {
+    @Override
+   protected void execute() {
         for (Invoker invoker : invokers) {
             invoker.execute();
         }
      }
     
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
         Class<? extends AnnotatedSubscriptionsPlugin> klass = getClass();
         // Method[] methods = klass.getMethods();
         Collection<Method> methods = Cougaar.getAnnotatedMethods(klass, Cougaar.Execute.class);

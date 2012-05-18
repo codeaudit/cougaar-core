@@ -59,28 +59,28 @@ public class JvmStackDumpServlet extends BaseServletComponent {
 
   private JvmStackDumpService jsds;
 
-  protected String getPath() {
+  @Override
+protected String getPath() {
     return "/jvmdump";
   }
 
-  public void load() {
+  @Override
+public void load() {
     // get the jvm stack dump service
-    jsds = (JvmStackDumpService) serviceBroker.getService(
+    jsds = serviceBroker.getService(
         this, JvmStackDumpService.class, null);
     // get the host name
     // get the agent id
-    AgentIdentificationService ais = (AgentIdentificationService)
-      serviceBroker.getService(
-          this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = serviceBroker.getService(
+       this, AgentIdentificationService.class, null);
     if (ais != null) {
       agentId = ais.getMessageAddress();
       serviceBroker.releaseService(
           this, AgentIdentificationService.class, ais);
     }
     // get the node id
-    NodeIdentificationService nis = (NodeIdentificationService)
-      serviceBroker.getService(
-          this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = serviceBroker.getService(
+       this, NodeIdentificationService.class, null);
     if (nis != null) {
       InetAddress hostAddr = nis.getInetAddress();
       hostId = hostAddr != null ? hostAddr.getHostName() : null;
@@ -91,7 +91,8 @@ public class JvmStackDumpServlet extends BaseServletComponent {
     super.load();
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (jsds != null) {
       serviceBroker.releaseService(
@@ -100,13 +101,15 @@ public class JvmStackDumpServlet extends BaseServletComponent {
     }
   }
 
-  protected Servlet createServlet() {
+  @Override
+protected Servlet createServlet() {
     return new JvmStackDumpServletImpl();
   }
 
   private class JvmStackDumpServletImpl extends HttpServlet {
 
-    public void doGet(
+    @Override
+   public void doGet(
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {
 

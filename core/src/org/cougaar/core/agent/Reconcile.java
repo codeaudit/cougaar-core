@@ -86,19 +86,18 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     localAgent = find_local_agent();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
     String prefix = localAgent+": ";
     log = LoggingServiceWithPrefix.add(log, prefix);
 
     // get incarnation service
-    incarnationService = (IncarnationService) 
-      sb.getService(this, IncarnationService.class, null);
+    incarnationService = sb.getService(this, IncarnationService.class, null);
     if (incarnationService == null) {
       throw new RuntimeException(
           "Unable to obtain IncarnationService");
@@ -111,8 +110,7 @@ implements Component
           reconcileNow();
         }
       };
-    ThreadService threadService = (ThreadService)
-      sb.getService(this, ThreadService.class, null);
+    ThreadService threadService = sb.getService(this, ThreadService.class, null);
     reconcileThread = threadService.getThread(
         this, reconcileRunner, "Reconciler");
     sb.releaseService(this, ThreadService.class, threadService);
@@ -139,8 +137,7 @@ implements Component
   }
 
   private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       return null;
     }
@@ -150,31 +147,36 @@ implements Component
     return ret;
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
     // called later via ReconcileEnablerService:
     //enableReconcile();
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     // called earlier via ReconcileEnablerService:
     //disableReconcile();
   }
 
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     // called later via ReconcileEnablerService:
     //enableReconcile();
   }
 
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
     // called earlier via ReconcileEnablerService:
     //disableReconcile();
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (resp != null) {
@@ -256,7 +258,6 @@ implements Component
         }
       };
     ps = 
-      (PersistenceService)
       sb.getService(
           pc, PersistenceService.class, null);
   }
@@ -341,8 +342,7 @@ implements Component
 
   private void enableReconcile() {
     if (bb == null) {
-      bb = (BlackboardForAgent)
-        sb.getService(this, BlackboardForAgent.class, null);
+      bb = sb.getService(this, BlackboardForAgent.class, null);
       if (bb == null) {
         throw new RuntimeException(
             "Unable to obtain BlackboardForAgent");
@@ -423,6 +423,7 @@ implements Component
         // make me last, so MTS links are reset before I reconcile!
         return (o instanceof ReconcileCallback ?  0 : -1);
       }
+      @Override
       public String toString() {
         return "(reconcile for "+localAgent+")";
       }

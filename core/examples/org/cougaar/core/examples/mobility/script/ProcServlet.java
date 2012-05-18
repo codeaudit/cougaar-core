@@ -110,33 +110,34 @@ implements BlackboardClient
   protected LoggingService log;
   protected MobilityTestFactory mobilityTestFactory;
 
-  protected String getPath() {
+  @Override
+protected String getPath() {
     return "/move/proc";
   }
 
-  protected Servlet createServlet() {
+  @Override
+protected Servlet createServlet() {
     // create inner class
     return new MyServlet();
   }
 
   // aquire services:
-  public void load() {
+  @Override
+public void load() {
 
     // get the log
-    log = (LoggingService)
-      serviceBroker.getService(
-          this, LoggingService.class, null);
+    log = serviceBroker.getService(
+       this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
 
     // get the agentId
     AgentIdentificationService agentIdService = 
-      (AgentIdentificationService)
       serviceBroker.getService(
-          this,
-          AgentIdentificationService.class,
-          null);
+       this,
+       AgentIdentificationService.class,
+       null);
     if (agentIdService == null) {
       throw new RuntimeException(
           "Unable to obtain agent-id service");
@@ -151,11 +152,10 @@ implements BlackboardClient
 
     // get the nodeId
     NodeIdentificationService nodeIdService = 
-      (NodeIdentificationService)
       serviceBroker.getService(
-          this,
-          NodeIdentificationService.class,
-          null);
+       this,
+       NodeIdentificationService.class,
+       null);
     if (nodeIdService == null) {
       throw new RuntimeException(
           "Unable to obtain node-id service");
@@ -169,11 +169,10 @@ implements BlackboardClient
     }
 
     // get the mobility domain
-    this.domain = (DomainService)
-      serviceBroker.getService(
-          this,
-          DomainService.class,
-          null);
+    this.domain = serviceBroker.getService(
+       this,
+       DomainService.class,
+       null);
     if (domain == null) {
       throw new RuntimeException(
           "Unable to obtain domain service");
@@ -189,11 +188,10 @@ implements BlackboardClient
     }
 
     // get the blackboard
-    this.blackboard = (BlackboardService)
-      serviceBroker.getService(
-          this,
-          BlackboardService.class,
-          null);
+    this.blackboard = serviceBroker.getService(
+       this,
+       BlackboardService.class,
+       null);
     if (blackboard == null) {
       throw new RuntimeException(
           "Unable to obtain blackboard service");
@@ -203,7 +201,8 @@ implements BlackboardClient
   }
 
   // release services:
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (blackboard != null) {
       serviceBroker.releaseService(
@@ -348,7 +347,8 @@ implements BlackboardClient
    */
   private class MyServlet extends HttpServlet {
 
-    public void doGet(
+    @Override
+   public void doGet(
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {
       MyWorker mw = new MyWorker(req, res);
@@ -721,7 +721,8 @@ implements BlackboardClient
         "a \"trigger\" event: "+event);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "\""+getPath()+"\" servlet";
   }
 }

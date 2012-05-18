@@ -57,13 +57,15 @@ public class QuiescenceStateServlet extends ComponentServlet {
   private AgentQuiescenceStateService aqs = null;
   private String node = null;
 
-  protected String getPath() {
+  @Override
+protected String getPath() {
     return "/agentQuiescenceState";
   }
 
-  public void load() {
-    log = (LoggingService)serviceBroker.getService(this, LoggingService.class, null);
-    aqs = (AgentQuiescenceStateService)serviceBroker.getService(this, AgentQuiescenceStateService.class, null);
+  @Override
+public void load() {
+    log = serviceBroker.getService(this, LoggingService.class, null);
+    aqs = serviceBroker.getService(this, AgentQuiescenceStateService.class, null);
     super.load();
   }
 
@@ -80,7 +82,8 @@ public class QuiescenceStateServlet extends ComponentServlet {
       node = nis.getMessageAddress().toString();
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     // release logger, aqs
     if (aqs != null) {
@@ -97,7 +100,8 @@ public class QuiescenceStateServlet extends ComponentServlet {
   }
 
 
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest sreq,
       HttpServletResponse sres) throws IOException {
     // create a new handler per request, so we don't mangle our
@@ -106,7 +110,8 @@ public class QuiescenceStateServlet extends ComponentServlet {
     h.execute(sreq, sres);  
   }
 
-  public void doPut(
+  @Override
+public void doPut(
       HttpServletRequest sreq,
       HttpServletResponse sres) throws IOException {
     // create a new handler per request, so we don't mangle our

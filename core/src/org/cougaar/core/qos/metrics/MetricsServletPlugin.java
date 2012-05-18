@@ -44,7 +44,8 @@ public class MetricsServletPlugin extends ComponentPlugin
 	super();
     }
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
@@ -55,10 +56,12 @@ public class MetricsServletPlugin extends ComponentPlugin
 	new MetricsWriterServlet(sb);
     }
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
 	//System.out.println("Executed MetricsServletPlugin");
     }
 

@@ -72,12 +72,9 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
   protected boolean haveServices() {
     if (servletService != null) return true;
     if (acquireServices()) {
-      eventService = (EventService)
-        getServiceBroker().getService(this, EventService.class, null);
-      servletService = (ServletService)
-        getServiceBroker().getService(this, ServletService.class, null);
-      metricsService = (PersistenceMetricsService)
-        getServiceBroker().getService(this, PersistenceMetricsService.class, null);
+      eventService = getServiceBroker().getService(this, EventService.class, null);
+      servletService = getServiceBroker().getService(this, ServletService.class, null);
+      metricsService = getServiceBroker().getService(this, PersistenceMetricsService.class, null);
       try {
         servletService.register("/persistenceMetrics", new MyServlet());
       } catch (Exception e) {
@@ -88,14 +85,16 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
     return false;
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     agentName = getAgentIdentifier().toString();
 
     // haveServices will acquire the services if not done yet. Returns (ignored) boolean
     haveServices();
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     // haveServices will acquire the services if not done yet. Returns (ignored) boolean
     haveServices();
   }
@@ -152,10 +151,12 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
   }
 
   private class MyServlet extends HttpServlet {
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @Override
+   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
       doPostOrGet(request, response, false);
     }
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @Override
+   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
       doPostOrGet(request, response, true);
     }
     private String getSortParams(boolean currentReverse, String currentSort, String newSort) {

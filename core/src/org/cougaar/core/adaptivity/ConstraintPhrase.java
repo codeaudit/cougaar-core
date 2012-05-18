@@ -58,7 +58,8 @@ public class ConstraintPhrase extends ConstraintOpValue {
     return proxyName;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return proxyName + " " + super.toString();
   }
 }

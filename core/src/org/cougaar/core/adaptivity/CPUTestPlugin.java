@@ -81,7 +81,8 @@ public class CPUTestPlugin extends ServiceUserPlugin {
       super(name, allowedValues, value);
     }
 
-    public void setValue(Comparable newValue) {
+    @Override
+   public void setValue(Comparable newValue) {
       super.setValue(newValue);
     }
   }
@@ -94,7 +95,8 @@ public class CPUTestPlugin extends ServiceUserPlugin {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     CPUTestCondition cpu =
       new CPUTestCondition(CPU_CONDITION_NAME, CPU_VALUES, cpuValues[0]);
     getBlackboardService().publishAdd(cpu);
@@ -105,14 +107,14 @@ public class CPUTestPlugin extends ServiceUserPlugin {
     if (conditionService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      conditionService = (ConditionService)
-        sb.getService(this, ConditionService.class, null);
+      conditionService = sb.getService(this, ConditionService.class, null);
       return true;
     }
     return false;
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       if (haveServices()) {
         cancelTimer();

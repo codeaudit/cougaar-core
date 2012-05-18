@@ -127,22 +127,20 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
           this, AgentIdentificationService.class, ais);
     }
 
-    raws = (ReconcileAddressWatcherService)
-      sb.getService(this, ReconcileAddressWatcherService.class, null);
+    raws = sb.getService(this, ReconcileAddressWatcherService.class, null);
     if (raws == null) {
       throw new RuntimeException(
           "Unable to obtain ReconcileAddressWatcherService");
@@ -176,21 +174,24 @@ implements Component
     //load_unpend_messages();
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     // called earlier via MessageSwitchShutdownService:
     //suspend_unregister_from_mts();
     suspend_shutdown_mts();
   }
 
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     resume_register_with_mts();
     // called later via MessageSwitchShutdownService:
     //resume_resend_unsent_messages();
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (msssp != null) {
@@ -221,8 +222,7 @@ implements Component
       log.info("Finding the local agent's incarnation");
     }
 
-    TopologyService ts = (TopologyService) 
-      sb.getService(this, TopologyService.class, null);
+    TopologyService ts = sb.getService(this, TopologyService.class, null);
     if (ts != null) {
       localIncarnation = ts.getIncarnationNumber();
       sb.releaseService(
@@ -253,8 +253,7 @@ implements Component
         }
       };
 
-    messenger = (MessageTransportService) 
-      sb.getService(mtsClientAdapter, MessageTransportService.class, null);
+    messenger = sb.getService(mtsClientAdapter, MessageTransportService.class, null);
     if (messenger == null) {
       throw new RuntimeException(
           "Unable to obtain MessageTransportService");
@@ -278,8 +277,7 @@ implements Component
       return;
     }
 
-    mss = (MessageSwitchService)
-      sb.getService(this, MessageSwitchService.class, null);
+    mss = sb.getService(this, MessageSwitchService.class, null);
 
     // register message handler to observe all incoming messages
     MessageHandler mh = new MessageHandler() {
@@ -329,7 +327,6 @@ implements Component
         }
       };
     ps = 
-      (PersistenceService)
       sb.getService(
           pc, PersistenceService.class, null);
   }
@@ -421,8 +418,7 @@ implements Component
         log.info(
             "Registering with the message transport service");
       }
-      messenger = (MessageTransportService) 
-        sb.getService(
+      messenger = sb.getService(
             mtsClientAdapter, MessageTransportService.class, null);
 
       if (mtsState != null) {

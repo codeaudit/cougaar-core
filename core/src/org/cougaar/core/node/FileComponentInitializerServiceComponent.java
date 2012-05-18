@@ -51,10 +51,10 @@ public class FileComponentInitializerServiceComponent
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
@@ -82,7 +82,8 @@ public class FileComponentInitializerServiceComponent
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (theSP != null) {
       sb.revokeService(ComponentInitializerService.class, theSP);
       theSP = null;

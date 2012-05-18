@@ -63,15 +63,16 @@ extends ContainerSupport
     }
   }
 
-  protected String specifyContainmentPoint() {
+  @Override
+protected String specifyContainmentPoint() {
     return INSERTION_POINT;
   }
 
-  protected ComponentDescriptions findInitialComponentDescriptions() {
+  @Override
+protected ComponentDescriptions findInitialComponentDescriptions() {
     String cname = agentId.toString();
     ServiceBroker sb = getServiceBroker();
-    ComponentInitializerService cis = (ComponentInitializerService)
-      sb.getService(this, ComponentInitializerService.class, null);
+    ComponentInitializerService cis = sb.getService(this, ComponentInitializerService.class, null);
     try {
       return new ComponentDescriptions(
           cis.getComponentDescriptions(cname, specifyContainmentPoint()));
@@ -85,7 +86,8 @@ extends ContainerSupport
     }
   }
 
-  public boolean add(Object o) {
+  @Override
+public boolean add(Object o) {
     try {
       if (logger.isInfoEnabled()) {
         logger.info("Agent "+agentId+" adding plugin "+o);
@@ -106,7 +108,8 @@ extends ContainerSupport
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     // release services
@@ -136,7 +139,8 @@ extends ContainerSupport
   public ConfigFinder getConfigFinder() {
     return ConfigFinder.getInstance(); // FIXME replace with service
   }
-  public String toString() {
+  @Override
+public String toString() {
     return agentId+"/PluginManager";
   }
 

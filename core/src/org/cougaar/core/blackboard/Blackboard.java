@@ -121,7 +121,8 @@ public class Blackboard extends Subscriber
   private List sendQueue = new ArrayList();
 
   // mark the envelopes which we emit so that we can detect them later.
-  protected Envelope createEnvelope() {
+  @Override
+protected Envelope createEnvelope() {
     if (isTimestamped()) {
       return new TimestampedPlanEnvelopeImpl();
     } else {
@@ -145,25 +146,29 @@ public class Blackboard extends Subscriber
 
   private static final class TimestampedPlanEnvelopeImpl
     extends TimestampedEnvelope implements PlanEnvelope {
+      @Override
       public boolean isBlackboard() { return true; }
     }
 
   /** override to immediately publish deltas rather than delay until transaction close */
-  protected EnvelopeTuple clientAddedObject(Object o) {
+  @Override
+protected EnvelopeTuple clientAddedObject(Object o) {
     EnvelopeTuple tup = super.clientAddedObject(o);
     consumeTuple(tup);
     return tup;
   }
 
   /** override to immediately publish deltas rather than delay until transaction close */
-  protected EnvelopeTuple clientRemovedObject(Object o) {
+  @Override
+protected EnvelopeTuple clientRemovedObject(Object o) {
     EnvelopeTuple tup = super.clientRemovedObject(o);
     consumeTuple(tup);
     return tup;
   }
 
   /** override to immediately publish deltas rather than delay until transaction close */
-  protected EnvelopeTuple clientChangedObject(Object o, List changes) {
+  @Override
+protected EnvelopeTuple clientChangedObject(Object o, List changes) {
     EnvelopeTuple tup = super.clientChangedObject(o, changes);
     consumeTuple(tup);
     return tup;
@@ -196,22 +201,19 @@ public class Blackboard extends Subscriber
     myServiceBroker = sb;
     self = msgSwitch.getMessageAddress();
     myDistributor = createDistributor(msgSwitch, state);
-    setClientDistributor((BlackboardClient) this, myDistributor);
+    setClientDistributor(this, myDistributor);
     setName("<blackboard>");
-    logger = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    logger = sb.getService(this, LoggingService.class, null);
     logger = LoggingServiceWithPrefix.add(logger, self+": ");
-    myDomainService = (DomainForBlackboardService) 
-      sb.getService(this, DomainForBlackboardService.class, null);
+    myDomainService = sb.getService(this, DomainForBlackboardService.class, null);
     if (myDomainService == null) {
       RuntimeException re = 
         new RuntimeException("Couldn't get DomainForBlackboardService!");
       re.printStackTrace();
       throw re;
     }
-    alarmService = (AlarmService)
-      sb.getService(this, AlarmService.class, null);
-    threadS = (ThreadService) sb.getService(this, ThreadService.class, null);
+    alarmService = sb.getService(this, AlarmService.class, null);
+    threadS = sb.getService(this, ThreadService.class, null);
   }
 
   public void stop() {
@@ -233,7 +235,8 @@ public class Blackboard extends Subscriber
     public AllObjectsSet(int size) {
       super(size);
     }
-    public boolean add(Object o) {
+    @Override
+   public boolean add(Object o) {
       boolean result = super.add(o);
       if (!result) {
         PublishStack priorStack = null;
@@ -250,7 +253,8 @@ public class Blackboard extends Subscriber
       }
       return result;
     }
-    public boolean remove(Object o) {
+    @Override
+   public boolean remove(Object o) {
       boolean result = super.remove(o);
       if (!result) {
         PublishStack priorStack = null;
@@ -336,7 +340,7 @@ public class Blackboard extends Subscriber
     if (aDirective == null) {
       throw new IllegalArgumentException("directive must not be null.");
     } else {
-      if (c != null && ((Collection) c).size()>0) {
+      if (c != null && c.size()>0) {
         DirectiveMessage.DirectiveWithChangeReports dd =
           new DirectiveMessage.DirectiveWithChangeReports(aDirective,c);
         aDirective = dd;
@@ -487,10 +491,12 @@ public class Blackboard extends Subscriber
       this.attrs = attrs;
       hc = cid.hashCode() + attrs.hashCode();
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return hc;
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o instanceof DestinationKey) {
         DestinationKey that = (DestinationKey) o;
         return this.cid.equals(that.cid) && this.attrs.equals(that.attrs);
@@ -549,7 +555,7 @@ public class Blackboard extends Subscriber
           if (qosAttributes != null) {
             agentAddress =
               MessageAddress.getMessageAddress(
-                  (MessageAddress)agentAddress, qosAttributes);
+                  agentAddress, qosAttributes);
           }
           Object key = getDirectiveKeyOfDestination(agentAddress);
 	  dirs = (ArrayList)directivesByDestination.get(key);
@@ -651,7 +657,8 @@ public class Blackboard extends Subscriber
     private final static Logger log = Logging.getLogger(ObjectTracker.class);
     private static final Set globalSet = new HashSet(11);
     private final ThreadLocal localSet = new ThreadLocal() {
-        protected synchronized Object initialValue() { return new HashSet(11); }
+        @Override
+      protected synchronized Object initialValue() { return new HashSet(11); }
       };
     
     public Set getLocalSet() {
@@ -724,15 +731,18 @@ public class Blackboard extends Subscriber
     private final Object o;
     private final Object a;
     public Traversal(Object o, Object a) { this.o=o; this.a=a;}
-    public boolean equals(Object thing) {
+    @Override
+   public boolean equals(Object thing) {
       if (thing instanceof Traversal) {
         return o.equals(((Traversal)thing).o) && a.equals(((Traversal)thing).a);
       } else {
         return false;
       }
     }
-    public int hashCode() { return o.hashCode(); } /*don't bother to spread 'em out*/
-    public String toString() { return "Traversal("+a+") "+o; }
+    @Override
+   public int hashCode() { return o.hashCode(); } /*don't bother to spread 'em out*/
+    @Override
+   public String toString() { return "Traversal("+a+") "+o; }
   }
 
   public PublishHistory getHistory() {
@@ -811,7 +821,8 @@ public class Blackboard extends Subscriber
   }
 
   private class MyCommunityChangeListener extends CommunityChangeAdapter {
-    public void communityChanged(CommunityChangeEvent e) {
+    @Override
+   public void communityChanged(CommunityChangeEvent e) {
       if (logger.isDebugEnabled()) logger.debug(e.toString());
       clearCache(e.getCommunityName());
     }
@@ -859,8 +870,7 @@ public class Blackboard extends Subscriber
     if (_myCommunityService != null) {
       return _myCommunityService;
     } else {
-      _myCommunityService = (CommunityService)
-        myServiceBroker.getService(this, CommunityService.class, null);
+      _myCommunityService = myServiceBroker.getService(this, CommunityService.class, null);
       if (_myCommunityService == null) {
         logger.warn(
             "Warning: Blackboard had no CommunityService -"+

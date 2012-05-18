@@ -72,7 +72,8 @@ public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
         }
     }
 
-    protected void execute() {
+    @Override
+   protected void execute() {
         super.execute();
         if (todo.hasChanged()) {
             @SuppressWarnings("unchecked")
@@ -83,7 +84,8 @@ public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
         }
     }
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
         super.setupSubscriptions();
         todo = new TodoSubscription("me");
         blackboard.subscribe(todo);
@@ -158,7 +160,8 @@ public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
             this.item = item;
         }
 
-        public void onExpire() {
+        @Override
+      public void onExpire() {
             todo.add(item);
         }
     }

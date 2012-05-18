@@ -170,7 +170,7 @@ public final class Util {
     if (sentM == null) {
       sentRecord = null;
     } else {
-      Map m2 = (Map) sentM;
+      Map m2 = sentM;
       Object o2 = m2.values().iterator().next();
       if (o2 instanceof NameTag) {
         o2 = ((NameTag) o2).getObject();

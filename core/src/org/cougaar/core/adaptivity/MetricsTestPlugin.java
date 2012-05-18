@@ -56,7 +56,8 @@ public class MetricsTestPlugin extends ServiceUserPlugin {
       super(name, allowedValues, value);
     }
 
-    public void setValue(Comparable newValue) {
+    @Override
+   public void setValue(Comparable newValue) {
       super.setValue(newValue);
     }
   }
@@ -70,7 +71,8 @@ public class MetricsTestPlugin extends ServiceUserPlugin {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     MetricsTestCondition jips =
       new MetricsTestCondition(JIPS_CONDITION_NAME, JIPS_VALUES, new Double(1.0));
     getBlackboardService().publishAdd(jips);
@@ -81,16 +83,15 @@ public class MetricsTestPlugin extends ServiceUserPlugin {
     if (conditionService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      conditionService = (ConditionService)
-        sb.getService(this, ConditionService.class, null);
-      metricsService = (MetricsService)
-        sb.getService(this, MetricsService.class, null);
+      conditionService = sb.getService(this, ConditionService.class, null);
+      metricsService = sb.getService(this, MetricsService.class, null);
       return true;
     }
     return false;
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       if (haveServices()) {
         cancelTimer();

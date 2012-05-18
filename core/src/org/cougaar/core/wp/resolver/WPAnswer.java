@@ -126,7 +126,8 @@ public final class WPAnswer extends WhitePagesMessage {
     return m;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     long now = System.currentTimeMillis();
     return toString(now);
   }

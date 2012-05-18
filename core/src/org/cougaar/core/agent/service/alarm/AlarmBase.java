@@ -71,7 +71,8 @@ public abstract class AlarmBase implements Alarm {
     return was;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "(alarm expired="+hasExpired()+" expireTime="+expirationTime+")";
   }
 }

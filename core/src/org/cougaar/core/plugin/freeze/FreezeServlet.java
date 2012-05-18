@@ -109,10 +109,12 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
       schedulable = s;
       hc = System.identityHashCode(t) + System.identityHashCode(s);
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return hc;
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this)
         return true;
       if (o instanceof BadGuy) {
@@ -122,7 +124,8 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
       }
       return false;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return schedulable.getState()
         + ": "
         + schedulable.getConsumer().toString();
@@ -140,7 +143,8 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
   // that have not left the run
   // state
 
-  public void unload() {
+  @Override
+public void unload() {
     if (threadControlService != null) {
       ServiceBroker sb = getServiceBroker();
       sb.releaseService(
@@ -208,7 +212,8 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
     threadControlService.setQualifier(null);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     super.setupSubscriptions();
     rules.addAllowRule(FreezePlugin.class);
     // Hope this is a List cause order is important.
@@ -226,18 +231,18 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
       logger.info("rules=" + rules);
     ServiceBroker sb = getServiceBroker();
     threadControlService =
-      (ThreadControlService) sb.getService(
+      sb.getService(
         this,
         ThreadControlService.class,
         null);
     threadListenerService =
-      (ThreadListenerService) sb.getService(
+      sb.getService(
         this,
         ThreadListenerService.class,
         null);
     threadListenerService.addListener(this);
     servletService =
-      (ServletService) sb.getService(
+      sb.getService(
         this,
         ServletService.class,
         null);
@@ -251,7 +256,8 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
     }
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       cancelTimer();
       if (isFreezing)
@@ -263,7 +269,8 @@ public class FreezeServlet extends FreezePlugin implements ThreadListener {
     /**
      * @see javax.servlet.http.HttpServlet#service(HttpServletRequest, HttpServletResponse)
      */
-    protected void service(HttpServletRequest arg0, HttpServletResponse arg1)
+    @Override
+   protected void service(HttpServletRequest arg0, HttpServletResponse arg1)
       throws ServletException, IOException {
       handleRequest(arg0, arg1);
     }

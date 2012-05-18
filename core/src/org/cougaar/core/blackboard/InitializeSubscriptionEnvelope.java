@@ -46,7 +46,8 @@ public final class InitializeSubscriptionEnvelope extends Envelope {
     return subscription;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "InitializeSubscriptionEnvelope for "+subscription;
   }
 }

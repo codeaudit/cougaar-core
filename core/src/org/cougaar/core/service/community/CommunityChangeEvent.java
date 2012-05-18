@@ -118,7 +118,8 @@ public class CommunityChangeEvent extends EventObject {
    * Returns a string representation of the change event.
    * @return Event as a string
    */
-  public String toString() {
+  @Override
+public String toString() {
     String communityName = getCommunityName();
     return "CommunityChangeEvent:" +
       " community=" + (communityName == null ? "*" : communityName) +

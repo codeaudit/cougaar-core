@@ -78,7 +78,8 @@ public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingSe
     this.prefix = prefix;
   }
 
-  public boolean isEnabledFor(int level) {
+  @Override
+public boolean isEnabledFor(int level) {
     if (TRACK_DUPLICATE_LOGGING_PREFIX) {
       // we want to see all messages, even they won't be logged.
       // note that this causes extra string consing!
@@ -86,7 +87,8 @@ public class LoggingServiceWithPrefix extends LoggerAdapter implements LoggingSe
     }
     return logger.isEnabledFor(level);
   }
-  public void log(int level, String message, Throwable t) {
+  @Override
+public void log(int level, String message, Throwable t) {
     if (TRACK_DUPLICATE_LOGGING_PREFIX &&
         message.regionMatches(0, prefix, 0, prefix.length()-1)) {
       StackTraceElement[] stack = (new Throwable()).getStackTrace();

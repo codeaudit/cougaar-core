@@ -89,7 +89,8 @@ public final class UID
   }
   */
 
-  public boolean equals(Object other) {
+  @Override
+public boolean equals(Object other) {
     if (this == other) return true;
     if (other instanceof UID) {
       UID o = (UID) other;
@@ -120,7 +121,8 @@ public final class UID
     }
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return owner.hashCode()+((int)id);
   }
   
@@ -133,7 +135,8 @@ public final class UID
    *
    * @see #toUID(String)
    */
-  public String toString() {
+  @Override
+public String toString() {
     /* Ugh! but we really don't want to keep these around! */
     return owner+"/"+id;
   }

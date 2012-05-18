@@ -88,11 +88,13 @@ public class OMCRange implements Serializable {
     return max;
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return min.hashCode() ^ max.hashCode();
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o instanceof OMCRange) {
       OMCRange that = (OMCRange) o;
       return this.min.equals(that.min) && this.max.equals(that.max);

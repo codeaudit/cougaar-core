@@ -42,7 +42,8 @@ public abstract class PluginAlarm extends AlarmBase {
 
   protected abstract BlackboardService getBlackboardService();
 
-  public final void onExpire() {
+  @Override
+public final void onExpire() {
     BlackboardService bb = getBlackboardService();
     if (bb != null) {
       bb.signalClientActivity();

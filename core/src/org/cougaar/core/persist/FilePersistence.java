@@ -71,38 +71,46 @@ public class FilePersistence
       fileOutputStream = new FileOutputStream(file);
     }
 
-    public void write(int b) throws IOException {
+    @Override
+   public void write(int b) throws IOException {
       fileOutputStream.write(b);
     }
 
-    public void write(byte[] b)  throws IOException {
+    @Override
+   public void write(byte[] b)  throws IOException {
       fileOutputStream.write(b, 0, b.length);
     }
 
-    public void write(byte[] b, int offset, int nbytes) throws IOException {
+    @Override
+   public void write(byte[] b, int offset, int nbytes) throws IOException {
       fileOutputStream.write(b, offset, nbytes);
     }
 
-    public void flush() throws IOException {
+    @Override
+   public void flush() throws IOException {
       fileOutputStream.flush();
     }
 
-    public void close() throws IOException {
+    @Override
+   public void close() throws IOException {
       fileOutputStream.flush();
       fileOutputStream.getFD().sync();
       fileOutputStream.close();
     }
   }
 
-  protected OutputStream openFileOutputStream(File file) throws FileNotFoundException {
+  @Override
+protected OutputStream openFileOutputStream(File file) throws FileNotFoundException {
     return new SafeFileOutputStream(file);
   }
 
-  protected InputStream openFileInputStream(File file) throws FileNotFoundException {
+  @Override
+protected InputStream openFileInputStream(File file) throws FileNotFoundException {
     return new FileInputStream(file);
   }
 
-  protected boolean rename(File from, File to) {
+  @Override
+protected boolean rename(File from, File to) {
     return from.renameTo(to);
   }
 }

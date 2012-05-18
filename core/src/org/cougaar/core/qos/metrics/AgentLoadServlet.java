@@ -56,15 +56,16 @@ public class AgentLoadServlet
     public AgentLoadServlet(ServiceBroker sb) {
 	super(sb);
 
-	agentStatusService = (AgentStatusService)
-	    sb.getService(this, AgentStatusService.class, null);
+	agentStatusService = sb.getService(this, AgentStatusService.class, null);
     }
 
-    public String getPath() {
+    @Override
+   public String getPath() {
 	return "/metrics/agent/load";
     }
 
-    public String getTitle () {
+    @Override
+   public String getTitle () {
 	return "Agent Load for Node " + getNodeID();
     }
 
@@ -137,7 +138,8 @@ public class AgentLoadServlet
 	out.print("</tr>\n");
     }
 
-    public void printPage(HttpServletRequest request, PrintWriter out) {
+    @Override
+   public void printPage(HttpServletRequest request, PrintWriter out) {
 	// Get list of All Agents On this Node
 	if (agentStatusService == null) return;
 	java.util.Set localAgents = agentStatusService.getLocalAgents();

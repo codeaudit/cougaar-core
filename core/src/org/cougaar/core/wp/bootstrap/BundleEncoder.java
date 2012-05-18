@@ -169,7 +169,8 @@ public final class BundleEncoder {
   }
 
   private static class UUEncoder extends BASE64Encoder {
-    protected void encodeLineSuffix(
+    @Override
+   protected void encodeLineSuffix(
         OutputStream aStream) throws IOException {
       pStream.println("\\");
     }

@@ -63,18 +63,15 @@ public abstract class MetricsServlet
     {
 	super(sb);
 
-	wpService = (WhitePagesService)
-	    sb.getService(this, WhitePagesService.class, null);
+	wpService = sb.getService(this, WhitePagesService.class, null);
 
-	NodeControlService ncs = (NodeControlService)
-            sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
         if (ncs != null) {
             agentContainer = ncs.getRootContainer();
             sb.releaseService(this, NodeControlService.class, ncs);
         }
 
-	metricsService = (MetricsService)
-	    sb.getService(this, MetricsService.class, null);
+	metricsService = sb.getService(this, MetricsService.class, null);
 
 
     }
@@ -93,19 +90,22 @@ public abstract class MetricsServlet
     }
 
 
-    public void printBottomPage(HttpServletRequest request,
+    @Override
+   public void printBottomPage(HttpServletRequest request,
 				PrintWriter out)
     {
 	out.print("<p><b>Color key</b>");
 	ServletUtilities.colorTest(out);
     }
 
-    public int dataPercentage() 
+    @Override
+   public int dataPercentage() 
     {
 	return 70;
     }
 
-    public int bottomPercentage() 
+    @Override
+   public int bottomPercentage() 
     {
 	return 20;
     }

@@ -51,7 +51,8 @@ public class IncrementalSubscription extends CollectionSubscription {
   private Set myAddedSet = null; 
   private List myRemovedList = null;
 
-  protected void resetChanges() {
+  @Override
+protected void resetChanges() {
     super.resetChanges();
     if (myAddedSet != null) 
       myAddedSet.clear();
@@ -132,14 +133,16 @@ public class IncrementalSubscription extends CollectionSubscription {
     myRemovedList.add( o );
   }
 
-  protected void privateAdd(Object o, boolean isVisible) { 
+  @Override
+protected void privateAdd(Object o, boolean isVisible) { 
     super.privateAdd(o, isVisible);
     if (isVisible) {
       setChanged(true);
       addToAddedList(o);
     }
   }
-  protected void privateRemove(Object o, boolean isVisible) {
+  @Override
+protected void privateRemove(Object o, boolean isVisible) {
     super.privateRemove(o, isVisible);
     if (isVisible) {
       setChanged(true);
@@ -147,7 +150,8 @@ public class IncrementalSubscription extends CollectionSubscription {
     }
   }
 
-  protected void privateChange(Object o, List changes, boolean isVisible) {
+  @Override
+protected void privateChange(Object o, List changes, boolean isVisible) {
     if (isVisible) {
       setChanged(true);
       super.privateChange(o, changes, true);

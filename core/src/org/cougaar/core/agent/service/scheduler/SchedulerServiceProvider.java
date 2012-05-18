@@ -259,20 +259,23 @@ class SchedulerServiceProvider
       this.threadService = threadService;
     }
 
-    void addClient(Trigger client, Object requestor) {
+    @Override
+   void addClient(Trigger client, Object requestor) {
       synchronized (clients) {
         if (!clients.containsKey(client)) {
           clients.put(client, new Worker(client, requestor));
         }
       }
     }
-    void removeClient(Trigger client) {
+    @Override
+   void removeClient(Trigger client) {
       synchronized (clients) {
         clients.remove(client);
       }
     }
 
-    void scheduleClient(Trigger client) {
+    @Override
+   void scheduleClient(Trigger client) {
       Worker worker;
       synchronized (clients) {
         worker = (Worker) clients.get(client);
@@ -283,13 +286,16 @@ class SchedulerServiceProvider
       worker.start();
     }
 
-    void assureStarted() {
+    @Override
+   void assureStarted() {
     }
 
-    void suspend() {
+    @Override
+   void suspend() {
     }
 
-    void resume() {
+    @Override
+   void resume() {
     }
 
     class Worker extends WorkerBase implements Runnable {
@@ -328,7 +334,8 @@ class SchedulerServiceProvider
 
     private final CircularQueue runnables = new CircularQueue(32);
 
-    void addClient(Trigger client, Object requestor) {
+    @Override
+   void addClient(Trigger client, Object requestor) {
       synchronized (clients) {
         // only put it on the list if it hasn't already been scheduled
         // Note that this will still allow rescheduling when it is currently
@@ -341,13 +348,15 @@ class SchedulerServiceProvider
         }
       }
     }
-    void removeClient(Trigger client) {
+    @Override
+   void removeClient(Trigger client) {
       synchronized (clients) {
         clients.remove(client);
       }
     }
 
-    void scheduleClient(Trigger client) {
+    @Override
+   void scheduleClient(Trigger client) {
       synchronized (runnables) {
 	//        if (!runnables.contains(client)) {
           runnables.add(client);
@@ -360,7 +369,8 @@ class SchedulerServiceProvider
     private boolean running = false;
 
     private ArrayList threads = null;
-    synchronized void assureStarted() {
+    @Override
+   synchronized void assureStarted() {
       if (threads == null) {
         threads = new ArrayList(nThreads);
         for (int i = 0; i<nThreads;i++) {
@@ -377,7 +387,8 @@ class SchedulerServiceProvider
       }
     }
 
-    synchronized void suspend() {
+    @Override
+   synchronized void suspend() {
       if (running) {
         // BUG 842: disable MultiScheduler suspend.  This is the low-risk
         // solution until the better fix is ready and well tested.  See 
@@ -402,7 +413,8 @@ class SchedulerServiceProvider
       }
     }
 
-    synchronized void resume() {
+    @Override
+   synchronized void resume() {
       if (!running) {
         assureStarted();
       }
@@ -452,18 +464,21 @@ class SchedulerServiceProvider
     private ArrayList runnables = new ArrayList(13);
     private ArrayList working = new ArrayList(13);
 
-    void addClient(Trigger client, Object requestor) {
+    @Override
+   void addClient(Trigger client, Object requestor) {
       synchronized (clients) {
         clients.add(client);
       }
     }
-    void removeClient(Trigger client) {
+    @Override
+   void removeClient(Trigger client) {
       synchronized (clients) {
         clients.remove(client);
       }
     }
 
-    void scheduleClient(Trigger client) {
+    @Override
+   void scheduleClient(Trigger client) {
       synchronized (runnableLock) {
         runnables.add(client);
       }
@@ -474,7 +489,8 @@ class SchedulerServiceProvider
     private Thread schedulerThread = null;
     private boolean running = false;
 
-    synchronized void assureStarted() {
+    @Override
+   synchronized void assureStarted() {
       if (schedulerThread == null) {
 	Worker scheduler = new Worker();
         if (isWatching) {
@@ -487,7 +503,8 @@ class SchedulerServiceProvider
       }
     }
 
-    synchronized void suspend() {
+    @Override
+   synchronized void suspend() {
       if (running) {
         running = false;
         sem.set();
@@ -499,7 +516,8 @@ class SchedulerServiceProvider
       }
     }
 
-    synchronized void resume() {
+    @Override
+   synchronized void resume() {
       if (!running) {
         assureStarted();
       }
@@ -634,7 +652,8 @@ class SchedulerServiceProvider
       count++;
       millis+=elapsed;
     }
-    public synchronized String toString() {
+    @Override
+   public synchronized String toString() {
       double mean = ((millis/count)/1000.0);
       return trigger.toString()+"\t"+count+"\t"+mean;
     }

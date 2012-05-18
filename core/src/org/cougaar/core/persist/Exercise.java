@@ -97,7 +97,8 @@ public class Exercise extends ServiceUserPlugin {
     return dflt;
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     int nItems = parseParameter("nItems=", 1000);
     executionMinDelay = parseParameter("executionMinDelay=", 5000);
     executionMaxDelay = parseParameter("executionMaxDelay=", 50000);
@@ -114,7 +115,8 @@ public class Exercise extends ServiceUserPlugin {
 //    }
 //  }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       long st = System.currentTimeMillis();
       cancelTimer();

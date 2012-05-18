@@ -33,16 +33,20 @@ package org.cougaar.core.blackboard;
  */
 class AddEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
-  public Object getObject() { return object; }
+  @Override
+public Object getObject() { return object; }
   public AddEnvelopeTuple(Object o) {
     if (o == null) throw new IllegalArgumentException("Object is null");
     object=o;
   }
 
-  public final int getAction() { return Envelope.ADD; }
-  public final boolean isAdd() { return true; }
+  @Override
+public final int getAction() { return Envelope.ADD; }
+  @Override
+public final boolean isAdd() { return true; }
 
-  boolean applyToSubscription(Subscription s, boolean isVisible) {
+  @Override
+boolean applyToSubscription(Subscription s, boolean isVisible) {
     return s.conditionalAdd(object,isVisible);
   }
 }

@@ -141,7 +141,8 @@ public class OperatingModePolicy implements Policy, Publishable  {
     return policy.getOperatingModeConstraints();
   }
   
-  public String toString() {
+  @Override
+public String toString() {
     StringBuffer sb = new StringBuffer(getName());
     sb.append(" ");
     sb.append(policy.getIfClause().toString());

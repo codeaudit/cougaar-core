@@ -62,7 +62,8 @@ public class ConditionServiceProvider
       makeSynchronized();
     }
 
-    protected Object getKey(Object o) {
+    @Override
+   protected Object getKey(Object o) {
       Condition sm = (Condition) o;
       return sm.getName();
     }
@@ -119,13 +120,15 @@ public class ConditionServiceProvider
    * Override base class method to register our service with the
    * service broker.
    **/
-  public void load() {
+  @Override
+public void load() {
     super.load();
-    logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
+    logger = getServiceBroker().getService(this, LoggingService.class, null);
     getServiceBroker().addService(ConditionService.class, this);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     getServiceBroker().releaseService(this, LoggingService.class, logger);
     getServiceBroker().revokeService(ConditionService.class, this);
     super.unload();
@@ -134,7 +137,8 @@ public class ConditionServiceProvider
   /**
    * Standard setupSubscriptions subscribes to all Conditions.
    **/
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     synchronized (smSet) {
       conditions = (IncrementalSubscription)
         getBlackboardService().subscribe(ConditionPredicate);
@@ -147,7 +151,8 @@ public class ConditionServiceProvider
    * automatically maintains the information of interest in smSet
    * where it is referenced directly by the service API.
    **/
-  public void execute() {
+  @Override
+public void execute() {
     if (conditions.hasChanged()) {
       synchronized (smSet) {
         smSet.addAll(conditions.getAddedCollection());

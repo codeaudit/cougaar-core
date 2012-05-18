@@ -137,7 +137,8 @@ public final class Record implements Serializable {
     return data;
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     }
@@ -155,11 +156,13 @@ public final class Record implements Serializable {
        data.equals(r.data));
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return (uid == null ? 0 : uid.hashCode());
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     if (ttd < 0) {
       return 
         "(new-record uid="+uid+

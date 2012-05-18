@@ -86,13 +86,11 @@ public class BlackboardPersistence implements Persistence {
   }
 
   private BlackboardPersistence(ServiceBroker sb) {
-    AgentIdentificationService agentIdService = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
-    agentId = (MessageAddress) agentIdService.getMessageAddress();
+    AgentIdentificationService agentIdService = sb.getService(this, AgentIdentificationService.class, null);
+    agentId = agentIdService.getMessageAddress();
     sb.releaseService(this, AgentIdentificationService.class, agentIdService);
-    logger = (LoggingService) sb.getService(this, LoggingService.class, null);
-    persistenceService = (PersistenceServiceForBlackboard)
-      sb.getService(persistenceClient, PersistenceServiceForBlackboard.class, null);
+    logger = sb.getService(this, LoggingService.class, null);
+    persistenceService = sb.getService(persistenceClient, PersistenceServiceForBlackboard.class, null);
   }
 
   /**
@@ -309,7 +307,8 @@ public class BlackboardPersistence implements Persistence {
   public void unregisterServices(ServiceBroker sb) {
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Persist(" + agentId + ")";
   }
 }

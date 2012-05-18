@@ -52,7 +52,8 @@ public class PublishException extends IllegalArgumentException {
     this.priorStack = priorStack;
     this.priorStackUnavailable = priorStackUnavailable;
   }
-  public String toString() {
+  @Override
+public String toString() {
     if (specialMessage != null) return specialMessage;
     return super.toString();
   }
@@ -61,15 +62,18 @@ public class PublishException extends IllegalArgumentException {
     super.printStackTrace();
     specialMessage = null;
   }
-  public synchronized void printStackTrace() { 
+  @Override
+public synchronized void printStackTrace() { 
     super.printStackTrace();
   }
 
-  public synchronized void printStackTrace(java.io.PrintStream s) { 
+  @Override
+public synchronized void printStackTrace(java.io.PrintStream s) { 
     super.printStackTrace(s);
   }
 
-  public synchronized void printStackTrace(java.io.PrintWriter s) { 
+  @Override
+public synchronized void printStackTrace(java.io.PrintWriter s) { 
     super.printStackTrace(s);
   }
 }

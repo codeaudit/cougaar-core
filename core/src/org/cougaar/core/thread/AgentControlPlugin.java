@@ -41,21 +41,23 @@ public class AgentControlPlugin extends ComponentPlugin
 	super();
     }
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
-	AgentIdentificationService svc = (AgentIdentificationService)
-	    sb.getService(this, AgentIdentificationService.class, null);
+	AgentIdentificationService svc = sb.getService(this, AgentIdentificationService.class, null);
 	// MessageAddress agent = getMessageAddress(); // deprecated
 	MessageAddress agent = svc.getMessageAddress();
 	new SchedulerWatcher(sb, agent.toString());
     }
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
 	System.out.println("Uninteresting");
     }
 

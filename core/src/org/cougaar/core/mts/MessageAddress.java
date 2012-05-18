@@ -55,17 +55,20 @@ public abstract class MessageAddress
   public abstract String toAddress();
 
   /** @see #toAddress */
-  public String toString() {
+  @Override
+public String toString() {
     return toAddress();
   }
 
   /** @see #getPrimary */
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return super.hashCode();
   }
 
   /** @see #getPrimary */
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     return super.equals(o);
   }
 

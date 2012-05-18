@@ -99,15 +99,14 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
     // get our local agent's address
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
@@ -115,8 +114,7 @@ implements Component
     }
 
     // get our local node's address
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
     if (nis != null) {
       localNode = nis.getMessageAddress();
       sb.releaseService(
@@ -128,8 +126,7 @@ implements Component
        localAgent.equals(localNode));
 
     // get wp
-    wps = (WhitePagesService) 
-      sb.getService(this, WhitePagesService.class, null);
+    wps = sb.getService(this, WhitePagesService.class, null);
     if (wps == null) {
       throw new RuntimeException(
           "Unable to obtain WhitePagesService");
@@ -159,7 +156,8 @@ implements Component
     }
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
     // do restart reconciliation if necessary
     reconcileBlackboard();
@@ -172,7 +170,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (tsp != null) {
@@ -221,7 +220,6 @@ implements Component
         }
       };
     ps = 
-      (PersistenceService)
       sb.getService(
           pc, PersistenceService.class, null);
   }
@@ -335,8 +333,7 @@ implements Component
       log.info("Restarting, synchronizing blackboards");
     }
 
-    BlackboardForAgent bb = (BlackboardForAgent)
-      sb.getService(this, BlackboardForAgent.class, null);
+    BlackboardForAgent bb = sb.getService(this, BlackboardForAgent.class, null);
     if (bb == null) {
       throw new RuntimeException(
           "Unable to find BlackboardForAgent");
@@ -470,6 +467,7 @@ implements Component
         }
       }
 
+      @Override
       public String toString() {
         return 
           "Agent "+agentId+

@@ -48,8 +48,7 @@ public class MetricsWriterServlet
   
     public MetricsWriterServlet(ServiceBroker sb) {
 	// Register our servlet with servlet service
-	ServletService servletService = (ServletService)
-	    sb.getService(this, ServletService.class, null);
+	ServletService servletService = sb.getService(this, ServletService.class, null);
 	if (servletService == null) {
 	    throw new RuntimeException("Unable to obtain ServletService");
 	}
@@ -62,8 +61,7 @@ public class MetricsWriterServlet
    
 	// get metrics service
 	try {
-	    metricsUpdateService = (MetricsUpdateService)
-		sb.getService(this, MetricsUpdateService.class, null);
+	    metricsUpdateService = sb.getService(this, MetricsUpdateService.class, null);
 	} catch (Exception e) {
 	    throw new RuntimeException("Unable to get MetricsUpdateService: "
 				       +e.getMessage());
@@ -110,7 +108,8 @@ public class MetricsWriterServlet
     }
     
     // servlet requirement - pass to our print method to handle
-    public void doGet(HttpServletRequest request,
+    @Override
+   public void doGet(HttpServletRequest request,
 		      HttpServletResponse response) 
 	throws java.io.IOException 
     {

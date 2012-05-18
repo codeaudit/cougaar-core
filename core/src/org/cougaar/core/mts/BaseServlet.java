@@ -44,14 +44,12 @@ public abstract class BaseServlet extends HttpServlet
   private MessageAddress nodeID;
 
   public BaseServlet(ServiceBroker sb) {
-    ServletService servletService = (ServletService)
-      sb.getService(this, ServletService.class, null);
+    ServletService servletService = sb.getService(this, ServletService.class, null);
     if (servletService == null) {
       throw new RuntimeException("Unable to obtain ServletService");
     }
 
-    NodeIdentificationService node_id_svc = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService node_id_svc = sb.getService(this, NodeIdentificationService.class, null);
     nodeID = node_id_svc.getMessageAddress();
 
 
@@ -74,7 +72,8 @@ public abstract class BaseServlet extends HttpServlet
     return nodeID;
   }
 
-  public void doGet(HttpServletRequest request,
+  @Override
+public void doGet(HttpServletRequest request,
       HttpServletResponse response) 
     throws java.io.IOException 
     {

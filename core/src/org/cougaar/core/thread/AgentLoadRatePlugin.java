@@ -84,7 +84,8 @@ public class AgentLoadRatePlugin
 	    addKey(loadavgKey);
 	}
 
-	public void newAddition(KeyMap keys, 
+	@Override
+   public void newAddition(KeyMap keys, 
 				DecayingHistory.SnapShot now_raw,
 				DecayingHistory.SnapShot last_raw) 
 	{
@@ -136,21 +137,19 @@ public class AgentLoadRatePlugin
     }
 
     // Component
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 	
 	ServiceBroker sb = getServiceBroker();
-	agentLoadService = (AgentLoadService)
-	    sb.getService(this, AgentLoadService.class, null);
+	agentLoadService = sb.getService(this, AgentLoadService.class, null);
 	if (agentLoadService == null) {
 	    throw new RuntimeException("Can't find AgentLoadService. This plugin must be loaded at Low priority");
 	}
 
-	metricsUpdateService = (MetricsUpdateService)
-	    sb.getService(this, MetricsUpdateService.class, null);
+	metricsUpdateService = sb.getService(this, MetricsUpdateService.class, null);
 
-	ThreadService tsvc = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
+	ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 	schedulable = tsvc.getThread(this, this, "AgentLoadRate");
 	schedulable.schedule(5000, BASE_PERIOD *1000);
 	sb.releaseService(this, ThreadService.class, tsvc);
@@ -183,10 +182,12 @@ public class AgentLoadRatePlugin
     }
 
     // Plugin
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
     }
 
 

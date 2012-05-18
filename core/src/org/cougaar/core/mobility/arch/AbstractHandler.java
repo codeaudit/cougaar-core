@@ -96,7 +96,8 @@ public abstract class AbstractHandler implements Runnable {
 
   // to-string
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Move (?) for agent "+id;
   }
 }

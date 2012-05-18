@@ -109,7 +109,8 @@ public final class ThreadServiceProvider
         this.sb = sb;
     }
 
-    public void load() 
+    @Override
+   public void load() 
     {
 	super.load();
 	
@@ -146,13 +147,11 @@ public final class ThreadServiceProvider
 	// check if this component was added with parameters
         if (name == null) {
 	    // Make default values from position in containment hierarcy
-	    AgentIdentificationService ais = (AgentIdentificationService)
-		the_sb.getService(this, AgentIdentificationService.class, null);
+	    AgentIdentificationService ais = the_sb.getService(this, AgentIdentificationService.class, null);
 	    MessageAddress agentAddr = ais.getMessageAddress();
 	    the_sb.releaseService(this, AgentIdentificationService.class, ais);
 	    
-	    NodeIdentificationService nis = (NodeIdentificationService)
-		the_sb.getService(this, NodeIdentificationService.class, null);
+	    NodeIdentificationService nis = the_sb.getService(this, NodeIdentificationService.class, null);
 	    MessageAddress nodeAddr = nis.getMessageAddress();
 	    the_sb.releaseService(this, NodeIdentificationService.class, nis);
 
@@ -167,14 +166,12 @@ public final class ThreadServiceProvider
 	    Reclaimer.startThread();*/
 	    SchedulableStateChangeQueue.startThread();
 	    // use the root service broker
-	    NodeControlService ncs = (NodeControlService)
-		sb.getService(this, NodeControlService.class, null);
+	    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
 	    the_sb = ncs.getRootServiceBroker();
 
 	}
 	
-	ThreadService parent = (ThreadService) 
-	    the_sb.getService(this, ThreadService.class, null);
+	ThreadService parent = the_sb.getService(this, ThreadService.class, null);
 	final TreeNode node = makeProxies(parent);
 	provideServices(the_sb);
 	if (isRoot) {
@@ -195,7 +192,8 @@ public final class ThreadServiceProvider
      * <p>
      * @see org.cougaar.util.GenericStateModelAdapter#unload()
      */
-    public synchronized void unload() throws StateModelException {
+    @Override
+   public synchronized void unload() throws StateModelException {
       
       if (threadServiceProvider == null) {
           // Unload hierarchical thread service and Timers

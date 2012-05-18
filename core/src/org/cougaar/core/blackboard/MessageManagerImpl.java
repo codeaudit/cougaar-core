@@ -272,7 +272,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
       needAdvanceEpoch = true;  // Our state changed need to persist
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return "AgentInfo " + agentIdentifier + " " +
         incarnationToString(localIncarnationNumber) + "->" +
         incarnationToString(remoteIncarnationNumber);
@@ -357,7 +358,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
       return this.theSequenceNumber - otherMsg.theSequenceNumber;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       StringBuffer buf = new StringBuffer();
       buf.append("seq(");
       buf.append(theIncarnationNumber);
@@ -738,7 +740,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
     public KeepAliveSender(String agentName) {
       super("Keep Alive Sender/" + agentName);
     }
-    public void run() {
+    @Override
+   public void run() {
       while (true) {
         sendKeepAlive();
         try {
@@ -763,7 +766,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
       AcknowledgementSender.this.notify();
     }
 
-    public void run() {
+    @Override
+   public void run() {
       while (true) {
         synchronized (AcknowledgementSender.this) {
           while (!poked) {
@@ -816,7 +820,8 @@ class MessageManagerImpl implements MessageManager, Serializable {
      * to be retransmitted and sleep long enough so that there could be
      * at least one message to retransmit when we awaken.
      */
-    public void run() {
+    @Override
+   public void run() {
       while (true) {
         try {
           long now = System.currentTimeMillis();

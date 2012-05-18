@@ -84,7 +84,8 @@ final class TopServlet extends ServletFrameset {
 		}
 	    }
 
-	    public boolean equals(Object x) {
+	    @Override
+      public boolean equals(Object x) {
 		return x == this;
 	    }
 	};
@@ -94,8 +95,7 @@ final class TopServlet extends ServletFrameset {
     public TopServlet(ServiceBroker sb)  {
 	super(sb);
 
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
 
 	if (ncs == null) {
 	    throw new RuntimeException("Unable to obtain service");
@@ -103,10 +103,8 @@ final class TopServlet extends ServletFrameset {
 
 	ServiceBroker rootsb = ncs.getRootServiceBroker();
 
-	statusService = (ThreadStatusService)
-	    rootsb.getService(this, ThreadStatusService.class, null);
-	controlService = (ThreadControlService)
-	    rootsb.getService(this, ThreadControlService.class, null);
+	statusService = rootsb.getService(this, ThreadStatusService.class, null);
+	controlService = rootsb.getService(this, ThreadControlService.class, null);
 
 	if (statusService == null) {
 	    throw new RuntimeException("Unable to obtain service");
@@ -167,7 +165,8 @@ final class TopServlet extends ServletFrameset {
 	out.print("</tr>");
     }
 
-    public void printBottomPage(HttpServletRequest request, PrintWriter out) {
+    @Override
+   public void printBottomPage(HttpServletRequest request, PrintWriter out) {
 	// lane key
 	out.print("Lane 0: Best Effort");
 	out.print("<br>Lane 1: Will Block");
@@ -217,15 +216,18 @@ final class TopServlet extends ServletFrameset {
 
     // Implementations of ServletFrameset's abstract methods
 
-    public String getPath() {
+    @Override
+   public String getPath() {
 	return "/threads/top";
     }
 
-    public String getTitle() {
+    @Override
+   public String getTitle() {
 	return "Threads";
     }
 
-    public void printPage(HttpServletRequest request, PrintWriter out) {
+    @Override
+   public void printPage(HttpServletRequest request, PrintWriter out) {
 	final List<Record> status = new ArrayList<Record>();
 	ThreadStatusService.Body body = new ThreadStatusService.Body () {
 		public void run(String scheduler, Schedulable schedulable)

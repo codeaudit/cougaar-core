@@ -42,7 +42,8 @@ public class AckHandler extends AbstractHandler {
     this.model = model;
   }
 
-  public void run() {
+  @Override
+public void run() {
     ack();
   }
 
@@ -115,7 +116,8 @@ public class AckHandler extends AbstractHandler {
     }
   }
 
-  protected void removeAgent() {
+  @Override
+protected void removeAgent() {
     if (log.isInfoEnabled()) {
       log.info("Remove   agent "+id);
     }
@@ -125,7 +127,8 @@ public class AckHandler extends AbstractHandler {
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Move (ack) of agent "+id;
   }
 }

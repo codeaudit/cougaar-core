@@ -47,13 +47,15 @@ public class DataProtectionOutputStreamStub extends FilterOutputStream {
     this.keyStub = (DataProtectionKeyStub) keyStub;
   }
 
-  public void write(int b) throws IOException {
+  @Override
+public void write(int b) throws IOException {
     byte bb = (byte) b;
     bb ^= keyStub.xor;
     out.write(bb);
   }
 
-  public void write(byte[] b, int offset, int nb) throws IOException {
+  @Override
+public void write(byte[] b, int offset, int nb) throws IOException {
     byte xor = keyStub.xor;
     while (nb > 0) {
       int tnb = Math.min(nb, buf.length);
@@ -66,11 +68,13 @@ public class DataProtectionOutputStreamStub extends FilterOutputStream {
     }
   }
 
-  public void write(byte[] b) throws IOException {
+  @Override
+public void write(byte[] b) throws IOException {
     write(b, 0, b.length);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "DataProtectionOutputStreamStub key " + keyStub;
   }
 }

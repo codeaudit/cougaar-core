@@ -98,22 +98,22 @@ extends AdvertiseBase
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    servletService = (ServletService)
-      sb.getService(this, ServletService.class, null);
+    servletService = sb.getService(this, ServletService.class, null);
     if (servletService == null && log.isWarnEnabled()) {
       log.warn("Unable to obtain ServletService");
     }
-    configService = (ConfigService)
-      sb.getService(configClient, ConfigService.class, null);
+    configService = sb.getService(configClient, ConfigService.class, null);
     if (configService == null) {
       throw new RuntimeException("Unable to obtain ConfigService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (configService != null) {
       sb.releaseService(configClient, ConfigService.class, configService);
       configService = null;
@@ -152,7 +152,8 @@ extends AdvertiseBase
     return entry;
   }
 
-  protected Advertiser createAdvertiser(Object bootObj) {
+  @Override
+protected Advertiser createAdvertiser(Object bootObj) {
     return new HttpAdvertiser(bootObj);
   }
 
@@ -190,7 +191,8 @@ extends AdvertiseBase
       path = s;
     }
 
-    public void start() {
+    @Override
+   public void start() {
       // register servlet
       servlet = new MyServlet();
       try {
@@ -214,21 +216,25 @@ extends AdvertiseBase
       return ret;
     }
 
-    public void update(String name, Bundle bundle) {
+    @Override
+   public void update(String name, Bundle bundle) {
       // do nothing, since we server bundles (as opposed to posting
       // them at external server)
     }
 
-    public void stop() {
+    @Override
+   public void stop() {
       servletService.unregister(path);
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return
         "(http_advertise "+super.toString()+")";
     }
 
     private class MyServlet extends HttpServlet {
+      @Override
       public void doGet(
           HttpServletRequest sreq,
           HttpServletResponse sres) throws IOException {

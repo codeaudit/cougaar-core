@@ -47,7 +47,8 @@ public abstract class TimeServiceBase {
     name = (this.getClass().getName())+" for "+(requestor.toString());
   }
 
-  public String toString() { return name; }
+  @Override
+public String toString() { return name; }
 
   /**
    * @return a {@link Timer}, not a {@link java.util.Timer}!
@@ -130,7 +131,8 @@ public abstract class TimeServiceBase {
       return alarm.cancel();
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "AlarmWrapper("+alarm+") of "+
         (TimeServiceBase.this.toString());

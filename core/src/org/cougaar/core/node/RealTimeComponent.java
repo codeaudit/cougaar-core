@@ -65,11 +65,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs != null) {
       rootsb = ncs.getRootServiceBroker();
       sb.releaseService(this, NodeControlService.class, ncs);
@@ -82,7 +82,8 @@ implements Component
     the_sb.addService(RealTimeService.class, rtsp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     ServiceBroker the_sb = (rootsb == null ? sb : rootsb);
@@ -102,8 +103,7 @@ implements Component
 
     /** Starts the timers */
     protected void start() {
-      ThreadService tsvc = (ThreadService)
-        sb.getService(this, ThreadService.class, null);
+      ThreadService tsvc = sb.getService(this, ThreadService.class, null);
       rTimer = new RealTimer();
       rTimer.start(tsvc);
       sb.releaseService(this, ThreadService.class, tsvc);
@@ -150,6 +150,7 @@ implements Component
         super(r);
         this.rTimer = rTimer;
       }
+      @Override
       protected Timer getTimer() { return rTimer; }
     }
 }

@@ -73,7 +73,8 @@ implements Script.Entry, Serializable
     return opts;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     Ticket t = opts.getTicket();
     return 
       "move "+

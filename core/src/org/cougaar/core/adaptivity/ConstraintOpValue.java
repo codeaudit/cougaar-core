@@ -84,7 +84,8 @@ public class ConstraintOpValue implements java.io.Serializable {
     return operator;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return operator + " " + allowedValues;
   }
 }

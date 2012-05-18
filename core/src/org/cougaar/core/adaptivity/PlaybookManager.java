@@ -119,9 +119,10 @@ public class PlaybookManager
   /**
    * Override to register the services we provide.
    **/
-  public void load() {
+  @Override
+public void load() {
     super.load();
-    logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
+    logger = getServiceBroker().getService(this, LoggingService.class, null);
     playbook = new Playbook(logger);
     getServiceBroker().addService(PlaybookReadService.class, this);
     getServiceBroker().addService(PlaybookConstrainService.class, this);
@@ -130,7 +131,8 @@ public class PlaybookManager
   /**
    * Override to unregister the services we provide.
    **/
-  public void unload() {
+  @Override
+public void unload() {
     getServiceBroker().revokeService(PlaybookConstrainService.class, this);
     getServiceBroker().revokeService(PlaybookReadService.class, this);
     getServiceBroker().releaseService(this, LoggingService.class, logger);
@@ -140,7 +142,8 @@ public class PlaybookManager
   /**
    * Read the plays from a file.
    **/
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     Iterator iter = getParameters().iterator();
     if (!iter.hasNext()) {
       logger.error("Missing playbook file name.");
@@ -169,7 +172,8 @@ public class PlaybookManager
    * two blackboard transactions simultaneously. The requests are
    * placed in a queue and executed here.
    **/
-  public void execute() {
+  @Override
+public void execute() {
     synchronized (todo) {
       while (todo.size() > 0) {
         try {

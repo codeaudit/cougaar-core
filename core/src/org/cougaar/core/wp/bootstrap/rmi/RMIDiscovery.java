@@ -76,21 +76,23 @@ extends DiscoveryBase
     this.socketFactoryService = socketFactoryService;
   }
 
-  protected String getConfigPrefix() {
+  @Override
+protected String getConfigPrefix() {
     return "org.cougaar.core.wp.resolver.rmi.";
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    configService = (ConfigService)
-      sb.getService(configClient, ConfigService.class, null);
+    configService = sb.getService(configClient, ConfigService.class, null);
     if (configService == null) {
       throw new RuntimeException("Unable to obtain ConfigService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (configService != null) {
       sb.releaseService(
           configClient, ConfigService.class, configService);
@@ -113,11 +115,13 @@ extends DiscoveryBase
     return RMIUtil.getBootEntry(b);
   }
 
-  protected Map lookup(Object bootObj) {
+  @Override
+protected Map lookup(Object bootObj) {
     throw new InternalError("should use RMIPoller!");
   }
 
-  protected Poller createPoller(Object bootObj) {
+  @Override
+protected Poller createPoller(Object bootObj) {
     return new RMIPoller(bootObj);
   }
 
@@ -136,17 +140,20 @@ extends DiscoveryBase
       bootEntry = (AddressEntry) bootObj;
     }
 
-    protected void initialize() {
+    @Override
+   protected void initialize() {
       super.initialize();
 
       filter = RMIUtil.getFilter(bootEntry, null, log);
     }
 
-    public void stop() {
+    @Override
+   public void stop() {
       rmiAccess = null;
     }
 
-    protected Map lookup() {
+    @Override
+   protected Map lookup() {
       String name = bootEntry.getName();
       URI uri = bootEntry.getURI();
       String host = uri.getHost();

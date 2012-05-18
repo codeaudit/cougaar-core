@@ -39,7 +39,8 @@ class SerialSchedulable extends TrivialSchedulable
 	this.queue = queue;
     }
 
-    Thread runThread()
+    @Override
+   Thread runThread()
     {
 	queue.enqueue(this);
 	return Thread.currentThread(); // dummy return, must be non-null

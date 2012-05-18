@@ -70,7 +70,8 @@ implements Step {
     this.status = ((status != null) ? status : StepStatus.NONE);
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof LocalStepImpl)) {
@@ -80,7 +81,8 @@ implements Step {
       return uid.equals(u);
     }
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return uid.hashCode();
   }
   
@@ -91,7 +93,8 @@ implements Step {
       status;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "local-"+_toString();
   }
 }

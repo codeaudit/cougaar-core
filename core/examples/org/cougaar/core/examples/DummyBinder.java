@@ -50,7 +50,8 @@ public class DummyBinder                 // PluginServiceFilter
   }
   public void setParameter(Object o) {}
   //  This method specifies the Binder to use (defined later)
-  protected Class getBinderClass(Object child) {
+  @Override
+protected Class getBinderClass(Object child) {
     return PluginServiceFilterBinder.class;
   }
 
@@ -64,12 +65,14 @@ public class DummyBinder                 // PluginServiceFilter
 
     // this method specifies a binder proxy to use, so as to avoid exposing the binder
     // itself to the lower level objects.
-    protected ContainerAPI createContainerProxy() {
+    @Override
+   protected ContainerAPI createContainerProxy() {
       return new ServiceFilterContainerProxy();
     }
 
     // this method installs the "filtering" service broker
-    protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
+    @Override
+   protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
       return new PluginFilteringServiceBroker(sb); 
     }
 
@@ -82,6 +85,7 @@ public class DummyBinder                 // PluginServiceFilter
         super(sb);
       }
 
+      @Override
       protected Object getServiceProxy(Object service, Class serviceClass, Object client) {
         System.err.println("DummyBinder: "+serviceClass+" requested by "+client);
         return null;

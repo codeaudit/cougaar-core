@@ -51,7 +51,8 @@ public class MobilityDomain extends DomainAdapter {
 
   private static final String MOBILTY_NAME = "mobility";
 
-  public String getDomainName() {
+  @Override
+public String getDomainName() {
     return MOBILTY_NAME;
   }
 
@@ -59,7 +60,8 @@ public class MobilityDomain extends DomainAdapter {
     return Collections.singleton(getDomainName());
   }
 
-  protected void loadFactory() {
+  @Override
+protected void loadFactory() {
     UIDService uidService = getUIDService();
     MessageAddress nodeId = getNodeId();
     MessageAddress agentId = getAgentId();
@@ -68,18 +70,18 @@ public class MobilityDomain extends DomainAdapter {
     setFactory(f);
   }
 
-  protected void loadXPlan() {
+  @Override
+protected void loadXPlan() {
     // no xplan
   }
 
   private UIDService getUIDService() {
     ServiceBroker sb = getServiceBroker();
     UIDService uidService = 
-      (UIDService)
       sb.getService(
-          this,
-          UIDService.class,
-          null);
+       this,
+       UIDService.class,
+       null);
     if (uidService == null) {
       throw new RuntimeException(
           "Unable to obtain uid service");
@@ -91,11 +93,10 @@ public class MobilityDomain extends DomainAdapter {
     // get the agentId
     ServiceBroker sb = getServiceBroker();
     AgentIdentificationService agentIdService = 
-      (AgentIdentificationService)
       sb.getService(
-          this,
-          AgentIdentificationService.class,
-          null);
+       this,
+       AgentIdentificationService.class,
+       null);
     if (agentIdService == null) {
       throw new RuntimeException(
           "Unable to obtain node-id service");
@@ -114,11 +115,10 @@ public class MobilityDomain extends DomainAdapter {
     // get the nodeId
     ServiceBroker sb = getServiceBroker();
     NodeIdentificationService nodeIdService = 
-      (NodeIdentificationService)
       sb.getService(
-          this,
-          NodeIdentificationService.class,
-          null);
+       this,
+       NodeIdentificationService.class,
+       null);
     if (nodeIdService == null) {
       throw new RuntimeException(
           "Unable to obtain node-id service");
@@ -134,14 +134,18 @@ public class MobilityDomain extends DomainAdapter {
   }
 
   // zero LPs
-  protected void loadLPs() {
+  @Override
+protected void loadLPs() {
   }
-  public void invokeMessageLogicProviders(DirectiveMessage message) {
+  @Override
+public void invokeMessageLogicProviders(DirectiveMessage message) {
   }
-  public void invokeEnvelopeLogicProviders(
+  @Override
+public void invokeEnvelopeLogicProviders(
       EnvelopeTuple tuple, boolean isPersistenceEnvelope) {
   }
-  public void invokeRestartLogicProviders(MessageAddress cid) {
+  @Override
+public void invokeRestartLogicProviders(MessageAddress cid) {
   }
 
 }

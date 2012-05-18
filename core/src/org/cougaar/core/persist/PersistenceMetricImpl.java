@@ -116,7 +116,8 @@ public class PersistenceMetricImpl implements PersistenceMetricsService.Metric {
     return count;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return (failed == null ? "Persisted " : "Failed ")
       + (full ? "full" : "delta")
       + name

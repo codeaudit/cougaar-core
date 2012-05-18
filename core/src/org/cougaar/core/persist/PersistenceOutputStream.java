@@ -158,7 +158,8 @@ public class PersistenceOutputStream extends ObjectOutputStream implements Persi
    * @param o the object to consider for replacement.
    * @return the replacement object.
    */
-  protected Object replaceObject(Object o) {
+  @Override
+protected Object replaceObject(Object o) {
     if (o instanceof PersistenceReference) {
       if (detail) print("Writing Ref ", o);
       return o;

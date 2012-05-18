@@ -43,7 +43,8 @@ public class PublishStack extends Throwable {
   public PublishStack(String message) {
     super(message + getClientName());
   }
-  public String toString() {
+  @Override
+public String toString() {
     return getMessage();
   }
 }

@@ -75,7 +75,8 @@ public class MetricImpl implements Metric, java.io.Serializable
 	this.halflife = halflife;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
 	return "<" +rawValue+ ":" +credibility+ ">";
     }
     

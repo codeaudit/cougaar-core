@@ -56,7 +56,8 @@ public class OMCPoint extends OMCRange {
   /**
    * Return a String representation of the single value in the range.
    **/
-  public String toString() {
+  @Override
+public String toString() {
     return min.toString();
   }
 }

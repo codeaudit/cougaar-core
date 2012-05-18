@@ -61,7 +61,8 @@ extends ComponentPlugin
 
   private BlackboardTimestampServiceProvider btSP;
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     if (btSP ==  null) {
       btSP = new BlackboardTimestampServiceProvider();
@@ -69,7 +70,8 @@ extends ComponentPlugin
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (btSP != null) {
       getServiceBroker().revokeService(BlackboardTimestampService.class, btSP);
       btSP = null;
@@ -77,7 +79,8 @@ extends ComponentPlugin
     super.unload();
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     Object sub = blackboard.subscribe(timeSub);
     if (sub != timeSub) {
       throw new RuntimeException(
@@ -85,7 +88,8 @@ extends ComponentPlugin
     }
   }
   
-  protected void execute() {
+  @Override
+protected void execute() {
     // never, since we never register to watch the changes
   }
 

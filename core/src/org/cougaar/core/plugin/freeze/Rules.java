@@ -75,7 +75,8 @@ public class Rules {
       return !deny;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return (deny ? "deny " : "allow ") + cls.getName();
     }
   }
@@ -108,7 +109,8 @@ public class Rules {
     return rules.iterator();
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     StringBuffer buf = new StringBuffer();
     for (int i = 0, n = rules.size(); i < n; i++) {
       if (i > 0) buf.append(",");

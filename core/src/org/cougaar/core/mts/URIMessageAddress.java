@@ -58,7 +58,8 @@ public class URIMessageAddress
     this.uri = uri;
   }
 
-  public final String toAddress() {
+  @Override
+public final String toAddress() {
     return uri.toString();
   }
 
@@ -71,7 +72,8 @@ public class URIMessageAddress
     return uri.equals(ma.uri);
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (this == o) return true;
     if (o instanceof URIMessageAddress) {
       return uri.equals(((URIMessageAddress)o).uri);      
@@ -80,7 +82,8 @@ public class URIMessageAddress
     }
   }
 
-  public final int hashCode() { 
+  @Override
+public final int hashCode() { 
     return uri.hashCode();
   }
 

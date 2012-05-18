@@ -58,9 +58,11 @@ public abstract class BlackboardServlet extends ComponentPlugin {
   /**
    * Optional subscriptions.
    */
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
   }
-  protected void execute() {
+  @Override
+protected void execute() {
   }
 
   protected Collection query(UnaryPredicate pred) {
@@ -116,16 +118,19 @@ public abstract class BlackboardServlet extends ComponentPlugin {
    */
   protected HttpServlet createServlet() {
     return new HttpServlet() {
+      @Override
       protected void doGet(
           HttpServletRequest req, HttpServletResponse resp
           ) throws ServletException, IOException {
         BlackboardServlet.this.doGet(req, resp);
       }
+      @Override
       protected void doPost(
           HttpServletRequest req, HttpServletResponse resp
           ) throws ServletException, IOException {
         BlackboardServlet.this.doPost(req, resp);
       }
+      @Override
       protected void doPut(
           HttpServletRequest req, HttpServletResponse resp
           ) throws ServletException, IOException {
@@ -165,7 +170,8 @@ public abstract class BlackboardServlet extends ComponentPlugin {
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // set path
@@ -186,8 +192,7 @@ public abstract class BlackboardServlet extends ComponentPlugin {
     encAgentName = (agentName == null ? null : encode(agentName));
 
     // get our servlet service
-    servletService = (ServletService)
-      getServiceBroker().getService(this, ServletService.class, null);
+    servletService = getServiceBroker().getService(this, ServletService.class, null);
     if (servletService == null) {
       throw new RuntimeException("Unable to obtain ServletService");
     }
@@ -201,7 +206,8 @@ public abstract class BlackboardServlet extends ComponentPlugin {
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (servletService != null) {
       // this will automatically unregister our servlet
       getServiceBroker().releaseService(

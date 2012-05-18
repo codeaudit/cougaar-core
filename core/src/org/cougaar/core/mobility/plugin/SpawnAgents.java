@@ -125,8 +125,7 @@ public class SpawnAgents extends ComponentPlugin {
   protected AgentContainer getAgentContainer() {
     if (!setAgentContainer) {
       setAgentContainer = true;
-      NodeControlService ncs = (NodeControlService)
-        getServiceBroker().getService(
+      NodeControlService ncs = getServiceBroker().getService(
             this, NodeControlService.class, null);
       if (ncs != null) {
         _agentContainer = ncs.getRootContainer();
@@ -140,8 +139,7 @@ public class SpawnAgents extends ComponentPlugin {
   protected ThreadService getThreadService() {
     if (!setThreadService) {
       setThreadService = true;
-      _threadService = (ThreadService)
-        getServiceBroker().getService(this, ThreadService.class, null);
+      _threadService = getServiceBroker().getService(this, ThreadService.class, null);
     }
     return _threadService;
   }
@@ -149,8 +147,7 @@ public class SpawnAgents extends ComponentPlugin {
   protected MobilityFactory getMobilityFactory() {
     if (!setMobilityFactory) {
       setMobilityFactory = true;
-      DomainService ds = (DomainService) 
-        getServiceBroker().getService(this, DomainService.class, null);
+      DomainService ds = getServiceBroker().getService(this, DomainService.class, null);
       if (ds != null) {
         _mobilityFactory = (MobilityFactory) ds.getFactory("mobility");
         getServiceBroker().releaseService(
@@ -160,7 +157,8 @@ public class SpawnAgents extends ComponentPlugin {
     return _mobilityFactory;
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     parseParameters(getParameters());
 
     // listen for responses to our add requests
@@ -186,7 +184,8 @@ public class SpawnAgents extends ComponentPlugin {
     }
   }
   
-  public void execute() {
+  @Override
+public void execute() {
     // check for completed local (loopback) adds
     if (loopback) {
       List l = takeCompletedLocalAdds();
@@ -563,7 +562,8 @@ public class SpawnAgents extends ComponentPlugin {
     public String getAgent() { return agent; }
     public String getNode() { return node; }
     public Object getOptions() { return options; }
-    public String toString() {
+    @Override
+   public String toString() {
       return agent+" @ "+node;
     }
   }
@@ -589,7 +589,8 @@ public class SpawnAgents extends ComponentPlugin {
     }
     public String getAgent() { return agent; }
     public Throwable getException() { return ex; }
-    public String toString() {
+    @Override
+   public String toString() {
       return "(completed-local-add agent="+agent+" success="+(ex == null)+")";
     }
   }

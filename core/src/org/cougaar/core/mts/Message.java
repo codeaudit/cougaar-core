@@ -113,7 +113,8 @@ public abstract class Message
   /** Set the destination */
   public final void setTarget(MessageAddress aTarget) { theTarget = aTarget; }
 
-  public String toString() {
+  @Override
+public String toString() {
     try {
       return "The source: " + getOriginator().toString() +
         " The Target: " + getTarget().toString() +

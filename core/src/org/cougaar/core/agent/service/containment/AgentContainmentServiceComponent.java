@@ -52,7 +52,8 @@ implements Component
     acS = (AgentContainmentService) o;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     if (acS == null) {
@@ -65,7 +66,8 @@ implements Component
     sb.addService(AgentContainmentService.class, acSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // revoke our service
     if (acSP != null) {
       sb.revokeService(AgentContainmentService.class, acSP);

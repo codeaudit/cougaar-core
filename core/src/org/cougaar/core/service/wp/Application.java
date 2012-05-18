@@ -59,18 +59,21 @@ public final class Application implements Serializable {
     // assert (a.intern() == a);
   }
        
-  public String toString() {
+  @Override
+public String toString() {
     return name;
   }
        
-  public boolean equals(Object a) {
+  @Override
+public boolean equals(Object a) {
     return
       (this == a ||
        (a instanceof Application &&
         name == ((Application)a).name));
   }
  
-  public int hashCode() {
+  @Override
+public int hashCode() {
     if (_hc == 0) _hc = name.hashCode();
     return _hc;
   }

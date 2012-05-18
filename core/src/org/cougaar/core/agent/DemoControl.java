@@ -102,40 +102,36 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     localAgent = find_local_agent();
     localNode = find_local_node();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
     log = LoggingServiceWithPrefix.add(log, localAgent+": ");
 
     // get execution timer
-    xTimer = (NaturalTimeService) 
-      sb.getService(this, NaturalTimeService.class, null);
+    xTimer = sb.getService(this, NaturalTimeService.class, null);
     if (xTimer == null) {
       throw new RuntimeException(
           "Unable to obtain NaturalTimeService");
     }
 
-    uidService = (UIDService)
-      sb.getService(this, UIDService.class, null);
+    uidService = sb.getService(this, UIDService.class, null);
     if (uidService == null) {
       throw new RuntimeException(
           "Unable to obtain UIDService");
     }
 
-    wp = (WhitePagesService)
-      sb.getService(this, WhitePagesService.class, null);
+    wp = sb.getService(this, WhitePagesService.class, null);
     if (wp == null) {
       throw new RuntimeException(
           "Unable to obtain WhitePagesService");
     }
 
-    mss = (MessageSwitchService)
-      sb.getService(this, MessageSwitchService.class, null);
+    mss = sb.getService(this, MessageSwitchService.class, null);
     if (mss == null) {
       throw new RuntimeException(
           "Unable to obtain MessageSwitchService");
@@ -159,7 +155,8 @@ implements Component
     sb.addService(DemoControlService.class, dcsp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     sb.revokeService(DemoControlService.class, dcsp);
@@ -257,8 +254,7 @@ implements Component
   //
 
   private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       return null;
     }
@@ -269,8 +265,7 @@ implements Component
   }
 
   private MessageAddress find_local_node() {
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
     if (nis == null) {
       return null;
     }
@@ -554,7 +549,8 @@ implements Component
     public void setSendTime(long sendTime) {
       this.sendTime = sendTime;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "(entry sentTime="+sendTime+" n="+n+" m="+m+" cb="+cb+")";
     }

@@ -54,7 +54,8 @@ public class DispatchRemoteHandler extends AbstractHandler {
     this.stateProvider = stateProvider;
   }
 
-  public void run() {
+  @Override
+public void run() {
     dispatchRemote();
   }
 
@@ -204,7 +205,8 @@ public class DispatchRemoteHandler extends AbstractHandler {
     return state;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Move (dispatch-remote) of agent "+id;
   }
 }

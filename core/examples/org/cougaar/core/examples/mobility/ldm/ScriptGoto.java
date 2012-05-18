@@ -46,7 +46,8 @@ implements Script.Entry, Serializable
   public int getIndex() {
     return idx;
   }
-  public String toString() {
+  @Override
+public String toString() {
     return "goto "+name;
   }
 }

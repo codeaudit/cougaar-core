@@ -109,7 +109,8 @@ public class OMCBase implements java.io.Serializable {
    * Furnish a useful string representation.
    * @return the name and value separated by an equals sign.
    **/
-  public String toString() {
+  @Override
+public String toString() {
     return getName() + " = " + getValue();
   }
 }

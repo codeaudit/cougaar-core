@@ -71,11 +71,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
     register_persistence();
 
@@ -89,7 +89,8 @@ implements Component
     //load_late();
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
 
     initialDescs = null;
@@ -103,7 +104,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     unregister_persistence();
@@ -216,7 +218,6 @@ implements Component
         }
       };
     ps = 
-      (PersistenceService)
       sb.getService(
           pc, PersistenceService.class, null);
   }
@@ -274,8 +275,7 @@ implements Component
     // save for state capture while loading
     initialDescs = l;
 
-    AgentBootstrapService abs = (AgentBootstrapService)
-      sb.getService(this, AgentBootstrapService.class, null);
+    AgentBootstrapService abs = sb.getService(this, AgentBootstrapService.class, null);
     if (abs == null) {
       throw new RuntimeException(
           "Unable to obtain AgentBootstrapService"+
@@ -315,8 +315,7 @@ implements Component
     }
 
     // get descriptions
-    AgentComponentModelService acms = (AgentComponentModelService)
-      sb.getService(this, AgentComponentModelService.class, null);
+    AgentComponentModelService acms = sb.getService(this, AgentComponentModelService.class, null);
     if (acms == null) {
       throw new RuntimeException(
           "Unable to obtain AgentComponentModelService"+

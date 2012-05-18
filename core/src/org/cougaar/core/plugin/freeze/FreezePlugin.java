@@ -40,8 +40,9 @@ public abstract class FreezePlugin extends ServiceUserPlugin {
     super(new Class[0]);
   }
 
-  public void setupSubscriptions() {
-    logger = (LoggingService) getServiceBroker()
+  @Override
+public void setupSubscriptions() {
+    logger = getServiceBroker()
       .getService(this, LoggingService.class, null);
     logger = LoggingServiceWithPrefix.add(logger, getAgentIdentifier().toString() + ": ");
 

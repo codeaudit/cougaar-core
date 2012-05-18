@@ -60,14 +60,16 @@ implements Component
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     // create and advertise our service
     this.mySP = new JvmStackDumpServiceProviderImpl();
     sb.addService(JvmStackDumpService.class, mySP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // revoke our service
     if (mySP != null) {
       sb.revokeService(JvmStackDumpService.class, mySP);

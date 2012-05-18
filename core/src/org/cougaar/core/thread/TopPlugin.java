@@ -80,7 +80,8 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
         this.sb = sb;
     }
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	String run_servlet = getParameter("servlet", "true");
@@ -116,7 +117,8 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 	}
     }
 
-    public void unload() {
+    @Override
+   public void unload() {
         if (rtd != null) {
             rtd.cancel();
             rtd = null;
@@ -151,8 +153,7 @@ public class TopPlugin extends ParameterizedComponent // not a Plugin
 		}
 	    };
 	ServiceBroker sb = getServiceBroker();
-	ThreadService tsvc = (ThreadService) 
-	    sb.getService(this, ThreadService.class, null);
+	ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 	org.cougaar.core.thread.Schedulable sched = 
 	    tsvc.getThread(this, test, "Sleep test", lane);
 	sb.releaseService(this, ThreadService.class, tsvc);

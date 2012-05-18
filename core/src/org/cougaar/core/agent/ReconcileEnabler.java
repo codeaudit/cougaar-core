@@ -52,33 +52,38 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    res = (ReconcileEnablerService)
-      sb.getService(this, ReconcileEnablerService.class, null);
+    res = sb.getService(this, ReconcileEnablerService.class, null);
     if (res == null) {
       throw new RuntimeException(
           "Unable to obtain ReconcileEnablerService");
     }
   }
-  public void start() {
+  @Override
+public void start() {
     super.start();
     res.startTimer();
   }
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     res.stopTimer();
   }
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     res.startTimer();
   }
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
     res.stopTimer();
   }
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (res != null) {
       sb.releaseService(this, ReconcileEnablerService.class, res);

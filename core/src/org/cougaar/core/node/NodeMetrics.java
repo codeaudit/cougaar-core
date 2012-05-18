@@ -49,11 +49,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs == null) {
       throw new RuntimeException("Unable to obtain NodeControlService");
     }
@@ -64,7 +64,8 @@ implements Component
     rootsb.addService(NodeMetricsService.class, nmsp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     rootsb.revokeService(NodeMetricsService.class, nmsp);

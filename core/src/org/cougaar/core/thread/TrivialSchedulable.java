@@ -90,7 +90,8 @@ class TrivialSchedulable implements Schedulable {
         return start_time;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
         return "<Schedulable " + (name == null ? "anonymous" : name) + ">";
     }
 
@@ -187,6 +188,7 @@ class TrivialSchedulable implements Schedulable {
     private TimerTask task() {
         cancelTimer();
         task = new TimerTask() {
+            @Override
             public void run() {
                 start();
             }

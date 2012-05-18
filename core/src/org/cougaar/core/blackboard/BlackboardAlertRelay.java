@@ -143,7 +143,8 @@ implements SimpleRelay, Relay.Source, Relay.Target {
 
   // Object:
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (o instanceof BlackboardAlertRelay) { 
@@ -153,7 +154,8 @@ implements SimpleRelay, Relay.Source, Relay.Target {
       return false;
     }
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return uid.hashCode();
   }
   private void readObject(java.io.ObjectInputStream os) 
@@ -161,7 +163,8 @@ implements SimpleRelay, Relay.Source, Relay.Target {
       os.defaultReadObject();
       cacheTargets();
     }
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "(BlackboardAlertRelay"+
       " uid="+uid+

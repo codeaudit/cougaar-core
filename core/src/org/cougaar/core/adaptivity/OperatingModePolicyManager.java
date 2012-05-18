@@ -110,7 +110,8 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
   }
 
   private void reallySetupSubscriptions() {
@@ -125,17 +126,16 @@ public class OperatingModePolicyManager extends ServiceUserPluginBase {
     if (playbookConstrainService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      playbookConstrainService = (PlaybookConstrainService)
-        sb.getService(this, PlaybookConstrainService.class, null);
-      operatingModeService = (OperatingModeService)
-        getServiceBroker().getService(this, OperatingModeService.class, null);
+      playbookConstrainService = sb.getService(this, PlaybookConstrainService.class, null);
+      operatingModeService = getServiceBroker().getService(this, OperatingModeService.class, null);
       reallySetupSubscriptions();
       return true;
     }
     return false;
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (haveServices()) {
       if (policySubscription.hasChanged()) {
 	removePolicies(policySubscription.getRemovedCollection());

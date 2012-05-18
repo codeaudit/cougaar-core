@@ -38,7 +38,8 @@ import org.cougaar.util.KeyedSet;
 public class UniqueObjectSet 
   extends KeyedSet
 {
-  protected Object getKey(Object o) {
+  @Override
+protected Object getKey(Object o) {
     if (o instanceof UniqueObject) {
       return ((UniqueObject) o).getUID();
     } else {

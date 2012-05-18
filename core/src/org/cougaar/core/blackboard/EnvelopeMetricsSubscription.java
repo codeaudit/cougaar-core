@@ -53,7 +53,8 @@ public class EnvelopeMetricsSubscription extends Subscription {
     this.includeBlackboard = includeBlackboard;
   }
 
-  protected void resetChanges() {
+  @Override
+protected void resetChanges() {
     super.resetChanges();
     myList.clear();
   }
@@ -76,7 +77,8 @@ public class EnvelopeMetricsSubscription extends Subscription {
     return myList;
   }
 
-  public boolean apply(Envelope e) {
+  @Override
+public boolean apply(Envelope e) {
     if (!(e instanceof TimestampedEnvelope)) {
       return false;
     }
@@ -91,8 +93,11 @@ public class EnvelopeMetricsSubscription extends Subscription {
   }
 
   // never called, due to "apply(..)" override:
-  protected void privateAdd(Object o, boolean isVisible) { }
-  protected void privateRemove(Object o, boolean isVisible) { }
-  protected void privateChange(Object o, List changes, boolean isVisible) { }
+  @Override
+protected void privateAdd(Object o, boolean isVisible) { }
+  @Override
+protected void privateRemove(Object o, boolean isVisible) { }
+  @Override
+protected void privateChange(Object o, List changes, boolean isVisible) { }
 
 }

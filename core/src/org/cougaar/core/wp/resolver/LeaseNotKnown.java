@@ -70,7 +70,8 @@ public final class LeaseNotKnown implements Serializable {
     return uid;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "(lease-not-known uid="+uid+")";
   }
 }

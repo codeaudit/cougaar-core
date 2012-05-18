@@ -39,7 +39,8 @@ public class DispatchNoopHandler extends AbstractHandler {
     super(support);
   }
 
-  public void run() {
+  @Override
+public void run() {
     dispatchNoop();
   }
 
@@ -115,7 +116,8 @@ public class DispatchNoopHandler extends AbstractHandler {
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Move (dispatch-noop) of agent "+id;
   }
 }

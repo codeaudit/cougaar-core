@@ -68,11 +68,11 @@ implements Component
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    msgSwitch = (MessageSwitchService)
-      sb.getService(this, MessageSwitchService.class, null);
+    msgSwitch = sb.getService(this, MessageSwitchService.class, null);
     if (msgSwitch == null) {
       throw new RuntimeException(
           "Unable to obtain MessageSwitchService, which is required"+
@@ -104,7 +104,8 @@ implements Component
     // add services here (none for now)
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     
     // unload services in reverse order of "load()"

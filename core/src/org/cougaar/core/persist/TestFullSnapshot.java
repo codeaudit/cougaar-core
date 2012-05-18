@@ -42,11 +42,13 @@ public class TestFullSnapshot extends ComponentPlugin {
     byte[] bytes = new byte[10000];
   }
 
-  public void setupSubscriptions() {
-    logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
+  @Override
+public void setupSubscriptions() {
+    logger = getServiceBroker().getService(this, LoggingService.class, null);
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (logger.isShoutEnabled())
       logger.shout("Running TestFullSnapShot");
 

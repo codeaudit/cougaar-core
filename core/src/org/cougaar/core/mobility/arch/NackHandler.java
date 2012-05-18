@@ -45,7 +45,8 @@ public class NackHandler extends AbstractHandler {
     this.throwable = throwable;
   }
 
-  public void run() {
+  @Override
+public void run() {
     nack();
   }
 
@@ -101,7 +102,8 @@ public class NackHandler extends AbstractHandler {
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Move (nack) of agent "+id;
   }
 }

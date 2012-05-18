@@ -64,7 +64,8 @@ public class AgentImpl extends Agent {
   private String agentName;
 
   /** Alias for getMessageAddress, required by Agent superclass */
-  public MessageAddress getAgentIdentifier() {
+  @Override
+public MessageAddress getAgentIdentifier() {
     return MessageAddress.getMessageAddress(agentName);
   }
 
@@ -83,26 +84,36 @@ public class AgentImpl extends Agent {
   }
 
   // disable super load sequence
-  protected void loadHighPriorityComponents() {}
-  protected void loadInternalPriorityComponents() {}
-  protected void loadBinderPriorityComponents() {}
-  protected void loadComponentPriorityComponents() {}
-  protected void loadLowPriorityComponents() {}
+  @Override
+protected void loadHighPriorityComponents() {}
+  @Override
+protected void loadInternalPriorityComponents() {}
+  @Override
+protected void loadBinderPriorityComponents() {}
+  @Override
+protected void loadComponentPriorityComponents() {}
+  @Override
+protected void loadLowPriorityComponents() {}
 
-  protected ComponentDescriptions findInitialComponentDescriptions() {
+  @Override
+protected ComponentDescriptions findInitialComponentDescriptions() {
     return null;
   }
-  protected ComponentDescriptions findExternalComponentDescriptions() {
+  @Override
+protected ComponentDescriptions findExternalComponentDescriptions() {
     return null;
   }
  
-  public Object getState() {
+  @Override
+public Object getState() {
     return null;
   }
-  public void setState(Object o) {
+  @Override
+public void setState(Object o) {
   }
 
-  public void load() {
+  @Override
+public void load() {
     // can't call super.load()!
     transitState("load()", UNLOADED, LOADED);
 
@@ -285,8 +296,7 @@ public class AgentImpl extends Agent {
 
   private void record_agent_name(ComponentDescription bootstrap_desc) {
     ServiceBroker csb = getChildServiceBroker();
-    AgentIdentificationService ais = (AgentIdentificationService)
-      csb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = csb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       this.agentName = extractAgentName(bootstrap_desc);
     } else {

@@ -210,9 +210,8 @@ public class RehydrateTest {
       };
     // rehydrate list
     PersistenceServiceForAgent persistenceService = 
-      (PersistenceServiceForAgent)
       sb.getService(
-          persistenceClient, PersistenceServiceForAgent.class, null);
+       persistenceClient, PersistenceServiceForAgent.class, null);
     persistenceService.rehydrate(persistenceObject);
     RehydrationData rd = persistenceService.getRehydrationData();
     List rehydrationList = (rd == null ? null : rd.getObjects());

@@ -52,15 +52,14 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
     // get our local agent's address
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
@@ -74,7 +73,8 @@ implements Component
     ClusterContextTable.addContext(localAgent);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     // remove ourselves from the VM-local context
     if (log.isDebugEnabled()) {

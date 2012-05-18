@@ -52,12 +52,12 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
   private IncrementalSubscription relaySubscription;
   private AgentContainer agentContainer;
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    NodeControlService ncs = (NodeControlService)
-      getServiceBroker().getService(
-          this, NodeControlService.class, null);
+    NodeControlService ncs = getServiceBroker().getService(
+       this, NodeControlService.class, null);
     if (ncs != null) {
       agentContainer = ncs.getRootContainer();
       getServiceBroker().releaseService(
@@ -65,7 +65,8 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
     }
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     super.setupSubscriptions();
     relaySubscription = (IncrementalSubscription)
       blackboard.subscribe(targetRelayPredicate);
@@ -77,7 +78,8 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
    * we freeze our children (send a relay). Redundant freezes and
    * thaws are filtered by our base class.
    */
-  public void execute() {
+  @Override
+public void execute() {
     if (relaySubscription.hasChanged()) {
       if (relaySubscription.isEmpty()) {
         thaw();                 // Thaw if frozen
@@ -93,7 +95,8 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
    * Get the names of our target agents.
    * @return the names of agents in this node
    */
-  protected Set getTargetNames() {
+  @Override
+protected Set getTargetNames() {
     // get local agent addresses
     Set addrs;
     if (agentContainer == null) {
@@ -119,7 +122,8 @@ public class FreezeNodePlugin extends FreezeSourcePlugin {
   /**
    * Our children have become frozen, so we tell our parent(s) we are frozen, too
    */
-  protected void setUnfrozenAgents(Set unfrozenAgents) {
+  @Override
+protected void setUnfrozenAgents(Set unfrozenAgents) {
     if (logger.isDebugEnabled()) logger.debug("unfrozen " + unfrozenAgents);
     for (Iterator i = relaySubscription.iterator(); i.hasNext(); ) {
       FreezeRelayTarget relay = (FreezeRelayTarget) i.next();

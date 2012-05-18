@@ -35,7 +35,8 @@ import java.util.List;
  */
 public class ChangeEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
-  public Object getObject() { return object; }
+  @Override
+public Object getObject() { return object; }
   private final List changes;
 
   // perhaps at some point we should complain if we aren't told what the
@@ -46,13 +47,16 @@ public class ChangeEnvelopeTuple extends EnvelopeTuple {
     this.changes = changes;
   }
 
-  public final int getAction() { return Envelope.CHANGE; }
-  public final boolean isChange() { return true; }
+  @Override
+public final int getAction() { return Envelope.CHANGE; }
+  @Override
+public final boolean isChange() { return true; }
 
   // useful for Logic Providers.
   public Collection getChangeReports() { return changes; }
 
-  boolean applyToSubscription(Subscription s, boolean isVisible) {
+  @Override
+boolean applyToSubscription(Subscription s, boolean isVisible) {
     return s.conditionalChange(object, changes, isVisible);
   }
 

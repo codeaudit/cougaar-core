@@ -41,7 +41,8 @@ import java.beans.SimpleBeanInfo;
 public class ClaimableImplBeanInfo extends SimpleBeanInfo {
 
   // return appropriate properties from Task.java interface
-  public PropertyDescriptor[] getPropertyDescriptors() {
+  @Override
+public PropertyDescriptor[] getPropertyDescriptors() {
     PropertyDescriptor[] pd = new PropertyDescriptor[2];
     try {
       Class claimableClass = 

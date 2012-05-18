@@ -35,6 +35,7 @@ import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.component.ServiceProvider;
 import org.cougaar.core.mts.AgentStatusService;
+import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.mts.SimpleMessageAddress;
 import org.cougaar.core.node.NodeControlService;
 import org.cougaar.core.service.LoggingService;
@@ -141,7 +142,8 @@ implements Component
     config = new EnsureIsFoundManagerConfig(o);
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     configure(null);
@@ -162,7 +164,8 @@ implements Component
     rootsb.addService(EnsureIsFoundService.class, ensureSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (ensureSP != null) {
       rootsb.revokeService(
           EnsureIsFoundService.class, ensureSP);
@@ -303,7 +306,7 @@ implements Component
             (agentStatusService == null ?
                 (null) :
                   agentStatusService.getRemoteAgentState(
-                      SimpleMessageAddress.getMessageAddress(name)));
+                      MessageAddress.getMessageAddress(name)));
           if (logger.isDetailEnabled()) {
             logger.detail("Length of " + name + " MTS queue: " +
                 (state == null ?
@@ -376,7 +379,8 @@ implements Component
   private static class Entry {
     public int i;
     public boolean found;
-    public String toString() {
+    @Override
+   public String toString() {
       return "(entry i="+i+" found="+found+")";
     }
   }

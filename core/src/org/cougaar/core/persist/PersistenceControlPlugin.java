@@ -86,19 +86,20 @@ public class PersistenceControlPlugin extends ServiceUserPlugin {
   protected boolean haveServices() {
     if (persistenceControlService != null) return true;
     if (acquireServices()) {
-      persistenceControlService = (PersistenceControlService)
-        getServiceBroker().getService(this, PersistenceControlService.class, null);
+      persistenceControlService = getServiceBroker().getService(this, PersistenceControlService.class, null);
       return true;
     }
     return false;
   }
 
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     myOperatingModes = (IncrementalSubscription) blackboard.subscribe(myOperatingModePredicate);
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (haveServices()) {
       if (!createdOperatingModes ) {
         createOperatingModes();

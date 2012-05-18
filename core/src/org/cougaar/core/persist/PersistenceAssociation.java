@@ -140,7 +140,8 @@ public class PersistenceAssociation extends WeakReference {
     return active == INACTIVE;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     String activity;
     switch (active) {
     default:       activity = " 0"; break;

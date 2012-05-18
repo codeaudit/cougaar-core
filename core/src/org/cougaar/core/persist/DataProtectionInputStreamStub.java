@@ -48,17 +48,20 @@ public class DataProtectionInputStreamStub extends FilterInputStream {
     this.keyStub = (DataProtectionKeyStub) keyStub;
   }
 
-  public int read() throws IOException {
+  @Override
+public int read() throws IOException {
     int b = super.read();
     if (b < 0) return b;
     return (b ^ keyStub.xor) & 0xff;
   }
 
-  public int read(byte[] b) throws IOException {
+  @Override
+public int read(byte[] b) throws IOException {
     return read(b, 0, b.length);
   }
 
-  public int read(byte[] b, int offset, int nb) throws IOException {
+  @Override
+public int read(byte[] b, int offset, int nb) throws IOException {
     int total = -1;
     byte xor = keyStub.xor;
     while (nb > 0) {
@@ -79,7 +82,8 @@ public class DataProtectionInputStreamStub extends FilterInputStream {
     return total;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "DataProtectionInputStreamStub key " + keyStub;
   }
 }

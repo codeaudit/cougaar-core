@@ -88,7 +88,8 @@ public final class EnvelopeMetrics implements java.io.Serializable {
   // use the name as the hash-code and equality?
   //
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "EnvelopeMetrics {"+
       "\n  bb:    "+isBlackboard()+

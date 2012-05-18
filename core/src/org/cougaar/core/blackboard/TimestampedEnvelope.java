@@ -51,7 +51,8 @@ public class TimestampedEnvelope extends Envelope {
   public TimestampedEnvelope() {
   }
 
-  public Envelope newInstance() {
+  @Override
+public Envelope newInstance() {
     TimestampedEnvelope ret = new TimestampedEnvelope();
     ret.name = name;
     ret.openTime = openTime;
@@ -63,13 +64,16 @@ public class TimestampedEnvelope extends Envelope {
     this.name = name; 
   }
 
-  AddEnvelopeTuple newAddEnvelopeTuple(Object o) {
+  @Override
+AddEnvelopeTuple newAddEnvelopeTuple(Object o) {
     return new Add(o, captureStack());
   }
-  ChangeEnvelopeTuple newChangeEnvelopeTuple(Object o, List changes) {
+  @Override
+ChangeEnvelopeTuple newChangeEnvelopeTuple(Object o, List changes) {
     return new Change(o, changes, captureStack());
   }
-  RemoveEnvelopeTuple newRemoveEnvelopeTuple(Object o) {
+  @Override
+RemoveEnvelopeTuple newRemoveEnvelopeTuple(Object o) {
     return new Remove(o, captureStack());
   }
 
@@ -117,7 +121,8 @@ public class TimestampedEnvelope extends Envelope {
   // package-private subscription needs to see this
   boolean get_isVisible() { return isVisible(); }
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       super.toString()+
       " ("+
@@ -133,7 +138,8 @@ public class TimestampedEnvelope extends Envelope {
       super(o);
       this.se = se;
     }
-    public StackElements getStack() { return se; }
+    @Override
+   public StackElements getStack() { return se; }
   }
   private static final class Change extends ChangeEnvelopeTuple {
     private StackElements se;
@@ -141,7 +147,8 @@ public class TimestampedEnvelope extends Envelope {
       super(o, changes);
       this.se = se;
     }
-    public StackElements getStack() { return se; }
+    @Override
+   public StackElements getStack() { return se; }
   }
   private static final class Remove extends RemoveEnvelopeTuple {
     private StackElements se;
@@ -149,6 +156,7 @@ public class TimestampedEnvelope extends Envelope {
       super(o);
       this.se = se;
     }
-    public StackElements getStack() { return se; }
+    @Override
+   public StackElements getStack() { return se; }
   }
 }

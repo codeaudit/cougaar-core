@@ -68,7 +68,8 @@ public class MessageAddressWithAttributes
   }
 
   /** @return The MessageAddress without the MessageAtributes */
-  public final MessageAddress getPrimary() {
+  @Override
+public final MessageAddress getPrimary() {
       return delegate == null ? null : delegate.getPrimary();
   }
 
@@ -80,11 +81,13 @@ public class MessageAddressWithAttributes
     return delegate;
   }
 
-  public final String toAddress() {
+  @Override
+public final String toAddress() {
       return (delegate == null) ? null : delegate.toAddress();
   }
 
-  public final MessageAttributes getMessageAttributes() {
+  @Override
+public final MessageAttributes getMessageAttributes() {
     return attributes;
   }
 

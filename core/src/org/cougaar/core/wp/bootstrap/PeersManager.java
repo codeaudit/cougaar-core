@@ -73,13 +73,13 @@ implements Component
     this.ensureService = ensureService;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     servers = findServers();
 
-    ensureService = (EnsureIsFoundService)
-      sb.getService(this, EnsureIsFoundService.class, null);
+    ensureService = sb.getService(this, EnsureIsFoundService.class, null);
     if (ensureService == null) {
       if (log.isWarnEnabled()) {
         log.warn("Unable to obtain EnsureIsFoundService");
@@ -99,7 +99,8 @@ implements Component
     sb.addService(PeersService.class, peersSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (peersSP != null) {
       sb.revokeService(PeersService.class, peersSP);
       peersSP = null;

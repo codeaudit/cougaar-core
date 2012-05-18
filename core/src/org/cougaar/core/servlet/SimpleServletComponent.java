@@ -121,7 +121,8 @@ extends BaseServletComponent
    * This is only set during initialization and is constant
    * for the lifetime of the Servlet.
    */
-  public void setParameter(Object o) {
+  @Override
+public void setParameter(Object o) {
     // expecting a List of [String, String]
     if (!(o instanceof List)) {
       throw new IllegalArgumentException(
@@ -147,11 +148,13 @@ extends BaseServletComponent
     this.path = (String) o2;
   }
 
-  protected String getPath() {
+  @Override
+protected String getPath() {
     return path;
   }
 
-  protected Servlet createServlet() {
+  @Override
+protected Servlet createServlet() {
     // load the servlet class
     Class cl;
     try {
@@ -240,22 +243,20 @@ extends BaseServletComponent
     // the agentId is known from "setAgentIdentificationService(..)"
 
     // get the blackboard query service
-    blackboardQuery = (BlackboardQueryService)
-      serviceBroker.getService(
-          servlet,
-          BlackboardQueryService.class,
-          null);
+    blackboardQuery = serviceBroker.getService(
+       servlet,
+       BlackboardQueryService.class,
+       null);
     if (blackboardQuery == null) {
       throw new RuntimeException(
           "Unable to obtain blackboard query service");
     }
 
     // get the logging service (for "getLogger")
-    log = (LoggingService)
-      serviceBroker.getService(
-          servlet,
-          LoggingService.class,
-          null);
+    log = serviceBroker.getService(
+       servlet,
+       LoggingService.class,
+       null);
     if (log == null) {
       // continue loading -- let the "support" use a null-logger.
     }
@@ -266,7 +267,8 @@ extends BaseServletComponent
         path, agentId, blackboardQuery, log);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // release all services
     super.unload();
 
@@ -304,7 +306,8 @@ extends BaseServletComponent
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return classname+"("+path+")";
   }
 }

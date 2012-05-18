@@ -56,12 +56,14 @@ public abstract class ComponentPlugin
   /**
    * Called once after initialization, as a "pre-execute()".
    */
-  protected abstract void setupSubscriptions();
+  @Override
+protected abstract void setupSubscriptions();
   
   /**
    * Called every time this component is scheduled to run.
    */
-  protected abstract void execute();
+  @Override
+protected abstract void execute();
   
   //
   // misc utility methods:

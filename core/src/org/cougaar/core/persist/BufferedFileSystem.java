@@ -131,19 +131,22 @@ public class BufferedFileSystem implements Runnable {
               releaseBuffer(buf);
             }
           }
-          public String toString() {
+          @Override
+         public String toString() {
             return "Write " + nbytes;
           }
         });
       newBuffer();
     }
     
-    public void write(int b) throws IOException {
+    @Override
+   public void write(int b) throws IOException {
       buffer[nbytes++] = (byte) b;
       if (nbytes == BUFSIZE) switchBuffer(nbytes);
     }
 
-    public void write(byte[] b, int offset, int nb) throws IOException {
+    @Override
+   public void write(byte[] b, int offset, int nb) throws IOException {
       while (nb > 0) {
         int tnb = Math.min(nb, BUFSIZE - nbytes);
         System.arraycopy(b, offset, buffer, nbytes, tnb);
@@ -154,15 +157,18 @@ public class BufferedFileSystem implements Runnable {
       }
     }
 
-    public void write(byte[] b) throws IOException {
+    @Override
+   public void write(byte[] b) throws IOException {
       write(b, 0, b.length);
     }
 
-    public void flush() throws IOException {
+    @Override
+   public void flush() throws IOException {
       if (nbytes > 0) switchBuffer(nbytes);
     }
 
-    public void close() throws IOException {
+    @Override
+   public void close() throws IOException {
       flush();
       enqueueJob(new Runnable() {
           public void run() {
@@ -174,7 +180,8 @@ public class BufferedFileSystem implements Runnable {
               throw new BufferedFileException(ioe);
             }
           }
-          public String toString() {
+          @Override
+         public String toString() {
             return "close";
           }
         });
@@ -266,7 +273,8 @@ public class BufferedFileSystem implements Runnable {
         public void run() {
           from.renameTo(to);
         }
-        public String toString() {
+        @Override
+      public String toString() {
           return "rename " + from + " to " + to;
         }
       });

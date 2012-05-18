@@ -69,23 +69,23 @@ public class MetricsBlasterPlugin
 	}
     }
 
-    public void execute() {
+    @Override
+   public void execute() {
     }
 
-    public void setupSubscriptions() {
+    @Override
+   public void setupSubscriptions() {
     }
 
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
-	update = (MetricsUpdateService)
-	    sb.getService(this, MetricsUpdateService.class, null);
-	svc = (MetricsService)
-	    sb.getService(this, MetricsService.class, null);
-	tsvc = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
+	update = sb.getService(this, MetricsUpdateService.class, null);
+	svc = sb.getService(this, MetricsService.class, null);
+	tsvc = sb.getService(this, ThreadService.class, null);
 
 	path = getParameter("path");
 	if (path != null) {

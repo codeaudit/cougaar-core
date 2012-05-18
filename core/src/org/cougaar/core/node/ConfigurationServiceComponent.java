@@ -65,13 +65,15 @@ public class ConfigurationServiceComponent
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     sp = new SP();
     rootsb.addService(ConfigurationService.class, sp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     rootsb.revokeService(ConfigurationService.class, sp);
     sp = null;

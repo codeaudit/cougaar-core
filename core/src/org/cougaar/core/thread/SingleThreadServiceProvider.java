@@ -38,7 +38,8 @@ public class SingleThreadServiceProvider
 	super();
     }
 
-    ThreadStatusService makeThreadStatusService()
+    @Override
+   ThreadStatusService makeThreadStatusService()
     {
 	return new ThreadStatusService() {
 		public int iterateOverStatus(ThreadStatusService.Body body) {
@@ -47,7 +48,8 @@ public class SingleThreadServiceProvider
 	    };
     }
 
-    ThreadService makeThreadServiceProxy()
+    @Override
+   ThreadService makeThreadServiceProxy()
     {
 	proxy = new SingleThreadServiceProxy();
 	return proxy;

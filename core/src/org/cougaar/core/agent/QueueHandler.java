@@ -69,22 +69,20 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
           this, AgentIdentificationService.class, ais);
     }
 
-    mss = (MessageSwitchService)
-      sb.getService(this, MessageSwitchService.class, null);
+    mss = sb.getService(this, MessageSwitchService.class, null);
 
 
     // register message handler to observe all incoming messages
@@ -102,7 +100,8 @@ implements Component
     mss.addMessageHandler(mh);
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
 
 
@@ -112,8 +111,7 @@ implements Component
     // is loaded after the blackboard.  Messages are buffered
     // between the top-level "load()" MTS unpend and our "start()",
     // then released by "startThread()".
-    bb = (BlackboardForAgent)
-      sb.getService(this, BlackboardForAgent.class, null);
+    bb = sb.getService(this, BlackboardForAgent.class, null);
     if (bb == null) {
       throw new RuntimeException(
           "Unable to obtain BlackboardForAgent");
@@ -123,19 +121,22 @@ implements Component
 
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     stopThread();
     bb.suspend();
   }
 
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     bb.resume();
     startThread();
   }
 
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
     stopThread();
     if (bb != null) {
@@ -144,7 +145,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (mss != null) {
@@ -192,8 +194,7 @@ implements Component
             receiveMessages(messages);
           }
         };
-        ThreadService tsvc = (ThreadService)
-          sb.getService(this, ThreadService.class, null);
+        ThreadService tsvc = sb.getService(this, ThreadService.class, null);
         body = new QueueHandlerBody(qc, tsvc);
         sb.releaseService(this, ThreadService.class, tsvc);
       }

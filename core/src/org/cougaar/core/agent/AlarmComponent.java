@@ -60,23 +60,23 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get execution timer
-    xTimer = (NaturalTimeService) 
-      sb.getService(this, NaturalTimeService.class, null);
+    xTimer = sb.getService(this, NaturalTimeService.class, null);
 
     // get real timer
-    rTimer = (RealTimeService) 
-      sb.getService(this, RealTimeService.class, null);
+    rTimer = sb.getService(this, RealTimeService.class, null);
 
     // add alarm service
     asp = new AlarmSP();
     sb.addService(AlarmService.class, asp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     sb.revokeService(AlarmService.class, asp);

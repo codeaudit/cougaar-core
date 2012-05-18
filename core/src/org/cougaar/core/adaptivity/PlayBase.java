@@ -72,7 +72,8 @@ public class PlayBase implements java.io.Serializable {
    * String is approximately the same as the input to the Parser.
    * @return The Play or OperatingModePolicy as a String.
    **/
-  public String toString() {
+  @Override
+public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append(ifClause);
     for (int i = 0; i < operatingModeConstraints.length; i++) {
@@ -82,7 +83,8 @@ public class PlayBase implements java.io.Serializable {
     return buf.toString();
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     int hc = ifClause.hashCode();
     for (int i = 0; i < this.operatingModeConstraints.length; i++) {
       hc = 31 * hc + operatingModeConstraints[i].hashCode();
@@ -90,7 +92,8 @@ public class PlayBase implements java.io.Serializable {
     return hc;
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null) return false;
     if (this.getClass() != o.getClass()) return false;

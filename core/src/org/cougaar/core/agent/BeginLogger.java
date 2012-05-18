@@ -52,13 +52,13 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get our local agent's address
     MessageAddress localAgent = null;
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
@@ -66,8 +66,7 @@ implements Component
     }
 
     // get logging service
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
     // prefix with agent name
     String prefix = localAgent+": ";
@@ -77,13 +76,15 @@ implements Component
       log.info("Loading");
     }
   }
-  public void start() {
+  @Override
+public void start() {
     super.start();
     if (log.isInfoEnabled()) {
       log.info("Starting");
     }
   }
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     if (log.isInfoEnabled()) {
       log.info("Resuming");
@@ -93,19 +94,22 @@ implements Component
   // the component model is "first loaded is last unload", so these
   // are the end-states (i.e. the "*ed" instead of "*ing").
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     if (log.isInfoEnabled()) {
       log.info("Suspended");
     }
   }
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
     if (log.isInfoEnabled()) {
       log.info("Stopped");
     }
   }
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (log.isInfoEnabled()) {
       log.info("Unloaded");

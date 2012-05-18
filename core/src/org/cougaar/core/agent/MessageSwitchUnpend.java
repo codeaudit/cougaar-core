@@ -47,11 +47,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    MessageSwitchUnpendService msus = (MessageSwitchUnpendService)
-      sb.getService(this, MessageSwitchUnpendService.class, null);
+    MessageSwitchUnpendService msus = sb.getService(this, MessageSwitchUnpendService.class, null);
     if (msus == null) {
       throw new RuntimeException(
           "Unable to obtain MessageSwitchUnpendService");

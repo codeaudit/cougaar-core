@@ -92,15 +92,14 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
     // get root sb
-    NodeControlService ncs = (NodeControlService)
-     sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs == null) {
       throw new RuntimeException(
           "Unable to obtain NodeControlService");
@@ -109,16 +108,14 @@ implements Component
     sb.releaseService(this, NodeControlService.class, ncs);
 
     // get wp
-    wps = (WhitePagesService) 
-      sb.getService(this, WhitePagesService.class, null);
+    wps = sb.getService(this, WhitePagesService.class, null);
     if (wps == null) {
       throw new RuntimeException(
           "Unable to obtain WhitePagesService");
     }
 
     // get thread
-    ThreadService threadService = (ThreadService)
-      sb.getService(this, ThreadService.class, null);
+    ThreadService threadService = sb.getService(this, ThreadService.class, null);
     Runnable pollRunner = 
       new Runnable() {
         public void run() {
@@ -139,7 +136,8 @@ implements Component
     rootsb.addService(IncarnationService.class, isp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (pollThread != null) {
       pollThread.cancelTimer();
       pollThread = null;
@@ -429,7 +427,8 @@ implements Component
       return ret;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return
         "(entry inc="+inc+" callbacks["+
         (callbacks == null ? 0 : callbacks.size())+

@@ -32,11 +32,13 @@ package org.cougaar.core.agent.service.alarm;
 public class RealTimer extends Timer {
   public RealTimer() {}
 
-  protected String getName() {
+  @Override
+protected String getName() {
     return "RealTimer";
   }
 
-  protected void report(Alarm alarm) {
+  @Override
+protected void report(Alarm alarm) {
     long now = currentTimeMillis();
     long at = alarm.getExpirationTime();
     if ((at+EPSILON)<now) {

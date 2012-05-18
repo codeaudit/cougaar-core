@@ -110,7 +110,8 @@ public final class LeaseDenied implements Serializable {
     return data;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return
       "(lease-denied uid="+uid+
       " reason="+reason+

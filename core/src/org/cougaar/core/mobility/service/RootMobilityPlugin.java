@@ -77,7 +77,8 @@ extends AbstractMobilityPlugin
   //
 
   /** a new request for the control of a local agent. */
-  protected void addedAgentControl(AgentControl control) {
+  @Override
+protected void addedAgentControl(AgentControl control) {
     if (!(isNode)) return;
 
     AbstractTicket abstractTicket = control.getAbstractTicket();
@@ -100,7 +101,8 @@ extends AbstractMobilityPlugin
   }
 
   /** a control was changed. */
-  protected void changedAgentControl(AgentControl control) {
+  @Override
+protected void changedAgentControl(AgentControl control) {
     if (!(isNode)) return;
 
     AbstractTicket abstractTicket = control.getAbstractTicket();
@@ -123,7 +125,8 @@ extends AbstractMobilityPlugin
   }
   
   /** a control was removed. */
-  protected void removedAgentControl(AgentControl control) {
+  @Override
+protected void removedAgentControl(AgentControl control) {
     if (!(isNode)) return;
 
     AbstractTicket abstractTicket = control.getAbstractTicket();
@@ -147,7 +150,8 @@ extends AbstractMobilityPlugin
 
 
   /** an agent registers as a mobile agent in the local node. */
-  protected void registerAgent(
+  @Override
+protected void registerAgent(
       MessageAddress id,
       ComponentDescription desc,
       MobilityClient agent) {
@@ -200,7 +204,8 @@ extends AbstractMobilityPlugin
   }
 
   /** an agent unregisters itself from the local mobility registry. */
-  protected void unregisterAgent(
+  @Override
+protected void unregisterAgent(
       MessageAddress id) {
     synchronized (entries) {
       AgentEntry ae = (AgentEntry) entries.get(id);
@@ -823,6 +828,7 @@ extends AbstractMobilityPlugin
           dequeue(id, r, pendingTuples);
         }
       }
+      @Override
       public String toString() {
         return r.toString();
       }
@@ -970,7 +976,8 @@ extends AbstractMobilityPlugin
       }
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "control request for agent "+id+
         ", state is <"+
@@ -994,7 +1001,8 @@ extends AbstractMobilityPlugin
       this.op = op;
       this.obj = obj;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "queued "+
         ((op == ADD) ? "add" :
@@ -1106,11 +1114,13 @@ extends AbstractMobilityPlugin
         publishChangeLater(transferControl);
       }
 
+      @Override
       public void addAgent(ComponentDescription desc) {
         StateTuple tuple = new StateTuple(desc, null);
         agentContainer.addAgent(id, tuple);
       }
 
+      @Override
       public void removeAgent() {
         agentContainer.removeAgent(id);
       }

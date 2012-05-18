@@ -88,11 +88,11 @@ implements Component
     this.log = log;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    bundleService = (BundleService)
-      sb.getService(bundleClient, BundleService.class, null);
+    bundleService = sb.getService(bundleClient, BundleService.class, null);
     if (bundleService == null) {
       throw new RuntimeException("Unable to obtain BundleService");
     }
@@ -102,7 +102,8 @@ implements Component
     sb.addService(AdvertiseService.class, advertiseSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (advertiseSP != null) {
       sb.revokeService(AdvertiseService.class, advertiseSP);
       advertiseSP = null;

@@ -44,7 +44,8 @@ extends ContainerSupport
   /** The Insertion point for any Agent, defined relative to the AgentManager. */
   public static final String INSERTION_POINT = AgentManager.INSERTION_POINT + ".Agent";
 
-  public boolean add(Object o) {
+  @Override
+public boolean add(Object o) {
     try {
       return super.add(o);
     } catch (RuntimeException re) {
@@ -54,7 +55,8 @@ extends ContainerSupport
     }
   }
 
-  protected String specifyContainmentPoint() {
+  @Override
+protected String specifyContainmentPoint() {
     return INSERTION_POINT;
   }
 

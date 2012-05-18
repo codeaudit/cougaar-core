@@ -85,7 +85,8 @@ public class FeedLoader extends QosComponent {
         }
     }
 
-    public void load() {
+    @Override
+   public void load() {
         super.load();
         if (svc != null && name != null && classname != null && args != null) {
             Object feed = null;

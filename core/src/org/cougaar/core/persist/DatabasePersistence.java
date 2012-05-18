@@ -136,7 +136,8 @@ public class DatabasePersistence
   private PreparedStatement cleanDeltas;
   private String deltaTable;
 
-  protected void handleParameter(String param) {
+  @Override
+protected void handleParameter(String param) {
     String value;
     if ((value = parseParamValue(param, PERSISTENCE_DB_DRIVER_PREFIX)) != null) {
       databaseDriver = value;
@@ -412,19 +413,23 @@ public class DatabasePersistence
       this.full = full;
     }
 
-    public void close() throws IOException {
+    @Override
+   public void close() throws IOException {
       final int cnt = count;
       final byte[] bfr = buf;
       InputStream is = new InputStream() {
         int n = 0;
-        public int read() {
+        @Override
+      public int read() {
           if (n >= cnt) return -1;
           return bfr[n++];
         }
-        public int read(byte[] rbuf) {
+        @Override
+      public int read(byte[] rbuf) {
           return read(rbuf, 0, rbuf.length);
         }
-        public int read(byte[] rbuf, int offset, int len) {
+        @Override
+      public int read(byte[] rbuf, int offset, int len) {
           len= Math.min(len, cnt - n);
           if (len == 0) return -1;
           System.arraycopy(bfr, n, rbuf, offset, len);
@@ -526,10 +531,12 @@ public class DatabasePersistence
       theObject = anObject;
       theHashCode = System.identityHashCode(theObject);
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return theHashCode;
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       return ((EqWrapper) o).theObject == theObject;
     }
   }
@@ -543,7 +550,8 @@ public class DatabasePersistence
    * Override adapter version since we actually have a database
    * connection we can return instead of throwing an exception.
    */
-  public Connection getDatabaseConnection(Object locker) {
+  @Override
+public Connection getDatabaseConnection(Object locker) {
     if (locker == null) throw new IllegalArgumentException("locker is null");
     synchronized (connectionLock) {
       if (connectionLocker != null) {
@@ -566,7 +574,8 @@ public class DatabasePersistence
       return activeConnection;
     }
   }
-  public void releaseDatabaseConnection(Object locker) {
+  @Override
+public void releaseDatabaseConnection(Object locker) {
     synchronized (connectionLock) {
       if (locker != connectionLocker.theObject) {
         throw new IllegalArgumentException("locker mismatch " +
@@ -640,13 +649,13 @@ public class DatabasePersistence
     }
     public PreparedStatement prepareStatement(String sql) throws SQLException {
       if (!active) throw new SQLException("getDatabaseConnection not called");
-      PreparedStatement statement = (PreparedStatement)new WrappedPreparedStatement(c.prepareStatement(sql));
+      PreparedStatement statement = new WrappedPreparedStatement(c.prepareStatement(sql));
       addStatement(statement);
       return statement;
     }
     public PreparedStatement prepareStatement(String sql, int a, int b) throws SQLException {
       if (!active) throw new SQLException("getDatabaseConnection not called");
-      PreparedStatement statement = (PreparedStatement)new WrappedPreparedStatement(c.prepareStatement(sql, a, b));
+      PreparedStatement statement = new WrappedPreparedStatement(c.prepareStatement(sql, a, b));
       addStatement(statement);
       return statement;
     }

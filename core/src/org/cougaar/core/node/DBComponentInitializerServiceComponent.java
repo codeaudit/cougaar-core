@@ -56,11 +56,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    LoggingService log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    LoggingService log = sb.getService(this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
@@ -79,7 +79,7 @@ implements Component
             "Not loading the DBInitializer service"+
             ", it already exists");
       }
-      dbInit = (DBInitializerService) sb.getService(
+      dbInit = sb.getService(
           this, DBInitializerService.class, null);
     } else if (experimentId == null) {
       if (log.isInfoEnabled()) {
@@ -135,7 +135,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (theInitSP != null) {
       sb.revokeService(DBInitializerService.class, theInitSP);
       theInitSP = null;

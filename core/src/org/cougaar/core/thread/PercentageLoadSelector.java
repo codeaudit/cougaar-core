@@ -75,12 +75,10 @@ public class PercentageLoadSelector
 	comparator = new DistanceComparator();
 
 
-	ThreadListenerService tls = (ThreadListenerService)
-	    sb.getService(this, ThreadListenerService.class, null);
+	ThreadListenerService tls = sb.getService(this, ThreadListenerService.class, null);
 	if (tls != null) tls.addListener(this);
 
-	ThreadService tsvc = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
+	ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 	Runnable body = new SnapShotter();
 	Schedulable sched = tsvc.getThread(this, body);
 	sched.schedule(5000, 1000);
@@ -150,7 +148,8 @@ public class PercentageLoadSelector
 	orderedChildren = result;
     }
 
-    public SchedulableObject getNextPending() {
+    @Override
+   public SchedulableObject getNextPending() {
 	if (orderedChildren == null) {
 	    // Snapshotter hasn't run yet.  Round-robin instead.
 	    return super.getNextPending();

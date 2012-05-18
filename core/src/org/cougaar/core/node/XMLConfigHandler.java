@@ -84,7 +84,8 @@ public class XMLConfigHandler extends DefaultHandler {
     return agents;
   }
 
-  public void startDocument() {
+  @Override
+public void startDocument() {
     // not thread-safe, but close enough to warn developers
     if (state != STATE_INITIAL) {
       throw new RuntimeException(
@@ -96,7 +97,8 @@ public class XMLConfigHandler extends DefaultHandler {
     state = STATE_PARSING;
   }
 
-  public void endDocument() {
+  @Override
+public void endDocument() {
     if (state != STATE_PARSING) {
       throw new RuntimeException(
           "ContentHandler "+
@@ -109,7 +111,8 @@ public class XMLConfigHandler extends DefaultHandler {
   }
 
   // begin element
-  public void startElement(
+  @Override
+public void startElement(
       String namespaceURI,
       String localName,
       String qName,
@@ -156,7 +159,8 @@ public class XMLConfigHandler extends DefaultHandler {
   }
 
   // misc characters within an element, e.g. argument data
-  public void characters(char[] ch, int start, int length)
+  @Override
+public void characters(char[] ch, int start, int length)
     throws SAXException {
 
     if (logger.isDetailEnabled()) {
@@ -175,7 +179,8 @@ public class XMLConfigHandler extends DefaultHandler {
   }
 
   // end element
-  public void endElement(String namespaceURI, String localName, String qName)
+  @Override
+public void endElement(String namespaceURI, String localName, String qName)
     throws SAXException {
 
     if (logger.isDetailEnabled()) {
@@ -204,13 +209,15 @@ public class XMLConfigHandler extends DefaultHandler {
   }
 
   // xml parser error
-  public void error(SAXParseException exception) throws SAXException {
+  @Override
+public void error(SAXParseException exception) throws SAXException {
     logger.error("Error parsing the file", exception);
     super.error(exception);
   }
 
   // xml parser warning
-  public void warning(SAXParseException exception) throws SAXException {
+  @Override
+public void warning(SAXParseException exception) throws SAXException {
     logger.warn("Warning parsing the file", exception);
     super.warning(exception);
   }

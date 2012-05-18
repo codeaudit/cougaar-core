@@ -45,7 +45,8 @@ public final class MetricsServiceProvider
     private MetricsUpdateService updater;
     private DataFeedRegistrationService registrar;
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 	updater = new NullMetricsUpdateServiceImpl() ;
 	retriever = new NullMetricsServiceImpl ();
@@ -53,8 +54,7 @@ public final class MetricsServiceProvider
 	registrar = (DataFeedRegistrationService) retriever;
 
 	ServiceBroker sb = getServiceBroker();
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
 	ServiceBroker rootsb = ncs.getRootServiceBroker();
 
 	rootsb.addService(MetricsUpdateService.class, this);

@@ -86,7 +86,8 @@ public final class StepOptions implements Serializable {
   public long getTimeoutTime() {
     return timeoutTime;
   }
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof StepOptions)) {
@@ -108,14 +109,16 @@ public final class StepOptions implements Serializable {
         (timeoutTime == so.timeoutTime);
     }
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return 
       ((ownerId != null) ? ownerId.hashCode() : 5) ^
       ticket.hashCode() ^
       ((source != null) ? source.hashCode() : 7);
   }
   
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "step {"+
       "\n  ownerId: "+ownerId+

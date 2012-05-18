@@ -69,7 +69,7 @@ public class NodeMessage
    * @return MessageAddress Identifies the originator of this directive
    */
   public final MessageAddress getSource(){
-    return (MessageAddress)getOriginator();
+    return getOriginator();
   }
 
   /**
@@ -79,7 +79,7 @@ public class NodeMessage
    * @return MessageAddress Identifies the reciever of the directive
    */
   public final MessageAddress getDestination() {
-    return (MessageAddress)getTarget();
+    return getTarget();
   }
 
   /**
@@ -100,7 +100,8 @@ public class NodeMessage
     setTarget(adestination);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "<NodeMessage "+getSource()+" - "+getDestination()+">";
   }
 }

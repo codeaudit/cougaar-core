@@ -143,7 +143,8 @@ extends Subscription
     }
   }
 
-  protected void privateAdd(Object o, boolean isVisible) {
+  @Override
+protected void privateAdd(Object o, boolean isVisible) {
     // always fill in the map, even if (!isVisible)
     if (o instanceof UniqueObject) {
       UID uid = ((UniqueObject) o).getUID();
@@ -156,7 +157,8 @@ extends Subscription
     }
   }
 
-  protected void privateChange(Object o, List changes, boolean isVisible) {
+  @Override
+protected void privateChange(Object o, List changes, boolean isVisible) {
     if (o instanceof UniqueObject) {
       UID uid = ((UniqueObject) o).getUID();
       if (uid != null) {
@@ -177,7 +179,8 @@ extends Subscription
     }
   }
 
-  protected void privateRemove(Object o, boolean isVisible) {
+  @Override
+protected void privateRemove(Object o, boolean isVisible) {
     if (removedList == null) {
       removeEntry(o);     // remove immediately
     } else {
@@ -194,7 +197,8 @@ extends Subscription
     }
   }
 
-  protected void resetChanges() {
+  @Override
+protected void resetChanges() {
     super.resetChanges();
     if (removedList != null) {
       // process removals
@@ -208,7 +212,8 @@ extends Subscription
     }
   }
 
-  public boolean apply(Envelope envelope) {
+  @Override
+public boolean apply(Envelope envelope) {
     if (envelope instanceof TimestampedEnvelope) {
       TimestampedEnvelope te = (TimestampedEnvelope) envelope;
       long closeTime = te.getTransactionCloseTime();

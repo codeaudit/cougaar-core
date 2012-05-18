@@ -78,7 +78,8 @@ public class WhitePagesServlet extends ComponentServlet {
     this.wps = wps;
   }
 
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest sreq,
       HttpServletResponse sres) throws IOException {
     // create a new handler per request, so we don't mangle our

@@ -103,7 +103,8 @@ public class DynamicSortedQueue<T extends Schedulable> {
 	return result;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
 	return "<DQ[" +store.size()+ "] " +store.toString()+ ">";
     }
 

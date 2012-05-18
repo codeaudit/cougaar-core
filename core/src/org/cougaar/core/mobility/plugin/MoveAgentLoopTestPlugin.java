@@ -50,18 +50,20 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
     };
     
   
-    public void load() {
+    @Override
+   public void load() {
         super.load();
         ServiceBroker sb = getServiceBroker();
-        log = (LoggingService) sb.getService(this, LoggingService.class, null);
-        NodeIdentificationService nis = (NodeIdentificationService) sb.getService(this, NodeIdentificationService.class, null);
+        log = sb.getService(this, LoggingService.class, null);
+        NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
         localNode = nis.getMessageAddress();
-        domain = (DomainService) sb.getService(this, DomainService.class, null);
+        domain = sb.getService(this, DomainService.class, null);
         mobilityFactory = (MobilityFactory) domain.getFactory("mobility");
-        alarmService = (AlarmService)  sb.getService(this, AlarmService.class, null);
+        alarmService = sb.getService(this, AlarmService.class, null);
     }
     // release services:
-    public void unload() {
+    @Override
+   public void unload() {
         super.unload();
         ServiceBroker sb = getServiceBroker();
         if (domain != null) {
@@ -86,7 +88,8 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
         }
         
     }
-    public void start() {
+    @Override
+   public void start() {
         mobileAgent = MessageAddress.getMessageAddress(getParameter(MOBILE_AGENT_PARAM,"Source1"));
         originNode= MessageAddress.getMessageAddress(getParameter(ORIGIN_NODE_PARAM,"NODE1"));        
         destNode= MessageAddress.getMessageAddress(getParameter(DEST_NODE_PARAM,"NODE2"));
@@ -251,12 +254,14 @@ public class MoveAgentLoopTestPlugin extends ParameterizedPlugin {
             }
     }
     
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
         // TODO Auto-generated method stub
         
     }
     
-    protected void execute() {
+    @Override
+   protected void execute() {
         // TODO Auto-generated method stub
         
     }

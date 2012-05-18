@@ -71,16 +71,18 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
   /**
    * Override to get a logger on load
    */
-  public void load() {
+  @Override
+public void load() {
     super.load();
-    loggingService = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
+    loggingService = getServiceBroker().getService(this, LoggingService.class, null);
     logger = LoggingServiceWithPrefix.add(loggingService, getAgentIdentifier().toString() + ": ");
   }
 
   /**
    * Override to release a logger on load
    */
-  public void unload() {
+  @Override
+public void unload() {
     if (loggingService != null) {
       getServiceBroker().releaseService(this, LoggingService.class, loggingService);
       logger = null;
@@ -162,6 +164,7 @@ public abstract class ServiceUserPlugin extends ComponentPlugin {
 
   private Alarm createAlarm(long time) {
     return new PluginAlarm(time) {
+      @Override
       public BlackboardService getBlackboardService() {
         if (blackboard == null) {
           if (logger != null && logger.isWarnEnabled()) {

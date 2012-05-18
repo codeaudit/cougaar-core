@@ -68,7 +68,8 @@ public class AdaptivityEngine extends ServiceUserPlugin {
       return (this == o);
     }
 
-    public boolean wantAdds() {
+    @Override
+   public boolean wantAdds() {
       return true;
     }
   }
@@ -143,16 +144,11 @@ public class AdaptivityEngine extends ServiceUserPlugin {
     if (playbookService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      playbookService = (PlaybookReadService)
-        sb.getService(this, PlaybookReadService.class, null);
-      operatingModeService = (OperatingModeService)
-        sb.getService(this, OperatingModeService.class, null);
-      conditionService = (ConditionService)
-        sb.getService(this, ConditionService.class, null);
-      uidService = (UIDService)
-        sb.getService(this, UIDService.class, null);
-      metricsService = (MetricsService)
-        sb.getService(this, MetricsService.class, null);
+      playbookService = sb.getService(this, PlaybookReadService.class, null);
+      operatingModeService = sb.getService(this, OperatingModeService.class, null);
+      conditionService = sb.getService(this, ConditionService.class, null);
+      uidService = sb.getService(this, UIDService.class, null);
+      metricsService = sb.getService(this, MetricsService.class, null);
       variableEvaluator = new StandardVariableEvaluator(sb);
 
       conditionService.addListener(conditionListener);
@@ -168,7 +164,8 @@ public class AdaptivityEngine extends ServiceUserPlugin {
   /**
    * Cleanup before we stop -- release all services.
    **/
-  public void stop() {
+  @Override
+public void stop() {
     ServiceBroker sb = getServiceBroker();
     if (playbookService != null) {
       playbookService.removeListener(playbookListener);
@@ -193,7 +190,8 @@ public class AdaptivityEngine extends ServiceUserPlugin {
    * alternative would be to introduce delays before responding to
    * reduce chaotic behavior.
    **/
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     Iterator iter = getParameters().iterator();
     if (iter.hasNext()) {
       String param = (String) iter.next();
@@ -226,7 +224,8 @@ public class AdaptivityEngine extends ServiceUserPlugin {
    * available, the operating modes are updated from the current
    * plays.
    **/
-  public synchronized void execute() {
+  @Override
+public synchronized void execute() {
     boolean debug = logger.isDebugEnabled();
     if (debug) {
       if (conditionListenerSubscription.hasChanged()) logger.debug("Condition changed");

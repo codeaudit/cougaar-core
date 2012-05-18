@@ -81,11 +81,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
     localAgent = find_local_agent();
 
@@ -123,9 +123,8 @@ implements Component
           return localAgent.getAddress();
         }
       };
-    agentIdentityService = (AgentIdentityService) 
-      sb.getService(
-          agentIdentityClient, AgentIdentityService.class, null);
+    agentIdentityService = sb.getService(
+       agentIdentityClient, AgentIdentityService.class, null);
     if (agentIdentityService == null) {
       if (log.isInfoEnabled()) {
         log.info("Agent identity service not found");
@@ -152,8 +151,7 @@ implements Component
           moveTargetNode = destinationNode;
         }
       };
-    mns = (MobilityNotificationService)
-      sb.getService(mnc, MobilityNotificationService.class, null);
+    mns = sb.getService(mnc, MobilityNotificationService.class, null);
     if (mns == null && log.isInfoEnabled()) {
       log.info(
          "Unable to obtain MobilityNotificationService"+
@@ -161,7 +159,8 @@ implements Component
     }
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
 
     if (moveTargetNode == null) {
@@ -182,7 +181,8 @@ implements Component
     }
   }
 
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
 
     // re-establish our identity
@@ -239,7 +239,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (mns != null) {
@@ -259,8 +260,7 @@ implements Component
   }
 
   private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       return null;
     }
@@ -298,7 +298,6 @@ implements Component
         }
       };
     ps = 
-      (PersistenceService)
       sb.getService(
           pc, PersistenceService.class, null);
   }

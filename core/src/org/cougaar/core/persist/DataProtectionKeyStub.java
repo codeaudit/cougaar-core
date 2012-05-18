@@ -37,7 +37,8 @@ public class DataProtectionKeyStub implements DataProtectionKey {
 
   byte xor = (byte) random.nextInt();
 
-  public String toString() {
-    return "key.xor(" + (((int) xor) & 0xff) + ")";
+  @Override
+public String toString() {
+    return "key.xor(" + (xor & 0xff) + ")";
   }
 }

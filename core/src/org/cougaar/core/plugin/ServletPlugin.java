@@ -121,7 +121,8 @@ public abstract class ServletPlugin extends ComponentPlugin {
     return path;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     Collection params = getParameters();
@@ -153,8 +154,7 @@ public abstract class ServletPlugin extends ComponentPlugin {
     encAgentName = (agentName == null ? null : encode(agentName));
 
     // get our servlet service
-    servletService = (ServletService)
-      getServiceBroker().getService(this, ServletService.class, null);
+    servletService = getServiceBroker().getService(this, ServletService.class, null);
     if (servletService == null) {
       throw new RuntimeException("Unable to obtain ServletService");
     }
@@ -168,7 +168,8 @@ public abstract class ServletPlugin extends ComponentPlugin {
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (servletService != null) {
       // this will automatically unregister our servlet
       getServiceBroker().releaseService(
@@ -184,13 +185,15 @@ public abstract class ServletPlugin extends ComponentPlugin {
     return encAgentName;
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     if (isTrans) {
       todo = (TodoSubscription) blackboard.subscribe(new TodoSubscription("x"));
     }
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     if (!isTrans) return;
     ensureTodo();
     if (!todo.hasChanged()) return;
@@ -298,6 +301,7 @@ public abstract class ServletPlugin extends ComponentPlugin {
    */
   protected HttpServlet createServlet() {
     return new HttpServlet() {
+      @Override
       protected void service(
           HttpServletRequest req, HttpServletResponse resp
           ) throws ServletException, IOException {

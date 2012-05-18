@@ -91,11 +91,13 @@ extends AbstractTicket {
       }
     }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return moveTicket.hashCode();
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof TransferTicket)) {
@@ -106,7 +108,8 @@ extends AbstractTicket {
     }
   }
   
-  public String toString() {
+  @Override
+public String toString() {
     return "Node-to-Node transfer of "+moveTicket;
   }
 }

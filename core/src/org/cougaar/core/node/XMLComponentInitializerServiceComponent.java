@@ -52,7 +52,8 @@ public class XMLComponentInitializerServiceComponent
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     Logger logger = Logging.getLogger(getClass());
@@ -77,7 +78,8 @@ public class XMLComponentInitializerServiceComponent
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (theSP != null) {
       sb.revokeService(ComponentInitializerService.class, theSP);
       theSP = null;

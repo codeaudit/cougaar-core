@@ -70,21 +70,23 @@ extends DiscoveryBase
       }
     };
 
-  protected String getConfigPrefix() {
+  @Override
+protected String getConfigPrefix() {
     return "org.cougaar.core.wp.resolver.multicast.";
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    configService = (ConfigService)
-      sb.getService(configClient, ConfigService.class, null);
+    configService = sb.getService(configClient, ConfigService.class, null);
     if (configService == null) {
       throw new RuntimeException("Unable to obtain ConfigService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (configService != null) {
       sb.releaseService(configClient, ConfigService.class, configService);
       configService = null;
@@ -97,11 +99,13 @@ extends DiscoveryBase
     return MulticastUtil.getBootEntry(b);
   }
 
-  protected Map lookup(Object bootObj) {
+  @Override
+protected Map lookup(Object bootObj) {
     throw new InternalError("should use MulticastPoller!");
   }
 
-  protected Poller createPoller(Object bootObj) {
+  @Override
+protected Poller createPoller(Object bootObj) {
     return new MulticastPoller(bootObj);
   }
 
@@ -139,7 +143,8 @@ extends DiscoveryBase
           ThreadService.WILL_BLOCK_LANE);
     }
 
-    public void start() {
+    @Override
+   public void start() {
       ds.update(null);
       synchronized (lock) {
         if (running) {
@@ -150,7 +155,8 @@ extends DiscoveryBase
       listenThread.start();
     }
 
-    public void stop() {
+    @Override
+   public void stop() {
       if (sendSoc != null) {
         try {
           sendSoc.close();
@@ -169,7 +175,8 @@ extends DiscoveryBase
       }
     }
 
-    public void doLookup() {
+    @Override
+   public void doLookup() {
       // no lookup in this thread, but we send our ARP here.
       // The reply will arrive in our listenThread.
       sendQuery();

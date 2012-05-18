@@ -54,7 +54,8 @@ public class PolicyInjectorPlugin extends ComponentPlugin {
     logger = ls;
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     String here = getAgentIdentifier().toString();
     for (Iterator fileIterator = getParameters().iterator(); 
 	 fileIterator.hasNext();) {
@@ -78,7 +79,8 @@ public class PolicyInjectorPlugin extends ComponentPlugin {
     }
   }
   
-  public void execute() {
+  @Override
+public void execute() {
   }
 
 }

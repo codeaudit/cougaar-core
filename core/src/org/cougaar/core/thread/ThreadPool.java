@@ -114,7 +114,8 @@ class ThreadPool {
             }
         }
                
-        public final void run() {
+        @Override
+      public final void run() {
             synchronized (runLock) {
                 while (true) {
                     
@@ -147,7 +148,8 @@ class ThreadPool {
             }
         }
 
-        public void start() {
+        @Override
+      public void start() {
             throw new RuntimeException("You can't call start() on a PooledThread");
         }
 
@@ -382,7 +384,8 @@ class ThreadPool {
     		this.name = "Run lock " +name;
     	}
     	
-    	public String toString() {
+    	@Override
+      public String toString() {
     		return name;
     	}
     }

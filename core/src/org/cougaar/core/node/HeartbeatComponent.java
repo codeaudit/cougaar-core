@@ -56,7 +56,8 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     if (isHeartbeatOn) {
       heartbeat = new Heartbeat();
@@ -64,7 +65,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (isHeartbeatOn && heartbeat != null) {
       heartbeat.stop();

@@ -47,7 +47,8 @@ import org.cougaar.util.log.Logging;
 public class DAB 
   extends ServiceFilter
 {
-  public int getPriority() { return MAX_PRIORITY; }
+  @Override
+public int getPriority() { return MAX_PRIORITY; }
   Logger logger;
 
   public DAB() {
@@ -56,7 +57,8 @@ public class DAB
   }
   public void setParameter(Object o) {}
 
-  protected Class getBinderClass(Object child) {
+  @Override
+protected Class getBinderClass(Object child) {
     return DABber.class;
   }
 
@@ -74,10 +76,12 @@ public class DAB
 
     // this method specifies a binder proxy to use, so as to avoid exposing the binder
     // itself to the lower level objects.
-    protected ContainerAPI createContainerProxy() { return this; }
+    @Override
+   protected ContainerAPI createContainerProxy() { return this; }
 
     // this method installs the "filtering" service broker
-    protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
+    @Override
+   protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
       return sb;
     }
   }

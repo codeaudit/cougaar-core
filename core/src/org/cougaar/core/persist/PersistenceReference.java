@@ -41,7 +41,8 @@ public class PersistenceReference implements Serializable {
   public int intValue() {
     return id;
   }
-  public String toString() {
+  @Override
+public String toString() {
     return String.valueOf(id);
   }
 }

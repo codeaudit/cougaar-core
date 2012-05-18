@@ -63,17 +63,18 @@ public class RemoteAgentServlet
     public RemoteAgentServlet(ServiceBroker sb) {
 	super(sb);
 
-	agentStatusService = (AgentStatusService)
-	    sb.getService(this, AgentStatusService.class, null);
+	agentStatusService = sb.getService(this, AgentStatusService.class, null);
     }
 
 
 
-    public String getPath() {
+    @Override
+   public String getPath() {
 	return "/metrics/remote/agents";
     }
 
-    public String getTitle () {
+    @Override
+   public String getTitle () {
 	return "Remote Agent Status for Node " + getNodeID();
     }
 
@@ -86,7 +87,8 @@ public class RemoteAgentServlet
 	}
     }
 
-    public void printPage(HttpServletRequest request, PrintWriter out) {
+    @Override
+   public void printPage(HttpServletRequest request, PrintWriter out) {
 	if (agentStatusService == null) return;
 	// Get list of All Agents in society
 	Set matches = agentStatusService.getRemoteAgents();

@@ -188,7 +188,7 @@ public final class ClusterContextTable {
             "Address \""+ma+"\" is not an Agent on this node.");
       }
     } else {
-      MessageAddress oldMA = (MessageAddress)cc.getMessageAddress();
+      MessageAddress oldMA = cc.getMessageAddress();
       if ((ma != null) ? ma.equals(oldMA) : (oldMA == null)) {
         // valid nesting, but rare in practice
         withContextState(new MessageContext(cc, from, to), thunk);

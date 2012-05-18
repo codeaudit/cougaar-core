@@ -121,7 +121,8 @@ public class CommunityServiceProvider extends ComponentSupport {
     this.wp = wp;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     refreshPeriod = args.getLong("refreshPeriod", DEFAULT_REFRESH_PERIOD);
@@ -130,8 +131,7 @@ public class CommunityServiceProvider extends ComponentSupport {
     ServiceBroker sb = getServiceBroker();
 
     // optional root-level sb
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs != null) {
       rootsb = ncs.getRootServiceBroker();
       sb.releaseService(this, NodeControlService.class, ncs);
@@ -143,7 +143,8 @@ public class CommunityServiceProvider extends ComponentSupport {
     the_sb.addService(CommunityService.class, sp);
   }
   
-  public void start() {
+  @Override
+public void start() {
     super.start();
 
     // start our refresh thread
@@ -160,7 +161,8 @@ public class CommunityServiceProvider extends ComponentSupport {
     thread.schedule(refreshPeriod);
   }
 
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
 
     // stop our refresh thread
@@ -170,7 +172,8 @@ public class CommunityServiceProvider extends ComponentSupport {
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     // revoke our service
@@ -819,15 +822,18 @@ public class CommunityServiceProvider extends ComponentSupport {
     public void communityChanged(CommunityChangeEvent event) {
       l.communityChanged(event);
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return System.identityHashCode(l);
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) return true;
       if (!(o instanceof ListenerImpl)) return false;
       return l == ((ListenerImpl) o).l;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return "(listener for community "+(s.length() == 0 ? "*" : s)+")";
     }
   }

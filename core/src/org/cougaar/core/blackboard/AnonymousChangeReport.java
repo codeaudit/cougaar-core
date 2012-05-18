@@ -64,7 +64,8 @@ public final class AnonymousChangeReport implements ChangeReport {
 
   private Object readResolve() { return INSTANCE; }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "anonymous";
   }
 
@@ -74,8 +75,11 @@ public final class AnonymousChangeReport implements ChangeReport {
   private static class AnonList extends AbstractList
     implements RandomAccess, Serializable {
       private AnonList() { }
+      @Override
       public int size() {return 1;}
+      @Override
       public boolean contains(Object obj) {return (obj == INSTANCE);}
+      @Override
       public Object get(int index) {
         if (index != 0)
           throw new IndexOutOfBoundsException("Index: "+index+", Size: 1");
@@ -90,6 +94,7 @@ public final class AnonymousChangeReport implements ChangeReport {
     implements Serializable
     {
       private AnonSet() {}
+      @Override
       public Iterator iterator() {
         return new Iterator() {
           private boolean hasNext = true;
@@ -108,7 +113,9 @@ public final class AnonymousChangeReport implements ChangeReport {
           }
         };
       }
+      @Override
       public int size() {return 1;}
+      @Override
       public boolean contains(Object obj) {return (obj == INSTANCE);}
       private Object readResolve() { return SET; }
       private static final long serialVersionUID = 409580998934879938L;

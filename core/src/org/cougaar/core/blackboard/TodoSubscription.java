@@ -209,7 +209,8 @@ public class TodoSubscription extends Subscription {
     return (active == null ? Collections.EMPTY_SET : active);
   }
 
-  protected void resetChanges() {
+  @Override
+protected void resetChanges() {
     super.resetChanges();
     if (active != null) {
       active.clear();
@@ -217,13 +218,15 @@ public class TodoSubscription extends Subscription {
   }
 
   /** For infrastructure use only */
-  public void fill(Envelope envelope) {
+  @Override
+public void fill(Envelope envelope) {
     // we only care about rehydrated "pending envelopes"
     apply(envelope);
   }
 
   /** For infrastructure use only */
-  public boolean apply(Envelope envelope) {
+  @Override
+public boolean apply(Envelope envelope) {
     if (envelope instanceof TodoEnvelope) {
       TodoEnvelope te = (TodoEnvelope) envelope;
       if (name.equals(te.getName())) {
@@ -238,9 +241,12 @@ public class TodoSubscription extends Subscription {
   }
 
   // we override "apply", so these methods are never called.
-  protected void privateAdd(Object o, boolean isVisible) { die(); }
-  protected void privateRemove(Object o, boolean isVisible) { die(); }
-  protected void privateChange(Object o, List changes, boolean isVisible) {
+  @Override
+protected void privateAdd(Object o, boolean isVisible) { die(); }
+  @Override
+protected void privateRemove(Object o, boolean isVisible) { die(); }
+  @Override
+protected void privateChange(Object o, List changes, boolean isVisible) {
     die();
   }
   private void die() { throw new InternalError(); }
@@ -258,7 +264,8 @@ public class TodoSubscription extends Subscription {
       this.isBulk = isBulk;
     }
 
-    public Envelope newInstance() {
+    @Override
+   public Envelope newInstance() {
       return new TodoEnvelope(name, o, isBulk);
     }
 
@@ -266,6 +273,7 @@ public class TodoSubscription extends Subscription {
     public Object getObject() { return o; }
     public boolean isBulk() { return isBulk; }
 
-    public String toString() { return "TodoEnvelope for "+name; }
+    @Override
+   public String toString() { return "TodoEnvelope for "+name; }
   }
 }

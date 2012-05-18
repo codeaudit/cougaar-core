@@ -47,7 +47,8 @@ import org.cougaar.core.servlet.ComponentServlet;
  */
 public class ColorServlet extends ComponentServlet {
 
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {
     // use a "worker" class, since multiple requests

@@ -85,7 +85,8 @@ public final class Lease implements Serializable {
     return ttd;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "(lease uid="+uid+" ttd="+ttd+")";
   }
 

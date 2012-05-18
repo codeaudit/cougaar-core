@@ -57,7 +57,8 @@ import org.cougaar.util.ConfigFinder;
  */
 public class FileServerServlet extends ComponentServlet {
 
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {
 

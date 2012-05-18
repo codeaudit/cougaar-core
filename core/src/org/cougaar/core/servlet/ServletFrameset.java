@@ -71,14 +71,12 @@ extends HttpServlet
 
   public ServletFrameset(ServiceBroker sb) {
     // which node are we in?
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
     nodeAddr = nis.getMessageAddress();
     sb.releaseService(this, NodeIdentificationService.class, nis);
 
     // Register our servlet.
-    ServletService servletService = (ServletService)
-      sb.getService(this, ServletService.class, null);
+    ServletService servletService = sb.getService(this, ServletService.class, null);
     if (servletService == null) {
       throw new RuntimeException("Unable to obtain ServletService");
     }
@@ -319,7 +317,8 @@ extends HttpServlet
     }
   }
 
-  public final void doGet(
+  @Override
+public final void doGet(
       HttpServletRequest request, HttpServletResponse response) 
     throws java.io.IOException {
       response.setContentType("text/html");

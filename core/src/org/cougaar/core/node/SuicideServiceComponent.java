@@ -54,7 +54,8 @@ extends GenericStateModelAdapter implements Component {
     rootsb = (ncs == null ? null : ncs.getRootServiceBroker());
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     ssp = new SuicideServiceProvider();
     ssi = new SuicideServiceImpl();
@@ -63,7 +64,8 @@ extends GenericStateModelAdapter implements Component {
     if (log.isDebugEnabled()) { log.error("SuicideService loaded"); }
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
     if (SuicideService.isSuicideEnabled) {
       if (SuicideService.isProactiveEnabled) {
@@ -72,7 +74,8 @@ extends GenericStateModelAdapter implements Component {
       }
     }
   }
-  public void stop() {
+  @Override
+public void stop() {
     if (SuicideService.isSuicideEnabled) {
       if (SuicideService.isProactiveEnabled) {
         monitor.stop();
@@ -81,7 +84,8 @@ extends GenericStateModelAdapter implements Component {
     }
     super.stop();
   }
-  public void unload() {
+  @Override
+public void unload() {
     rootsb.revokeService(SuicideService.class, ssp);
     ssp = null;
     ssi = null;
@@ -104,8 +108,7 @@ extends GenericStateModelAdapter implements Component {
       try {
         String s = (component==null)?"anonymous":(component.toString());
         log.fatal("Suicide from "+s, error);
-	StateDumpService sds = (StateDumpService)
-	    rootsb.getService(this, StateDumpService.class, null);
+	StateDumpService sds = rootsb.getService(this, StateDumpService.class, null);
 	if (sds != null) sds.dumpState();
       } finally {
         if (SuicideService.isSuicideEnabled) {
@@ -137,7 +140,7 @@ extends GenericStateModelAdapter implements Component {
       if (lm >= 1.0) {
         thresh = (long) (lm*1024);
       } else {
-        thresh = (long) ((double)runtime.maxMemory()*lm);
+        thresh = (long) (runtime.maxMemory()*lm);
       }
       period = (long) (SuicideService.proactivePeriod * 1000L);
     }

@@ -126,7 +126,8 @@ implements Component
     this.uidService = uidService;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     configure(null);
@@ -135,8 +136,7 @@ implements Component
       logger.debug("Loading server root authority");
     }
 
-    protectS = (WhitePagesProtectionService)
-      sb.getService(this, WhitePagesProtectionService.class, null);
+    protectS = sb.getService(this, WhitePagesProtectionService.class, null);
     if (logger.isDebugEnabled()) {
       logger.debug(
           (protectS == null ? "Didn't find" : "Found")+
@@ -172,16 +172,11 @@ implements Component
     expireThread.schedule(config.checkExpirePeriod);
 
     // register for server-transport
-    pingAckService = (PingAckService)
-      sb.getService(myClient, PingAckService.class, null);
-    lookupAckService = (LookupAckService)
-      sb.getService(myClient, LookupAckService.class, null);
-    modifyAckService = (ModifyAckService)
-      sb.getService(myClient, ModifyAckService.class, null);
-    forwardAckService = (ForwardAckService)
-      sb.getService(myClient, ForwardAckService.class, null);
-    forwardService = (ForwardService)
-      sb.getService(myClient, ForwardService.class, null);
+    pingAckService = sb.getService(myClient, PingAckService.class, null);
+    lookupAckService = sb.getService(myClient, LookupAckService.class, null);
+    modifyAckService = sb.getService(myClient, ModifyAckService.class, null);
+    forwardAckService = sb.getService(myClient, ForwardAckService.class, null);
+    forwardService = sb.getService(myClient, ForwardService.class, null);
     String s =
       (pingAckService == null  ? "PingAckService" :
        lookupAckService == null  ? "LookupAckService" :
@@ -195,7 +190,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     expireThread.cancel();
 
     // release services
@@ -704,8 +700,8 @@ implements Component
     }
 
     Forward fwd = (Forward) query;
-    Lease lease = (Lease) fwd.getLease();
-    Record record = (Record) fwd.getRecord();
+    Lease lease = fwd.getLease();
+    Record record = fwd.getRecord();
     Object modQuery;
     if (record == null) {
       modQuery = lease.getUID();
@@ -1176,7 +1172,8 @@ implements Component
       return uid;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       long now = System.currentTimeMillis();
       return toString(now);
     }
@@ -1216,7 +1213,8 @@ implements Component
       return entries;
     }
 
-    public String toString(long now) {
+    @Override
+   public String toString(long now) {
       StringBuffer buf = new StringBuffer();
       append(buf, "?", "\n  ", now);
       return buf.toString();
@@ -1288,7 +1286,8 @@ implements Component
       return data;
     }
 
-    public String toString(long now) {
+    @Override
+   public String toString(long now) {
       return 
         "(record uid="+getUID()+
         " ttl="+Timestamp.toString(ttl, now)+

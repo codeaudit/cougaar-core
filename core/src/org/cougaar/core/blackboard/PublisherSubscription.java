@@ -128,15 +128,18 @@ public class PublisherSubscription extends Subscription {
     }
   }
 
-  protected void privateAdd(Object o, boolean isVisible) {
+  @Override
+protected void privateAdd(Object o, boolean isVisible) {
     privateAdd(o, null, isVisible);
   }
 
-  protected void privateChange(Object o, List changes, boolean isVisible) {
+  @Override
+protected void privateChange(Object o, List changes, boolean isVisible) {
     privateChange(o, changes, null, isVisible);
   }
 
-  protected void privateRemove(Object o, boolean isVisible) {
+  @Override
+protected void privateRemove(Object o, boolean isVisible) {
     privateRemove(o, null, isVisible);
   }
 
@@ -149,7 +152,8 @@ public class PublisherSubscription extends Subscription {
     }
   }
 
-  protected void resetChanges() {
+  @Override
+protected void resetChanges() {
     super.resetChanges();
     if (removedList != null) {
       // process removals
@@ -163,7 +167,8 @@ public class PublisherSubscription extends Subscription {
     }
   }
 
-  public boolean apply(Envelope envelope) {
+  @Override
+public boolean apply(Envelope envelope) {
     if (envelope instanceof TimestampedEnvelope) {
       TimestampedEnvelope te = (TimestampedEnvelope) envelope;
       if (te.getTransactionCloseTime() >= 0) {
@@ -268,7 +273,8 @@ public class PublisherSubscription extends Subscription {
       super(publisher);
       this.add_stack = add_stack;
     }
-    public StackElements getAddStack() { return add_stack; }
+    @Override
+   public StackElements getAddStack() { return add_stack; }
 
   }
   private static class InfoAddChange extends InfoAdd {
@@ -276,7 +282,8 @@ public class PublisherSubscription extends Subscription {
     public InfoAddChange(String publisher, StackElements stack) {
       super(publisher, stack);
     }
-    public Set getChangeStacks() {
+    @Override
+   public Set getChangeStacks() {
       return change_stacks;
     }
     public void addChangeStack(StackElements se) { 

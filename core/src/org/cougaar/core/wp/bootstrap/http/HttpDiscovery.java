@@ -73,21 +73,23 @@ extends DiscoveryBase
       }
     };
 
-  protected String getConfigPrefix() {
+  @Override
+protected String getConfigPrefix() {
     return "org.cougaar.core.wp.resolver.http.";
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    configService = (ConfigService)
-      sb.getService(configClient, ConfigService.class, null);
+    configService = sb.getService(configClient, ConfigService.class, null);
     if (configService == null) {
       throw new RuntimeException("Unable to obtain ConfigService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (configService != null) {
       sb.releaseService(configClient, ConfigService.class, configService);
       configService = null;
@@ -100,11 +102,13 @@ extends DiscoveryBase
     return HttpUtil.getBootEntry(b);
   }
 
-  protected Map lookup(Object bootObj) {
+  @Override
+protected Map lookup(Object bootObj) {
     throw new InternalError("should use HttpPoller!");
   }
 
-  protected Poller createPoller(Object bootObj) {
+  @Override
+protected Poller createPoller(Object bootObj) {
     return new HttpPoller(bootObj);
   }
 
@@ -120,16 +124,19 @@ extends DiscoveryBase
       bootEntry = (AddressEntry) bootObj;
     }
 
-    protected void initialize() {
+    @Override
+   protected void initialize() {
       super.initialize();
 
       filter = HttpUtil.getFilter(bootEntry, null, log);
     }
 
-    public void stop() {
+    @Override
+   public void stop() {
     }
 
-    protected Map lookup() {
+    @Override
+   protected Map lookup() {
       URI uri = bootEntry.getURI();
 
       URLConnection uc;

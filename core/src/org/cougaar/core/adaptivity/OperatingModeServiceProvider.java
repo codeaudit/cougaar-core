@@ -63,7 +63,8 @@ public class OperatingModeServiceProvider
       makeSynchronized();
     }
 
-    protected Object getKey(Object o) {
+    @Override
+   protected Object getKey(Object o) {
       OperatingMode om = (OperatingMode) o;
       return om.getName();
     }
@@ -139,18 +140,19 @@ public class OperatingModeServiceProvider
    * Override base class method to register our service with the
    * service broker.
    **/
-  public void load() {
+  @Override
+public void load() {
     super.load();
     getServiceBroker().addService(OperatingModeService.class, this);
-    logger = (LoggingService)
-      getServiceBroker().getService(this, LoggingService.class, null);
+    logger = getServiceBroker().getService(this, LoggingService.class, null);
   }
 
   /**
    * Override base class method to unregister our service with the
    * service broker.
    **/
-  public void unload() {
+  @Override
+public void unload() {
     getServiceBroker().revokeService(OperatingModeService.class, this);
     super.unload();
   }
@@ -158,7 +160,8 @@ public class OperatingModeServiceProvider
   /**
    * Standard setupSubscriptions subscribes to all OperatingModes.
    **/
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     synchronized (omSet) {
       operatingModes = (IncrementalSubscription)
         getBlackboardService().subscribe(operatingModePredicate);
@@ -171,7 +174,8 @@ public class OperatingModeServiceProvider
    * automatically maintains the information of interest in omSet
    * where it is referenced directly by the service API.
    **/
-  public void execute() {
+  @Override
+public void execute() {
     synchronized (omSet) {
       if (operatingModes.hasChanged()) {
         Collection c;

@@ -50,7 +50,8 @@ public class PersistenceInputStream extends ObjectInputStream implements Persist
   public MessageAddress getOriginator() { return null; }
   public MessageAddress getTarget() { return null; }
 
-  public void close() throws IOException {
+  @Override
+public void close() throws IOException {
     super.close();
   }
 
@@ -76,15 +77,18 @@ public class PersistenceInputStream extends ObjectInputStream implements Persist
       super(ois);
       bytes = ois.readInt();
     }
-    public int read(byte[] buf) throws IOException {
+    @Override
+   public int read(byte[] buf) throws IOException {
       return read(buf, 0, buf.length);
     }
-    public int read() throws IOException {
+    @Override
+   public int read() throws IOException {
       if (bytes == 0) return -1;
       bytes--;
       return super.read();
     }
-    public int read(byte[] buf, int offset, int nb) throws IOException {
+    @Override
+   public int read(byte[] buf, int offset, int nb) throws IOException {
       if (nb > bytes) nb = bytes;
       nb = super.read(buf, offset, nb);
       if (nb >= 0) bytes -= nb;
@@ -249,7 +253,8 @@ public class PersistenceInputStream extends ObjectInputStream implements Persist
    * @param o the object to resolve.
    * @return the replacement.
    */
-  protected Object resolveObject(Object o) throws IOException {
+  @Override
+protected Object resolveObject(Object o) throws IOException {
     if (o instanceof PersistenceReference) {
       PersistenceReference pRef = (PersistenceReference) o;
       PersistenceAssociation pAssoc = identityTable.get(pRef);

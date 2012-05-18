@@ -117,7 +117,8 @@ public final class StepStatus implements Serializable {
     return moveStatus;
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof StepStatus)) {
@@ -133,11 +134,13 @@ public final class StepStatus implements Serializable {
          (ss.moveStatus == null));
     }
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return ((int) startTime);
   }
   
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "status {"+
       "\n  state:       "+getStateAsString()+

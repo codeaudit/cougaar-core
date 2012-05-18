@@ -129,7 +129,8 @@ final class SchedulableStateChangeQueue extends Thread {
 	return true;
     }
 
-    public void run() {
+    @Override
+   public void run() {
 	while (true) {
 	    QueueEntry entry = null;
 	    synchronized (lock) {

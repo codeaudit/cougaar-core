@@ -48,11 +48,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    FindComponentsLoadService fcls = (FindComponentsLoadService)
-      sb.getService(this, FindComponentsLoadService.class, null);
+    FindComponentsLoadService fcls = sb.getService(this, FindComponentsLoadService.class, null);
     if (fcls == null) {
       throw new RuntimeException(
           "Unable to obtain FindComponentsLoadService");

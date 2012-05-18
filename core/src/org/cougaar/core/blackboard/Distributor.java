@@ -329,13 +329,10 @@ final class Distributor {
 
 
     this.sb = sb;
-    nodeBusyService = (NodeBusyService)
-      sb.getService(this, NodeBusyService.class, null);
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    nodeBusyService = sb.getService(this, NodeBusyService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     nodeBusyService.setAgentIdentificationService(ais);
-    quiescenceReportService = (QuiescenceReportForDistributorService)
-      sb.getService(this, QuiescenceReportForDistributorService.class, null);
+    quiescenceReportService = sb.getService(this, QuiescenceReportForDistributorService.class, null);
     quiescenceReportService.setAgentIdentificationService(ais);
     quiescenceMonitor = new QuiescenceMonitor(quiescenceReportService, logger);
   }
@@ -605,8 +602,7 @@ final class Distributor {
               }
             }
           };
-        ThreadService tsvc = (ThreadService)
-          sb.getService(this, ThreadService.class, null);
+        ThreadService tsvc = sb.getService(this, ThreadService.class, null);
         distributorTimer = tsvc.getThread(this, task, "Persistence Timer",
             ThreadService.WILL_BLOCK_LANE);
         sb.releaseService(this, ThreadService.class, tsvc);
@@ -1100,17 +1096,20 @@ final class Distributor {
     List ret = 
       new AbstractList() {
         private Envelope envelope = e;
-        public int size() {
+        @Override
+      public int size() {
           return (envelope == null ? 0 : 1);
         }
-        public Object get(int index) {
+        @Override
+      public Object get(int index) {
           if (index != 0 || envelope == null) {
             throw new IndexOutOfBoundsException(
                 "Index: "+index+", Size: "+size());
           }
           return envelope;
         }
-        public void clear() {
+        @Override
+      public void clear() {
           if (envelope != null) {
             envelope = null;
             epochTuples.clear();
@@ -1647,7 +1646,8 @@ final class Distributor {
 
   public String getName() { return name; } // agent name
 
-  public String toString() {
+  @Override
+public String toString() {
     return "<Distributor " + getName() + ">";
   }
 

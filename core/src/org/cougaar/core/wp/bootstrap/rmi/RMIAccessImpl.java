@@ -55,7 +55,8 @@ implements RMIAccess {
     return bp.getBundles();
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "RMIAccessImpl for "+bp;
   }
 }

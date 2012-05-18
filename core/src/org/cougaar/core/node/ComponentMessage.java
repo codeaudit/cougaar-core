@@ -121,7 +121,8 @@ extends Message {
     this.state = state;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     String sOp;
     switch (operation) {
       case ADD:     sOp = "Add";     break;

@@ -68,7 +68,8 @@ implements Component
     this.log = log;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     if (log.isDebugEnabled()) {
@@ -77,14 +78,12 @@ implements Component
 
     // get the key services that should be created by our
     // subcomponents.
-    cacheService = (CacheService)
-      sb.getService(this, CacheService.class, null);
+    cacheService = sb.getService(this, CacheService.class, null);
     if (cacheService == null) {
       throw new RuntimeException(
           "Unable to obtain CacheService");
     }
-    leaseService = (LeaseService)
-      sb.getService(this, LeaseService.class, null);
+    leaseService = sb.getService(this, LeaseService.class, null);
     if (leaseService == null) {
       throw new RuntimeException(
           "Unable to obtain LeaseService");
@@ -98,7 +97,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     // revoke white pages service
@@ -154,6 +154,7 @@ implements Component
         this.agent = agent;
       }
 
+      @Override
       public Response submit(Request req) {
         if (log.isDetailEnabled()) {
           log.detail("Resolver intercept wp request: "+req);

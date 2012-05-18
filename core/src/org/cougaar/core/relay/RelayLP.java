@@ -709,7 +709,8 @@ implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, AB
     public static final MarkerReport INSTANCE = new MarkerReport();
     private MarkerReport() { }
     private Object readResolve() { return INSTANCE; }
-    public String toString() { return "relay-marker-report"; }
+    @Override
+   public String toString() { return "relay-marker-report"; }
     static final long serialVersionUID = 9091843781928322223L;
   }
 
@@ -734,7 +735,8 @@ implements EnvelopeLogicProvider, MessageLogicProvider, RestartLogicProvider, AB
     }
     private TokenImpl(MessageAddress addr) { this.addr = addr; }
     private Object readResolve() { return getToken(addr); }
-    public String toString() { return "<token "+addr+">"; }
+    @Override
+   public String toString() { return "<token "+addr+">"; }
     static final long serialVersionUID = 3878912876728718092L;
   }
 }

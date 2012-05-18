@@ -424,12 +424,12 @@ public class PersistenceServiceComponent
   /**
    * Load
    */
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // Get our local agent's address
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       agentId = ais.getMessageAddress();
       sb.releaseService(
@@ -519,8 +519,8 @@ public class PersistenceServiceComponent
       throw new PersistenceException("No plugin name: " + pluginSpec);
     }
     try {
-      Class pluginClass = Class.forName((String) paramTokens[0]);
-      String pluginName = (String) paramTokens[1];
+      Class pluginClass = Class.forName(paramTokens[0]);
+      String pluginName = paramTokens[1];
       String[] pluginParams = new String[paramTokens.length - 2];
       System.arraycopy(paramTokens, 2, pluginParams, 0, pluginParams.length);
       PersistencePlugin ppi = (PersistencePlugin) pluginClass.newInstance();
@@ -535,7 +535,8 @@ public class PersistenceServiceComponent
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     unregisterServices(sb);
     if (dataProtectionService != null) {
       sb.releaseService(dataProtectionServiceClient,
@@ -1580,7 +1581,8 @@ public class PersistenceServiceComponent
     sb.revokeService(PersistenceServiceForAgent.class, serviceProvider);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Persist(" + getAgentName() + ")";
   }
 }

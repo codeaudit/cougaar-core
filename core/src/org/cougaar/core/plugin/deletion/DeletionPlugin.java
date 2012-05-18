@@ -94,7 +94,8 @@ import org.cougaar.util.UnaryPredicate;
  */
 public class DeletionPlugin extends ComponentPlugin {
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     long deletionDelay = DEFAULT_DELETION_DELAY;
     long deletionPeriod = DEFAULT_DELETION_PERIOD;
     long deletionPhase = DEFAULT_DELETION_PHASE;
@@ -138,7 +139,8 @@ public class DeletionPlugin extends ComponentPlugin {
    * remove them from the expansion and remove them from the
    * logplan.
    */
-  public void execute() {
+  @Override
+public void execute() {
     scenarioNow = currentTimeMillis();
     systemNow = System.currentTimeMillis();
     if (alarm.hasExpired()) { // Time to make the donuts
@@ -279,7 +281,8 @@ public class DeletionPlugin extends ComponentPlugin {
     this.uidService = uidService;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     if (!(logger instanceof LoggingServiceWithPrefix)) {
       logger =
@@ -397,7 +400,8 @@ public class DeletionPlugin extends ComponentPlugin {
 
   private Alarm createAlarm(long time) {
     return new PluginAlarm(time) {
-	public BlackboardService getBlackboardService() {
+	@Override
+   public BlackboardService getBlackboardService() {
 	  return blackboard;
 	}
       };

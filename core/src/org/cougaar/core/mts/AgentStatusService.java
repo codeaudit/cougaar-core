@@ -68,7 +68,8 @@ public interface AgentStatusService extends Service {
 	public long lastSentTo;
 	public long lastFailedSend;
 	
-	public AgentState clone() throws CloneNotSupportedException {
+	@Override
+   public AgentState clone() throws CloneNotSupportedException {
 	    return (AgentState) super.clone();
 	}
     }

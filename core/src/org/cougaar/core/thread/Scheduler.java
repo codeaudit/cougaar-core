@@ -68,7 +68,8 @@ public class Scheduler {
 
     private Comparator<SchedulableObject> timeComparator =
 	new Comparator<SchedulableObject>() {
-		public boolean equals(Object x) {
+		@Override
+      public boolean equals(Object x) {
 		    return x == this;
 		}
 
@@ -126,7 +127,8 @@ public class Scheduler {
 	// error? no-op?
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
 	return printName;
     }
 

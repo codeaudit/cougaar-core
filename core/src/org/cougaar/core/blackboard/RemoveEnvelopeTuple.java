@@ -33,15 +33,19 @@ package org.cougaar.core.blackboard;
  */
 class RemoveEnvelopeTuple extends EnvelopeTuple {
   private final Object object;
-  public Object getObject() { return object; }
+  @Override
+public Object getObject() { return object; }
   public RemoveEnvelopeTuple(Object o) {
     if (o == null) throw new IllegalArgumentException("Object is null");
     object = o;
   }
 
-  public final int getAction() { return Envelope.REMOVE; }
-  public final boolean isRemove() { return true; }
-  boolean applyToSubscription(Subscription s, boolean isVisible) {
+  @Override
+public final int getAction() { return Envelope.REMOVE; }
+  @Override
+public final boolean isRemove() { return true; }
+  @Override
+boolean applyToSubscription(Subscription s, boolean isVisible) {
     return s.conditionalRemove(object,isVisible);
   }
 }

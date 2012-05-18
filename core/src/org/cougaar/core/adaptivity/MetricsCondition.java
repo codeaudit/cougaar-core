@@ -86,7 +86,8 @@ public abstract class MetricsCondition implements Condition {
     }
   }
 
-  public java.lang.String toString() {
+  @Override
+public java.lang.String toString() {
     return "MetricsCondition(" + getName() + ")";
   }
 
@@ -122,7 +123,8 @@ public abstract class MetricsCondition implements Condition {
             OMCRangeList.ALL_DOUBLE_RANGE_LIST, prefix);
     }
 
-    public Comparable getValue() {
+    @Override
+   public Comparable getValue() {
       Metric metric = getMetric();
       Object rawValue = metric.getRawValue();
       if (rawValue instanceof java.lang.Double) return (java.lang.Double) rawValue;
@@ -148,7 +150,8 @@ public abstract class MetricsCondition implements Condition {
             OMCRangeList.ALL_INTEGER_RANGE_LIST, METRICS_INTEGER_PREFIX);
     }
 
-    public Comparable getValue() {
+    @Override
+   public Comparable getValue() {
       Metric metric = getMetric();
       Object rawValue = metric.getRawValue();
       if (rawValue instanceof java.lang.Integer) return (java.lang.Integer) rawValue;
@@ -165,7 +168,8 @@ public abstract class MetricsCondition implements Condition {
             OMCRangeList.ALL_LONG_RANGE_LIST, METRICS_LONG_PREFIX);
     }
 
-    public Comparable getValue() {
+    @Override
+   public Comparable getValue() {
       Metric metric = getMetric();
       Object rawValue = metric.getRawValue();
       if (rawValue instanceof java.lang.Long) return (java.lang.Long) rawValue;
@@ -182,7 +186,8 @@ public abstract class MetricsCondition implements Condition {
             OMCRangeList.ALL_STRING_RANGE_LIST, METRICS_STRING_PREFIX);
     }
 
-    public Comparable getValue() {
+    @Override
+   public Comparable getValue() {
       Metric metric = getMetric();
       Object rawValue = metric.getRawValue();
       if (rawValue instanceof java.lang.String) return (java.lang.String) rawValue;
@@ -199,7 +204,8 @@ public abstract class MetricsCondition implements Condition {
             ALL_BOOLEAN_RANGE_LIST, METRICS_BOOLEAN_PREFIX);
     }
     
-    public Comparable getValue() {
+    @Override
+   public Comparable getValue() {
       Metric metric = getMetric();
       if (metric.booleanValue()) {
         return ONE;

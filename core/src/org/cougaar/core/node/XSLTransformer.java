@@ -234,7 +234,8 @@ public class XSLTransformer {
     return resolver;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "(XSLTransformer"+
       " xml_file_name="+getXMLFileName()+

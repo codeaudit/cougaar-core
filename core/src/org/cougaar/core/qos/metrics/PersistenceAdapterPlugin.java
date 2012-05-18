@@ -51,32 +51,29 @@ public class PersistenceAdapterPlugin
     private Schedulable schedulable;
     private String key;
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 	
 	ServiceBroker sb = getServiceBroker();
 	
-	loggingService = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
+	loggingService = sb.getService(this, LoggingService.class, null);
 
-	pms = (PersistenceMetricsService)
-	    sb.getService(this, PersistenceMetricsService.class, null);
+	pms = sb.getService(this, PersistenceMetricsService.class, null);
 	if (pms == null) {
 	    if (loggingService.isErrorEnabled())
 		loggingService.error("Couldn't get PersistenceMetricsService");
 	    return;
 	} 
 
-	mus = (MetricsUpdateService)
-	    sb.getService(this, MetricsUpdateService.class, null);
+	mus = sb.getService(this, MetricsUpdateService.class, null);
 	if (mus == null) {
 	    if (loggingService.isErrorEnabled())
 		loggingService.error("Couldn't get MetricsUpdateService");
 	    return;
 	} 
 
-	ThreadService tsvc = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
+	ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 	if (tsvc == null) {
 	    if (loggingService.isErrorEnabled())
 		loggingService.error("Couldn't get ThreadService");
@@ -120,11 +117,13 @@ public class PersistenceAdapterPlugin
     }
 
     // Plugin methods
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
 	// None in this example
     }
 
-    public void execute() {
+    @Override
+   public void execute() {
 	// Not relevant in this example
     }
 

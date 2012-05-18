@@ -84,7 +84,8 @@ public class CPURemoteTestPlugin extends ServiceUserPlugin {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     cpu = new InterAgentCondition(CPU_CONDITION_NAME,
                                       CPU_VALUES, cpuValues[0]);
     cpu.setTarget(MessageAddress.getMessageAddress("Provider"));
@@ -99,14 +100,14 @@ public class CPURemoteTestPlugin extends ServiceUserPlugin {
     if (uidService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      uidService = (UIDService)
-        sb.getService(this, UIDService.class, null);
+      uidService = sb.getService(this, UIDService.class, null);
       return true;
     }
     return false;
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       if (haveServices()) {
         cancelTimer();

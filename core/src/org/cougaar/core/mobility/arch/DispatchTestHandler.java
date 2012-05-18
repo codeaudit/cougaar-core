@@ -62,7 +62,8 @@ public class DispatchTestHandler extends AbstractHandler {
     this.localMoveState = localMoveState;
   }
 
-  public void run() {
+  @Override
+public void run() {
     dispatchTest();
   }
 
@@ -243,7 +244,8 @@ public class DispatchTestHandler extends AbstractHandler {
     }
   }
 
-  protected void addAgent(ComponentDescription desc) {
+  @Override
+protected void addAgent(ComponentDescription desc) {
     if (log.isInfoEnabled()) {
       log.info("Add       agent "+id);
     }
@@ -253,7 +255,8 @@ public class DispatchTestHandler extends AbstractHandler {
     }
   }
 
-  protected void removeAgent() {
+  @Override
+protected void removeAgent() {
     if (log.isInfoEnabled()) {
       log.info("Remove    agent "+id);
     }
@@ -296,7 +299,8 @@ public class DispatchTestHandler extends AbstractHandler {
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Move (dispatch-test) of agent "+id;
   }
 }

@@ -40,7 +40,8 @@ implements Script.Entry, Serializable
   public String getName() {
     return name;
   }
-  public String toString() {
+  @Override
+public String toString() {
     return "label "+name;
   }
 }

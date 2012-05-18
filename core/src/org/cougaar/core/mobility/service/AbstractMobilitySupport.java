@@ -81,7 +81,8 @@ implements MobilitySupport
 
   public abstract void removeAgent();
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Mobility support for agent "+id+" on "+nodeId;
   }
 

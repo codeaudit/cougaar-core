@@ -82,13 +82,15 @@ public final class RemoveTicket extends AbstractTicket {
     return destNode;
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return 
       (((id != null) ? id.hashCode() : 17) ^
        ((mobileAgent != null) ? mobileAgent.hashCode() : 53));
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof RemoveTicket)) {
@@ -108,7 +110,8 @@ public final class RemoveTicket extends AbstractTicket {
     }
   }
   
-  public String toString() {
+  @Override
+public String toString() {
     // cache?
     return 
       "Remove "+

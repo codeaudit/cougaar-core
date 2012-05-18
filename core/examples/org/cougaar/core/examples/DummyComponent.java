@@ -52,13 +52,14 @@ public class DummyComponent
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     ServiceBroker sb = getBindingSite().getServiceBroker();
 
     // what node are we in?
     String nn = "?";
     {
-      NodeIdentificationService nis = (NodeIdentificationService) sb.getService(this,NodeIdentificationService.class,null);
+      NodeIdentificationService nis = sb.getService(this,NodeIdentificationService.class,null);
       if (nis != null) {
         nn = nis.getMessageAddress().toString();
       }
@@ -67,7 +68,7 @@ public class DummyComponent
     // what agent?
     String an = "?";
     {
-      AgentIdentificationService ais = (AgentIdentificationService) sb.getService(this,AgentIdentificationService.class,null);
+      AgentIdentificationService ais = sb.getService(this,AgentIdentificationService.class,null);
       if (ais != null) {
         an = ais.getName();
       }

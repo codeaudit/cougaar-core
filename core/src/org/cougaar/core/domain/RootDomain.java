@@ -99,20 +99,21 @@ implements Component, Domain
     }
   }
   
-  public void load() {
+  @Override
+public void load() {
     super.load();
     sb.addService(RootPlan.class, new RootPlanServiceProvider());
-    rootplan = (RootPlan) sb.getService(this, RootPlan.class, null);
+    rootplan = sb.getService(this, RootPlan.class, null);
     relayLP = new RelayLP(rootplan, self);
-    domainRegistryService = (DomainRegistryService)
-      sb.getService(
-          this, DomainRegistryService.class, null);
+    domainRegistryService = sb.getService(
+       this, DomainRegistryService.class, null);
     if (domainRegistryService != null) {
       domainRegistryService.registerDomain(this);
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (domainRegistryService != null) {
       domainRegistryService.unregisterDomain(this);

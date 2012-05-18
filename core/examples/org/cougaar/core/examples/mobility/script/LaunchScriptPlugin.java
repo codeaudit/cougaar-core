@@ -84,7 +84,8 @@ extends ComponentPlugin
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (domain != null) {
       getServiceBroker().releaseService(
           this, DomainService.class, domain);
@@ -99,7 +100,8 @@ extends ComponentPlugin
     super.unload();
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     if (blackboard.didRehydrate()) {
       // already created our script & proc
       return;
@@ -118,7 +120,8 @@ extends ComponentPlugin
     launchScript(file);
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     // never
   }
 

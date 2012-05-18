@@ -198,13 +198,15 @@ public final class AddTicket extends AbstractTicket {
     return desc;
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return 
       (((id == null) ? 17 : id.hashCode()) ^
        mobileAgent.hashCode());
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof AddTicket)) {
@@ -230,7 +232,8 @@ public final class AddTicket extends AbstractTicket {
     }
   }
   
-  public String toString() {
+  @Override
+public String toString() {
     // cache?
     return 
       "Add "+

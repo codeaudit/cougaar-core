@@ -49,26 +49,29 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    msss = (MessageSwitchShutdownService)
-      sb.getService(
-          this, MessageSwitchShutdownService.class, null);
+    msss = sb.getService(
+       this, MessageSwitchShutdownService.class, null);
     if (msss == null) {
       throw new RuntimeException(
           "Unable to obtain MessageSwitchShutdownService");
     }
   }
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     msss.shutdown();
   }
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     msss.restore();
   }
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (msss != null) {
       sb.releaseService(

@@ -92,11 +92,11 @@ implements Component
     this.log = log;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    hintService = (HintService)
-      sb.getService(this, HintService.class, null);
+    hintService = sb.getService(this, HintService.class, null);
     if (hintService == null) {
       throw new RuntimeException("Unable to obtain HintService");
     }
@@ -110,7 +110,8 @@ implements Component
     sb.addService(DiscoveryService.class, discoverySP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (discoverySP != null) {
       sb.revokeService(DiscoveryService.class, discoverySP);
       discoverySP = null;

@@ -101,7 +101,8 @@ public class DirectiveMessage extends ClusterMessage
     return allMessagesAcknowledged;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append("<DirectiveMessage "+getSource()+" - "+getDestination());
     if (directives == null) {
@@ -191,7 +192,8 @@ public class DirectiveMessage extends ClusterMessage
   // Externalizable support
   /*
   */
-  public void writeExternal(final ObjectOutput out) throws IOException {
+  @Override
+public void writeExternal(final ObjectOutput out) throws IOException {
     super.writeExternal(out);   // Message
 
     out.writeBoolean(allMessagesAcknowledged);
@@ -222,7 +224,8 @@ public class DirectiveMessage extends ClusterMessage
    * reattach to the agent.
    * @see ClusterContextTable
    */
-  public void readExternal(final ObjectInput in) 
+  @Override
+public void readExternal(final ObjectInput in) 
     throws IOException, ClassNotFoundException
   {
     super.readExternal(in);     // Message
@@ -264,7 +267,8 @@ public class DirectiveMessage extends ClusterMessage
 
     public MessageAddress getSource() { return real.getSource(); }
     public MessageAddress getDestination() { return real.getDestination(); }
-    public String toString() {return real.toString(); }
+    @Override
+   public String toString() {return real.toString(); }
   }
 
 }

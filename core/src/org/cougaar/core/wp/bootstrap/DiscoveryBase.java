@@ -97,29 +97,29 @@ implements Component
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     configure(null);
 
     // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     agentId = ais.getMessageAddress();
     sb.releaseService(this, AgentIdentificationService.class, ais);
     agentName = agentId.getAddress();
 
     // register our discovery client
-    discoveryService = (DiscoveryService)
-      sb.getService(
-          this, DiscoveryService.class, null);
+    discoveryService = sb.getService(
+       this, DiscoveryService.class, null);
     if (discoveryService == null) {
       throw new RuntimeException(
           "Unable to obtain DiscoveryService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (discoveryService != null) {
@@ -258,8 +258,7 @@ implements Component
           "White pages bootstrap discovery for "+bootObj,
           ThreadService.WILL_BLOCK_LANE);
 
-      ds = (DiscoveryService)
-        sb.getService(
+      ds = sb.getService(
             dsc, DiscoveryService.class, null);
       if (ds == null) {
         throw new RuntimeException(

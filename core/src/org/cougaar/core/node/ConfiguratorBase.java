@@ -74,7 +74,8 @@ public abstract class ConfiguratorBase extends ComponentSupport {
     root_cis = cis;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     localNode = find_local_node();
@@ -89,7 +90,8 @@ public abstract class ConfiguratorBase extends ComponentSupport {
     rootsb.addService(ComponentInitializerService.class, sp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (sp != null) {
       rootsb.revokeService(ComponentInitializerService.class, sp);
       sp = null;
@@ -223,9 +225,8 @@ public abstract class ConfiguratorBase extends ComponentSupport {
   }
 
   private MessageAddress find_local_node() {
-    NodeIdentificationService nis = (NodeIdentificationService)
-      getServiceBroker().getService(
-          this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = getServiceBroker().getService(
+       this, NodeIdentificationService.class, null);
     if (nis == null) {
       return null;
     }

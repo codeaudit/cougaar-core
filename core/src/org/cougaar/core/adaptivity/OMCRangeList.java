@@ -245,7 +245,8 @@ public class OMCRangeList implements Serializable {
     return allowedValues.length == 0;
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     int hc = 0;
     for (int i = 0; i < this.allowedValues.length; i++) {
       hc = 31 * hc + allowedValues[i].hashCode();
@@ -253,7 +254,8 @@ public class OMCRangeList implements Serializable {
     return hc;
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (!(o instanceof OMCRangeList)) return false;
     OMCRangeList that = (OMCRangeList) o;
     if (this.allowedValues.length != that.allowedValues.length) return false;
@@ -263,7 +265,8 @@ public class OMCRangeList implements Serializable {
     return true;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append('{');
     for (int i = 0; i < allowedValues.length; i++) {

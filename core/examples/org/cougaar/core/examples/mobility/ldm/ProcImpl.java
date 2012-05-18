@@ -103,7 +103,8 @@ implements Proc {
     scriptIndex = index;
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof LocalStepImpl)) {
@@ -113,11 +114,13 @@ implements Proc {
       return uid.equals(u);
     }
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return uid.hashCode();
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "Proc {"+
       "\n uid: "+uid+

@@ -54,11 +54,13 @@ public class DummyPersistence
     init(pps, name, params);
   }
 
-  protected void handleParameter(String param) {
+  @Override
+protected void handleParameter(String param) {
     // Ignore params
   }
 
-  public boolean isWritable() {
+  @Override
+public boolean isWritable() {
     return true;                // Cannot be disabled.
   }
 

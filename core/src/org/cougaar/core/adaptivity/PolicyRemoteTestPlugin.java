@@ -55,7 +55,8 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     OperatingModePolicy[] tempPolicies = null;
     String policyFileName = getParameters().iterator().next().toString();
     try {
@@ -87,7 +88,8 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
 
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       cancelTimer();
       setPolicies();
@@ -98,8 +100,7 @@ public class PolicyRemoteTestPlugin extends ServiceUserPluginBase {
     if (uidService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      uidService = (UIDService)
-        sb.getService(this, UIDService.class, null);
+      uidService = sb.getService(this, UIDService.class, null);
       return true;
     }
     return false;

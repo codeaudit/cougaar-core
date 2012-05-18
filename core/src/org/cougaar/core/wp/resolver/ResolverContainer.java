@@ -59,15 +59,16 @@ extends ContainerSupport
     }
   }
 
-  protected String specifyContainmentPoint() {
+  @Override
+protected String specifyContainmentPoint() {
     return INSERTION_POINT;
   }
 
-  protected ComponentDescriptions findInitialComponentDescriptions() {
+  @Override
+protected ComponentDescriptions findInitialComponentDescriptions() {
     String cname = agentId.toString();
     ServiceBroker sb = getServiceBroker();
-    ComponentInitializerService cis = (ComponentInitializerService)
-      sb.getService(this, ComponentInitializerService.class, null);
+    ComponentInitializerService cis = sb.getService(this, ComponentInitializerService.class, null);
     try {
       return new ComponentDescriptions(
           cis.getComponentDescriptions(cname, specifyContainmentPoint()));

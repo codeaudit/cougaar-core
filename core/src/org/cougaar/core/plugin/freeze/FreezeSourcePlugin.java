@@ -56,7 +56,8 @@ public abstract class FreezeSourcePlugin extends FreezePlugin {
   private Subscription relaySubscription;
   private FreezeRelaySource relay; // The relay we sent
 
-  public void unload() {
+  @Override
+public void unload() {
     if (uidService != null) {
       ServiceBroker sb = getServiceBroker();
       sb.releaseService(this, UIDService.class, uidService);
@@ -65,15 +66,16 @@ public abstract class FreezeSourcePlugin extends FreezePlugin {
     super.unload();
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     super.setupSubscriptions();
     ServiceBroker sb = getServiceBroker();
-    uidService = (UIDService)
-      sb.getService(this, UIDService.class, null);
+    uidService = sb.getService(this, UIDService.class, null);
     relaySubscription = blackboard.subscribe(sourceRelayPredicate);
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (relaySubscription.hasChanged()) {
       if (relay != null) {
         setUnfrozenAgents(relay.getUnfrozenAgents());

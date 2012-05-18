@@ -32,7 +32,8 @@ public abstract class GroupMessageAddress extends SimpleMessageAddress {
         return reference;
     }
     
-    public boolean isGroupAddress() {
+    @Override
+   public boolean isGroupAddress() {
         return true;
     }
 }

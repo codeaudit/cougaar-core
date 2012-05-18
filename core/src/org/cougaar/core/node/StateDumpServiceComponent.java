@@ -66,27 +66,28 @@ public final class StateDumpServiceComponent
 	rootsb = (ncs == null)?null:ncs.getRootServiceBroker();
     }
 
-    public void load()
+    @Override
+   public void load()
     {
 	super.load();
 	impl = new Impl(sb);
 	rootsb.addService(StateDumpService.class, this);
     }
 
-    public void start()
+    @Override
+   public void start()
     {
 	super.start();
 	waitTime = (int) getParameter("waitTime", 10000);
-	impl.threadStatus = (ThreadStatusService)
-	    sb.getService(this, ThreadStatusService.class, null);
+	impl.threadStatus = sb.getService(this, ThreadStatusService.class, null);
 	// test for forcing Suicide 
 	int dieTime = (int) getParameter("dieTime", 0);
 	if (dieTime > 0) {
 	    java.util.Timer timer = new java.util.Timer();
 	    java.util.TimerTask task = new java.util.TimerTask() {
-		    public void run() {
-			SuicideService svc = (SuicideService)
-			    sb.getService(this, SuicideService.class, null);
+		    @Override
+         public void run() {
+			SuicideService svc = sb.getService(this, SuicideService.class, null);
 			Throwable thr = new Error("Pointless suicide");
 			svc.die(StateDumpServiceComponent.this, thr);
 		    }
@@ -213,8 +214,7 @@ public final class StateDumpServiceComponent
 	private void dumpQueues()
 	{
 	    if (mqds == null) {
-		mqds = (MessageQueueDumpService)
-		    sb.getService(this, MessageQueueDumpService.class, null);
+		mqds = sb.getService(this, MessageQueueDumpService.class, null);
 		if (mqds == null) {
 		    logger.warn("Couldn't get MessageQueueDumpService");
 		    return;
@@ -247,8 +247,7 @@ public final class StateDumpServiceComponent
 
 	private void dumpBlackboard()
 	{
-	    BlackboardQueryService svc = (BlackboardQueryService)
-		sb.getService(this, BlackboardQueryService.class, null);
+	    BlackboardQueryService svc = sb.getService(this, BlackboardQueryService.class, null);
 	    if (svc != null) {
 		UnaryPredicate pred = new UnaryPredicate() {
 			public boolean execute(Object o) {

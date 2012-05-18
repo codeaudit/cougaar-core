@@ -166,7 +166,8 @@ implements Component
     config = new CacheConfig(o);
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     configure(null);
@@ -174,9 +175,8 @@ implements Component
     cache = new LRUMap(config.maxSize);
 
     // register for lookups
-    lookupService = (LookupService)
-      sb.getService(
-          myLookupClient, LookupService.class, null);
+    lookupService = sb.getService(
+       myLookupClient, LookupService.class, null);
     if (lookupService == null) {
       throw new RuntimeException(
           "Unable to obtain LookupService");
@@ -221,7 +221,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (hintSP != null) {
       sb.revokeService(HintService.class, hintSP);
       hintSP = null;
@@ -1743,7 +1744,8 @@ implements Component
       return buf.toString();
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       long now = System.currentTimeMillis();
       return toString(now);
     }
@@ -1833,25 +1835,30 @@ implements Component
       this.responses = e.responses;
     }
 
-    public boolean hasHints() {
+    @Override
+   public boolean hasHints() {
       return hints != NO_HINTS;
     }
-    public AddressEntry getHint(String type) {
+    @Override
+   public AddressEntry getHint(String type) {
       if (type == null || hints == NO_HINTS) {
         return null;
       }
       return (AddressEntry) hints.get(type);
     }
-    public Map getHints() {
+    @Override
+   public Map getHints() {
       return hints;
     }
-    public void putHint(String type, AddressEntry ae) {
+    @Override
+   public void putHint(String type, AddressEntry ae) {
       if (hints == NO_HINTS) {
         hints = new HashMap();
       }
       hints.put(type, ae);
     }
-    public boolean removeHint(String type) {
+    @Override
+   public boolean removeHint(String type) {
       if (hints == NO_HINTS) {
         return data == null;
       } else {
@@ -1870,7 +1877,8 @@ implements Component
     public LRUMap(int initialSize) {
       super(initialSize, 0.75f, true);
     }
-    protected boolean removeEldestEntry(Map.Entry eldest) {
+    @Override
+   protected boolean removeEldestEntry(Map.Entry eldest) {
       Entry eldestE =
         (eldest == null ?
          (null) :

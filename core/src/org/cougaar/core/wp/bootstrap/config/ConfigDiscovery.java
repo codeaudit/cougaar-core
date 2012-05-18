@@ -71,23 +71,23 @@ implements Component, DiscoveryService.Client
     this.threadService = threadService;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    configService = (ConfigService)
-      sb.getService(this, ConfigService.class, null);
+    configService = sb.getService(this, ConfigService.class, null);
     if (configService == null) {
       throw new RuntimeException("Unable to obtain ConfigService");
     }
 
-    discoveryService = (DiscoveryService)
-      sb.getService(this, DiscoveryService.class, null);
+    discoveryService = sb.getService(this, DiscoveryService.class, null);
     if (discoveryService == null) {
       throw new RuntimeException("Unable to obtain DiscoveryService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (discoveryService != null) {
       sb.releaseService(this, DiscoveryService.class, discoveryService);
       discoveryService = null;

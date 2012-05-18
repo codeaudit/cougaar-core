@@ -70,7 +70,8 @@ public class AddAgentExamplePlugin extends ComponentPlugin {
       (MobilityFactory) domain.getFactory("mobility");
   }
   
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     if (mobilityFactory == null) {
       throw new RuntimeException(
 				 "Mobility factory (and domain) not enabled");
@@ -86,7 +87,8 @@ public class AddAgentExamplePlugin extends ComponentPlugin {
     sub = (IncrementalSubscription) blackboard.subscribe(AGENT_CONTROL_PRED);
   }
   
-  public void execute() {
+  @Override
+public void execute() {
     if (sub.hasChanged()) {
       for (Enumeration en = sub.getAddedList(); en.hasMoreElements(); ) {
 	AgentControl ac = (AgentControl) en.nextElement();

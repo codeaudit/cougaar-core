@@ -62,10 +62,12 @@ public class AttributeBasedAddress
     return myCommunityName;
   }
 
-  public String toAddress() {
+  @Override
+public String toAddress() {
     return "ABA";
   }
-  public String toString() {
+  @Override
+public String toString() {
     return "#<ABA '"+myCommunityName+"' "+
       myAttributeType+"="+myAttributeValue+">";
   }

@@ -45,14 +45,15 @@ public class TestComponent
     param = o;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     ServiceBroker sb = getServiceBroker();
     
     String nodeName = "unknown";
     {
       NodeIdentificationService nis =
-        (NodeIdentificationService) sb.getService(this, NodeIdentificationService.class, null);
+        sb.getService(this, NodeIdentificationService.class, null);
       if (nis != null) {
         nodeName = nis.getMessageAddress().toString();
       }
@@ -61,7 +62,7 @@ public class TestComponent
     String agentName = "unknown";
     {
       AgentIdentificationService ais =
-        (AgentIdentificationService) sb.getService(this, AgentIdentificationService.class, null);
+        sb.getService(this, AgentIdentificationService.class, null);
       if (ais != null) {
         agentName = ais.getName();
       }

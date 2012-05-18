@@ -99,7 +99,8 @@ public class DeltaSubscription extends IncrementalSubscription {
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Delta Subscription";
   }
 
@@ -120,8 +121,10 @@ public class DeltaSubscription extends IncrementalSubscription {
     public boolean removeAll(Collection c) { die(); return false; }
     public boolean retainAll(Collection c) { die(); return false; }
     public void clear() { die(); }
-    public boolean equals(Object o) { die(); return false; }
-    public int hashCode() { die(); return 0; }
+    @Override
+   public boolean equals(Object o) { die(); return false; }
+    @Override
+   public int hashCode() { die(); return 0; }
 
     protected void die() {
       // create error message
@@ -162,7 +165,8 @@ public class DeltaSubscription extends IncrementalSubscription {
       this.stack = captureStack();
     }
     // enhance the "die()" message with our allocation point
-    protected Throwable getStack() {
+    @Override
+   protected Throwable getStack() {
       return stack.getThrowable();
     }
     private static StackElements captureStack() {

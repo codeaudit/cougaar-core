@@ -54,7 +54,8 @@ public class OMCThruRange extends OMCRange {
     super(min, max);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return min.toString() + " thru " + max.toString();
   }
 }

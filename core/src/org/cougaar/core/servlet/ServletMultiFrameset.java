@@ -81,17 +81,20 @@ extends ServletFrameset
   // The rest is fine for most subclasses
   //
 
-  public final void printPage(
+  @Override
+public final void printPage(
       HttpServletRequest request, PrintWriter out) {
     String selectName = request.getParameter(SELECT_NAME);
     printPage(selectName, request, out);
   }
 
-  protected final String getMiddleFrame() {
+  @Override
+protected final String getMiddleFrame() {
     return INFO_FRAME;
   }
 
-  protected final void writeJavascript(PrintWriter out) {
+  @Override
+protected final void writeJavascript(PrintWriter out) {
     out.print(
         "<script language=\"JavaScript\">\n"+
         "<!--\n"+
@@ -133,7 +136,8 @@ extends ServletFrameset
    * selection list and data frame if the user hasn't changed
    * the agent selection.
    */
-  protected final void printAdditionalBottomFields(
+  @Override
+protected final void printAdditionalBottomFields(
       PrintWriter out) {
     out.print(
         "<input type=hidden name=\""+INFO_BASE+"\" value=\""+
@@ -287,7 +291,8 @@ extends ServletFrameset
     out.print("</html>\n");
   }
 
-  protected final void printFrame(
+  @Override
+protected final void printFrame(
       String frame,
       HttpServletRequest request,
       PrintWriter out) {

@@ -44,7 +44,8 @@ public class LocalMoveState {
     }
     state = o;
   }
-  public String toString() {
+  @Override
+public String toString() {
     return "proxy("+state+")";
   }
 }

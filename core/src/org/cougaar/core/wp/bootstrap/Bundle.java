@@ -90,7 +90,8 @@ public final class Bundle implements Serializable {
     return entries;
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     }
@@ -108,11 +109,13 @@ public final class Bundle implements Serializable {
        entries.equals(b.entries));
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return uid.hashCode();
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "(bundle "+encode()+")";
   }
 

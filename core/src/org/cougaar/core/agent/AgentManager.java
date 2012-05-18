@@ -99,7 +99,8 @@ public class AgentManager
     params = (List) o;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     List ext = params;
@@ -127,7 +128,8 @@ public class AgentManager
    * 
    * @see org.cougaar.util.GenericStateModel#unload()
    */
-  public void unload() {
+  @Override
+public void unload() {
     revokeServices();
     super.unload();
   }
@@ -145,11 +147,13 @@ public class AgentManager
     }
   }
 
-  protected String specifyContainmentPoint() {
+  @Override
+protected String specifyContainmentPoint() {
     return INSERTION_POINT;
   }
 
-  protected ComponentDescriptions findInitialComponentDescriptions() {
+  @Override
+protected ComponentDescriptions findInitialComponentDescriptions() {
     return null;
   }
 
@@ -157,7 +161,8 @@ public class AgentManager
   // override "add(o)" to log exceptions:
   //
 
-  public boolean add(Object o) {
+  @Override
+public boolean add(Object o) {
     try {
       return super.add(o);
     } catch (RuntimeException re) {
@@ -278,8 +283,7 @@ public class AgentManager
     ServiceBroker csb = getChildServiceBroker();
     ComponentDescriptions cds;
     try {
-      ComponentInitializerService cis = (ComponentInitializerService)
-          csb.getService(this, ComponentInitializerService.class, null);
+      ComponentInitializerService cis = csb.getService(this, ComponentInitializerService.class, null);
       Logger logger = Logging.getLogger(AgentManager.class);
       if (logger.isInfoEnabled()) {
         logger.info(nodeName +
@@ -332,6 +336,7 @@ public class AgentManager
   }
 
   private Memo _getAgentAddressesMemo = Memo.get(new Memo.Function() {
+      @Override
       public String toString() { return "Memo<getAgentAddresses>"; }
       public Object eval(Object o) {
         return Collections.unmodifiableSet(((Map)o).keySet());
@@ -358,6 +363,7 @@ public class AgentManager
   }
 
   private Memo _getAgentsMemo = Memo.get(new Memo.Function() {
+      @Override
       public String toString() { return "Memo<getAgents>"; }
       public Object eval(Object o) {
         List cds = (List) o;

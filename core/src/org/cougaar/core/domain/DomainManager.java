@@ -146,12 +146,12 @@ extends ContainerSupport
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     ServiceBroker sb = getServiceBroker();
     ServiceBroker csb = getChildServiceBroker();
 
-    LoggingService ls = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    LoggingService ls = sb.getService(this, LoggingService.class, null);
     if (ls != null) {
       loggingService = ls;
     }
@@ -387,16 +387,17 @@ extends ContainerSupport
   // binding services
   //
 
-  protected String specifyContainmentPoint() {
+  @Override
+protected String specifyContainmentPoint() {
     return CONTAINMENT_POINT;
   }
 
-  protected ComponentDescriptions findInitialComponentDescriptions() {
+  @Override
+protected ComponentDescriptions findInitialComponentDescriptions() {
     // display the agent id
     String cname = agentIdService.getMessageAddress().toString();
     ServiceBroker sb = getServiceBroker();
-    ComponentInitializerService cis = (ComponentInitializerService)
-      sb.getService(this, ComponentInitializerService.class, null);
+    ComponentInitializerService cis = sb.getService(this, ComponentInitializerService.class, null);
     try {
       List l = new ArrayList(5);
 
@@ -443,7 +444,8 @@ extends ContainerSupport
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     ServiceBroker sb = getServiceBroker();
     ServiceBroker csb = getChildServiceBroker();
 
@@ -640,7 +642,8 @@ extends ContainerSupport
   // other services
   //
   
-  public String toString() {
+  @Override
+public String toString() {
     return self+"/DomainManager";
   }
 

@@ -58,8 +58,7 @@ public class MetricsRSSFeedServlet
 
     public MetricsRSSFeedServlet(ServiceBroker sb) {
 	// Register our servlet with servlet service
-	ServletService servletService = (ServletService)
-	    sb.getService(this, ServletService.class, null);
+	ServletService servletService = sb.getService(this, ServletService.class, null);
 	if (servletService == null) {
 	    throw new RuntimeException("Unable to obtain ServletService");
 	}
@@ -72,21 +71,18 @@ public class MetricsRSSFeedServlet
    
 	// get metrics service
 	try {
-	    metricsService = (MetricsService)
-		sb.getService(this, MetricsService.class, null);
+	    metricsService = sb.getService(this, MetricsService.class, null);
 	} catch (Exception e) {
 	    throw new RuntimeException("Unable to get MetricsService at path <"
 				       +getPath()+ ">: " +e.getMessage());
 	}
 
 
-	NodeIdentificationService nis = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
+	NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
 	nodeID = nis.getMessageAddress();
 	sb.releaseService(this, NodeIdentificationService.class, nis);
 
-	NodeControlService ncs = (NodeControlService)
-            sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
         if (ncs != null) {
             agentContainer = ncs.getRootContainer();
             sb.releaseService(this, NodeControlService.class, ncs);
@@ -252,7 +248,8 @@ public class MetricsRSSFeedServlet
 
 
     // servlet requirement - pass to our print method to handle
-    public void doGet(HttpServletRequest request,
+    @Override
+   public void doGet(HttpServletRequest request,
 		      HttpServletResponse response) 
 	throws java.io.IOException 
     {

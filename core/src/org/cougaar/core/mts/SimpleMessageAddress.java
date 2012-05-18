@@ -47,7 +47,8 @@ public class SimpleMessageAddress
     _as = address.intern();
   }
 
-  public final String getAddress() {
+  @Override
+public final String getAddress() {
     return _as;
   }
 
@@ -55,7 +56,8 @@ public class SimpleMessageAddress
     return (ma != null && _as == ma._as);
   }
 
-  public boolean equals(Object o ){
+  @Override
+public boolean equals(Object o ){
     if (this == o) return true;
     // use == since the strings are interned.
     if (o instanceof MessageAddress) {
@@ -65,11 +67,13 @@ public class SimpleMessageAddress
       return false;
     }
   }
-  public String toAddress() {
+  @Override
+public String toAddress() {
     return _as;
   }
 
-  public final int hashCode() { 
+  @Override
+public final int hashCode() { 
     return _as.hashCode();
   }
 

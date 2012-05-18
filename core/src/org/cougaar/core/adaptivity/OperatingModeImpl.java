@@ -42,7 +42,8 @@ public class OperatingModeImpl extends OMCBase implements OperatingMode {
     super(name, allowedValues, value);
   }
     
-  public void setValue(Comparable newValue) {
+  @Override
+public void setValue(Comparable newValue) {
     super.setValue(newValue);
   }
 

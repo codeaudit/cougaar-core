@@ -56,15 +56,14 @@ public class ThreadsWellBehavedPlugin
         this.sb = sb;
     }
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 	long defaultLane = getParameter("defaultLane", 
 					  ThreadService.WELL_BEHAVED_LANE);
 	ServiceBroker sb = getServiceBroker();
-	ThreadControlService tsvc = (ThreadControlService) 
-	    sb.getService(this, ThreadControlService.class, null);
-	LoggingService lsvc = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
+	ThreadControlService tsvc = sb.getService(this, ThreadControlService.class, null);
+	LoggingService lsvc = sb.getService(this, LoggingService.class, null);
 	tsvc.setDefaultLane((int)defaultLane);
 	if (lsvc.isDebugEnabled()) 
 	    lsvc.debug("Default Lane Set to " + defaultLane +

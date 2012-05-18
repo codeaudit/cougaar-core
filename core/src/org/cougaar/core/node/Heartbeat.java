@@ -88,8 +88,7 @@ public final class Heartbeat
   synchronized void start(ServiceBroker sb) {
     if (schedulable != null) throw new RuntimeException("Attempted to restart Heartbeat!");
 
-    ThreadService tsvc = (ThreadService)
-	sb.getService(this, ThreadService.class, null);
+    ThreadService tsvc = sb.getService(this, ThreadService.class, null);
     //Want this thread to be lowest priority, i.e. run only after
     // every thing else has run. With the thread lanes, the best we can do
     // is run in the default pool.

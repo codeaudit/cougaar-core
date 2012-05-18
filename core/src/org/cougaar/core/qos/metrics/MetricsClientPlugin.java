@@ -74,7 +74,8 @@ public class MetricsClientPlugin
   /**
    * load time is when services are  lookup
    */ 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     ServiceBroker sb = getServiceBroker();
     
@@ -82,8 +83,7 @@ public class MetricsClientPlugin
     
     evaluator = new StandardVariableEvaluator(sb);
 
-    metricsService = ( MetricsService)
-      sb.getService(this, MetricsService.class, null);
+    metricsService = sb.getService(this, MetricsService.class, null);
 	
     MetricsCallback cb = new MetricsCallback();
     paramPath = getParameter("path");
@@ -92,10 +92,12 @@ public class MetricsClientPlugin
     metricsService.subscribeToValue(paramPath, cb, evaluator);
   }
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    public synchronized void execute() {
+    @Override
+   public synchronized void execute() {
     }
   
 }

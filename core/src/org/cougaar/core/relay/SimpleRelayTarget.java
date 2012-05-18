@@ -51,7 +51,8 @@ implements Relay.Target {
 
   // prevent "setQuery", since this is the target-side instance.
   // Only "updateContent" from the source can change the content.
-  public void setQuery(Object reply) {
+  @Override
+public void setQuery(Object reply) {
     throw new UnsupportedOperationException(
         "Unable to modify the query on the target-side, "+
         "it can only be set at the source ("+source+")");

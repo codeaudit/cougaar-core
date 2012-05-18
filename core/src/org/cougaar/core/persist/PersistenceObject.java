@@ -47,7 +47,8 @@ public class PersistenceObject implements Serializable {
         return name;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
         return name + "(" + bytes.length + " bytes)";
     }
 }

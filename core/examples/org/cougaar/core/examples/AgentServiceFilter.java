@@ -49,7 +49,8 @@ extends ServiceFilter
 {
 
   //  This method specifies the Binder to use (defined later)
-  protected Class getBinderClass(Object child) {
+  @Override
+protected Class getBinderClass(Object child) {
     return AgentServiceFilterBinder.class;
   }
   
@@ -63,12 +64,14 @@ extends ServiceFilter
 
     // this method specifies a binder proxy to use, so as to avoid exposing the binder
     // itself to the lower level objects.
-    protected ContainerAPI createContainerProxy() { 
+    @Override
+   protected ContainerAPI createContainerProxy() { 
       return new AgentFilteringBinderProxy(); 
     }
 
     // this method installs the "filtering" service broker
-    protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
+    @Override
+   protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
       return new AgentFilteringServiceBroker(sb); 
     }
 
@@ -87,6 +90,7 @@ extends ServiceFilter
       public AgentFilteringServiceBroker(ServiceBroker sb) {
         super(sb);
       }
+      @Override
       protected Object getServiceProxy(Object service, Class serviceClass, Object client) {
         if (service instanceof NodeIdentificationService) {
           return new NodeIdentificationServiceProxy(

@@ -195,7 +195,8 @@ class TrivialThreadPool {
             super.start();
         }
     
-        public void start() {
+        @Override
+      public void start() {
             throw new RuntimeException("You can't call start() on a PooledThread");
         }
     
@@ -208,7 +209,8 @@ class TrivialThreadPool {
             }
         }
     
-        public void run() {
+        @Override
+      public void run() {
             while (true) {
                 synchronized (lock) {
                     if (body != null) {

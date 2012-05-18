@@ -105,14 +105,13 @@ public class ComponentViewServlet extends ComponentServlet {
 
   private ComponentView view;
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      serviceBroker.getService(this, LoggingService.class, null);
+    log = serviceBroker.getService(this, LoggingService.class, null);
 
-    ViewService viewService = (ViewService)
-      serviceBroker.getService(this, ViewService.class, null);
+    ViewService viewService = serviceBroker.getService(this, ViewService.class, null);
     if (viewService != null) {
       view = viewService.getComponentView();
       serviceBroker.releaseService(
@@ -137,7 +136,8 @@ public class ComponentViewServlet extends ComponentServlet {
     return curr;
   }
 
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {
     (new Worker(request, response)).execute();

@@ -96,24 +96,23 @@ extends ComponentPlugin
   // maps proc UID to internal Entry
   private Map uidToEntry = new HashMap(13);
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get the logger
-    log = (LoggingService) 
-      getServiceBroker().getService(
-          this, LoggingService.class, null);
+    log = getServiceBroker().getService(
+       this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
 
     // get the agentId
     AgentIdentificationService agentIdService = 
-      (AgentIdentificationService)
       getServiceBroker().getService(
-          this,
-          AgentIdentificationService.class,
-          null);
+       this,
+       AgentIdentificationService.class,
+       null);
     if (agentIdService == null) {
       throw new RuntimeException(
           "Unable to obtain agent-id service");
@@ -129,11 +128,10 @@ extends ComponentPlugin
 
     // get the nodeId
     NodeIdentificationService nodeIdService = 
-      (NodeIdentificationService)
       getServiceBroker().getService(
-          this,
-          NodeIdentificationService.class,
-          null);
+       this,
+       NodeIdentificationService.class,
+       null);
     if (nodeIdService == null) {
       throw new RuntimeException(
           "Unable to obtain node-id service");
@@ -147,11 +145,10 @@ extends ComponentPlugin
     }
 
     // get the mobility factories
-    this.domain = (DomainService)
-      getServiceBroker().getService(
-          this,
-          DomainService.class,
-          null);
+    this.domain = getServiceBroker().getService(
+       this,
+       DomainService.class,
+       null);
     if (domain == null) {
       throw new RuntimeException(
           "Unable to obtain domain service");
@@ -176,7 +173,8 @@ extends ComponentPlugin
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (domain != null) {
       getServiceBroker().releaseService(
           this, DomainService.class, domain);
@@ -191,7 +189,8 @@ extends ComponentPlugin
     super.unload();
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     // subscribe to procs that we'll execute
     procSub = (IncrementalSubscription)
       blackboard.subscribe(PROCESS_PRED);
@@ -212,7 +211,8 @@ extends ComponentPlugin
     }
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     if (log.isDebugEnabled()) {
       log.debug(todd+"Execute");
     }
@@ -611,7 +611,8 @@ extends ComponentPlugin
       }
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "Entry {"+
         "\n procUID: "+proc.getUID()+

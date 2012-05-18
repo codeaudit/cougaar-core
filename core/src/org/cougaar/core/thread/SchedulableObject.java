@@ -149,7 +149,8 @@ final class SchedulableObject implements Schedulable {
         return scheduler;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
         return 	"<Schedulable " 
 	    +(name == null ? "anonymous" : name)+
 	    ">";
@@ -296,7 +297,8 @@ final class SchedulableObject implements Schedulable {
     private TimerTask task() {
 	cancelTimer();
 	task = new TimerTask() {
-		public void run() {
+		@Override
+      public void run() {
 		    start();
 		}
 	    };

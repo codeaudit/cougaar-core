@@ -80,7 +80,7 @@ public final class ServletUtil {
    */
   public static final String encodeForHTML(final String s) {
     int slen = ((s != null) ? s.length() : 0);
-    StringBuffer sb = new StringBuffer((int)(1.10*(double)slen));
+    StringBuffer sb = new StringBuffer((int)(1.10*slen));
     for (int i = 0; i < slen; i++) {
       char ci = s.charAt(i);
       switch (ci) {
@@ -118,7 +118,7 @@ public final class ServletUtil {
    */
   public static final String encodeForJava(final String s) {
     int slen = ((s != null) ? s.length() : 0);
-    StringBuffer sb = new StringBuffer((int)(1.10*(double)slen));
+    StringBuffer sb = new StringBuffer((int)(1.10*slen));
     for (int i = 0; i < slen; i++) {
       char ci = s.charAt(i);
       switch (ci) {

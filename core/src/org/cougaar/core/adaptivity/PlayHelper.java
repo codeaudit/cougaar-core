@@ -396,7 +396,8 @@ public class PlayHelper {
       super(pk);
     }
     
-    public boolean isPersistable() {
+    @Override
+   public boolean isPersistable() {
       return false;
     }
   }

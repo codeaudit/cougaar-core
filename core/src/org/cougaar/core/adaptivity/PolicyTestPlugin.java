@@ -52,7 +52,8 @@ public class PolicyTestPlugin extends ServiceUserPlugin {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     String policyFileName = getParameters().iterator().next().toString();
     try {
       Reader is = new InputStreamReader(getConfigFinder().open(policyFileName));
@@ -72,14 +73,14 @@ public class PolicyTestPlugin extends ServiceUserPlugin {
     if (playbookConstrainService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      playbookConstrainService = (PlaybookConstrainService)
-        sb.getService(this, PlaybookConstrainService.class, null);
+      playbookConstrainService = sb.getService(this, PlaybookConstrainService.class, null);
       return true;
     }
     return false;
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       if (haveServices()) {
         cancelTimer();

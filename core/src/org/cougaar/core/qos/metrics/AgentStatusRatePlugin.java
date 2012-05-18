@@ -115,7 +115,8 @@ public class AgentStatusRatePlugin
 	    addKey( bytesOutKey);
 	}
 
-	public void newAddition(KeyMap keys,
+	@Override
+   public void newAddition(KeyMap keys,
 				DecayingHistory.SnapShot rawNow, 
 				DecayingHistory.SnapShot rawLast) 
 	{
@@ -166,7 +167,8 @@ public class AgentStatusRatePlugin
 	    addKey( bytesToKey);
 	}
 
-	public void newAddition(KeyMap keys,
+	@Override
+   public void newAddition(KeyMap keys,
 			  DecayingHistory.SnapShot rawNow, 
 			  DecayingHistory.SnapShot rawLast) 
 	{
@@ -260,26 +262,23 @@ public class AgentStatusRatePlugin
 
 
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
-	agentStatusService = (AgentStatusService)
-	    sb.getService(this, AgentStatusService.class, null);
+	agentStatusService = sb.getService(this, AgentStatusService.class, null);
 
-	metricsUpdate = (MetricsUpdateService)
-	    sb.getService(this, MetricsUpdateService.class, null);
+	metricsUpdate = sb.getService(this, MetricsUpdateService.class, null);
 
-	NodeIdentificationService nis = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
+	NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
  	nodeID = nis.getMessageAddress();
 
 	nodeHistory = new NodeHistory();
 
 	// Start a 1 second poller, if the required services exist.
 	if (agentStatusService != null && metricsUpdate != null) {
-	    ThreadService tsvc = (ThreadService)
-		sb.getService(this, ThreadService.class, null);
+	    ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 	    schedulable = tsvc.getThread(this, this, "AgentStatus");
 	    schedulable.schedule(0, BASE_PERIOD*1000);
 	    sb.releaseService(this, ThreadService.class, tsvc);
@@ -323,10 +322,12 @@ public class AgentStatusRatePlugin
     }
 
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
 	//System.out.println("Executed AgentStatusRatePlugin");
     }
 

@@ -57,8 +57,7 @@ final class SingleNodeRouterImpl
 	clients = new HashMap();
 	waitingMsgs = new HashMap();
 	
-	loggingService = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
+	loggingService = sb.getService(this, LoggingService.class, null);
     }
     
     /**

@@ -88,11 +88,13 @@ public class ConstrainingClause implements java.io.Serializable {
     };
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return list.hashCode();
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o instanceof ConstrainingClause) return list.equals(((ConstrainingClause) o).list);
     return false;
   }
@@ -137,7 +139,8 @@ public class ConstrainingClause implements java.io.Serializable {
    * notation. Parentheses are inserted liberally to make operator
    * precedence clear.
    **/
-  public String toString() {
+  @Override
+public String toString() {
     return toString(iterator());
   }
 }

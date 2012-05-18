@@ -54,7 +54,8 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // advertise our service
@@ -62,7 +63,8 @@ implements Component
     sb.addService(ConfigService.class, configSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (configSP != null) {
       sb.revokeService(ConfigService.class, configSP);
       configSP = null;

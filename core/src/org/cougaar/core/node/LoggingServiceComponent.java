@@ -68,11 +68,11 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs != null) {
       rootsb = ncs.getRootServiceBroker();
       sb.releaseService(this, NodeControlService.class, ncs);
@@ -94,8 +94,7 @@ implements Component
   }
   
   private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       return null;
     }
@@ -105,7 +104,8 @@ implements Component
     return ret;
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     ServiceBroker the_sb = (rootsb == null ? sb : rootsb);

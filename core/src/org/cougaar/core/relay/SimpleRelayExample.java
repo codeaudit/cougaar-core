@@ -82,15 +82,14 @@ public class SimpleRelayExample extends ComponentPlugin {
 
   private IncrementalSubscription sub;
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get services
     ServiceBroker sb = getServiceBroker();
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
-    uids = (UIDService)
-      sb.getService(this, UIDService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
+    uids = sb.getService(this, UIDService.class, null);
 
     // prefix all logging calls with our agent name
     log = LoggingServiceWithPrefix.add(log, agentId+": ");
@@ -100,7 +99,8 @@ public class SimpleRelayExample extends ComponentPlugin {
     }
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     if (log.isDebugEnabled()) {
       log.debug("setupSubscriptions");
     }
@@ -135,7 +135,8 @@ public class SimpleRelayExample extends ComponentPlugin {
     }
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     if (log.isDebugEnabled()) {
       log.debug("execute");
     }

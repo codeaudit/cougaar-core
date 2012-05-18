@@ -82,16 +82,19 @@ public class ClusterMessage
     setTarget(adestination);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "<ClusterMessage "+getSource()+" - "+getDestination()+">";
   }
 
-  public void writeExternal(ObjectOutput out) throws IOException {
+  @Override
+public void writeExternal(ObjectOutput out) throws IOException {
     super.writeExternal(out);
     out.writeLong(theIncarnationNumber);
   }
 
-  public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
+  @Override
+public void readExternal(ObjectInput in) throws ClassNotFoundException, IOException {
     super.readExternal(in);
     theIncarnationNumber = in.readLong();
   }

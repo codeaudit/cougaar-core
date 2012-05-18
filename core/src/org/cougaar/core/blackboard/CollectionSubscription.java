@@ -184,9 +184,11 @@ public class CollectionSubscription
    */
   public boolean retainAll(Collection c) { recordUse(); return real.retainAll(c); }
 
-  public boolean equals(Object o) { return (this == o); }
+  @Override
+public boolean equals(Object o) { return (this == o); }
 
-  public String toString() { return "Subscription of "+real; }
+  @Override
+public String toString() { return "Subscription of "+real; }
 
   /** @return an enumeration of the subscription objects */
   public Enumeration elements() { 
@@ -204,7 +206,8 @@ public class CollectionSubscription
   // subscriber methods:
   //
 
-  /** overrides Subscription.conditionalChange */
+  @Override
+/** overrides Subscription.conditionalChange */
   boolean conditionalChange(Object o, List changes, boolean isVisible) {
     if (hasDynamicPredicate) {
       // this logic could be written more tersely, but I think this
@@ -239,17 +242,20 @@ public class CollectionSubscription
   }
 
   /** {@link Subscriber} method to add an object */
-  protected void privateAdd(Object o, boolean isVisible) { 
+  @Override
+protected void privateAdd(Object o, boolean isVisible) { 
     real.add(o); 
   }
 
   /** {@link Subscriber} method to remove an object */
-  protected void privateRemove(Object o, boolean isVisible) {
+  @Override
+protected void privateRemove(Object o, boolean isVisible) {
     real.remove(o);
   }
 
   /** {@link Subscriber} method to change an object */
-  protected void privateChange(Object o, List changes, boolean isVisible) {
+  @Override
+protected void privateChange(Object o, List changes, boolean isVisible) {
     if (isVisible) {
       Set set = (Set) changeMap.get(o);
       // here we avoid creating a new set instance if it will only
@@ -297,7 +303,8 @@ public class CollectionSubscription
   }
 
   /** {@link Subscriber} method to reset the ChangeReports map */
-  protected void resetChanges() {
+  @Override
+protected void resetChanges() {
     super.resetChanges();       // propagate reset
     changeMap.clear();
   }

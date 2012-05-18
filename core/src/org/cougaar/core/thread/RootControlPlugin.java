@@ -77,17 +77,15 @@ public class RootControlPlugin extends ComponentPlugin
     }
 
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
-	LoggingService lsvc = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
+	LoggingService lsvc = sb.getService(this, LoggingService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
 	sb = ncs.getRootServiceBroker();
- 	ThreadControlService tcs = (ThreadControlService)
- 	    sb.getService(this, ThreadControlService.class, null);
+ 	ThreadControlService tcs = sb.getService(this, ThreadControlService.class, null);
 //  	RightsSelector selector = new PercentageLoadSelector(sb);
  	//tcs.setRightsSelector(selector);
 	if (tcs != null) {
@@ -97,10 +95,12 @@ public class RootControlPlugin extends ComponentPlugin
 	
     }
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
 	System.out.println("Uninteresting");
     }
 

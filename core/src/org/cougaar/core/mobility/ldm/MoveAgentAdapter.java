@@ -77,12 +77,14 @@ implements MoveAgent {
     }
   }
 
-  public void setStatus(int status, Throwable stack) {
+  @Override
+public void setStatus(int status, Throwable stack) {
     super.setStatus(status, stack);
     setMyStatus(status, stack);
   }
 
-  public int updateResponse(
+  @Override
+public int updateResponse(
       MessageAddress t, Object response) {
     int ret = super.updateResponse(t, response);
     if (ret != Relay.NO_CHANGE) {

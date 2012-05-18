@@ -75,7 +75,8 @@ public final class DemoControlMessage extends Message {
     return ack;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "(DemoControlMessage "+(ack ? "ACK" : "SET")+
       " source="+getOriginator()+" target="+getTarget()+

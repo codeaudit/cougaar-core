@@ -23,14 +23,16 @@ public class InetMulticastMessageAddress
         super(new InetSocketAddress(host, port));
     }
 
-    public InetSocketAddress makeReference(String addressString) {
+    @Override
+   public InetSocketAddress makeReference(String addressString) {
         String[] hostAndPort = addressString.split(":");
         String host = hostAndPort[0];
         int port = Integer.parseInt(hostAndPort[1]);
         return new InetSocketAddress(host, port);
     }
     
-    public InetSocketAddress getReference() {
+    @Override
+   public InetSocketAddress getReference() {
         return (InetSocketAddress) super.getReference();
     }
 }

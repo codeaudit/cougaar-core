@@ -63,7 +63,8 @@ implements Component
     }
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // if we're in the node-agent then advertise at the root
@@ -72,9 +73,8 @@ implements Component
     // note that the other agengs will override this node-level
     // service to make the prefix match their agent's id, as
     // opposed to the node's id.
-    NodeControlService nodeControlService = (NodeControlService)
-      sb.getService(
-          this, NodeControlService.class, null);
+    NodeControlService nodeControlService = sb.getService(
+       this, NodeControlService.class, null);
     if (nodeControlService != null) {
       ServiceBroker rootsb =
         nodeControlService.getRootServiceBroker();
@@ -90,7 +90,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // revoke our service
     if (sp != null) {
       sb.revokeService(EventService.class, sp);

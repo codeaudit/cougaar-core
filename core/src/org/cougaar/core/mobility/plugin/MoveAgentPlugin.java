@@ -39,12 +39,12 @@ extends ComponentPlugin
 
   private LoggingService log;
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService) 
-      getServiceBroker().getService(
-          this, LoggingService.class, null);
+    log = getServiceBroker().getService(
+       this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
@@ -58,7 +58,8 @@ extends ComponentPlugin
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if ((log != null) &&
         (log != LoggingService.NULL)) {
       getServiceBroker().releaseService(
@@ -68,10 +69,12 @@ extends ComponentPlugin
     super.unload();
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
   }
 
 }

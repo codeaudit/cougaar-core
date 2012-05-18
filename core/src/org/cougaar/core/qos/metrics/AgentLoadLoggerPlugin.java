@@ -120,28 +120,25 @@ public class AgentLoadLoggerPlugin
 	out.flush();
     }
 
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 
 	ServiceBroker sb = getServiceBroker();
 
-	NodeControlService ncs = (NodeControlService)
-            sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
         if (ncs != null) {
             agentContainer = ncs.getRootContainer();
             sb.releaseService(this, NodeControlService.class, ncs);
         }
 
-	metricsService = (MetricsService)
-	    sb.getService(this, MetricsService.class, null);
+	metricsService = sb.getService(this, MetricsService.class, null);
 
-	NodeIdentificationService nis = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
+	NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
  	node = nis.getMessageAddress().toString();
 
 
-	ThreadService tsvc = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
+	ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 
 	filename = node+"-"+filename;
 	
@@ -174,10 +171,12 @@ public class AgentLoadLoggerPlugin
         }
     }
 
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
 	//System.out.println("Uninteresting");
     }
 

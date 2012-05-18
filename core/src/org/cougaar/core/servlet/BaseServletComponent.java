@@ -69,15 +69,15 @@ public abstract class BaseServletComponent
   public void setParameter(Object o) {
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     
     // get the servlet service
-    servletService = (ServletService)
-      serviceBroker.getService(
-		    this,
-		    ServletService.class,
-		    null);
+    servletService = serviceBroker.getService(
+       this,
+       ServletService.class,
+       null);
     if (servletService == null) {
       throw new RuntimeException(
           "Unable to obtain servlet service");
@@ -103,7 +103,8 @@ public abstract class BaseServletComponent
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     // release the servlet service, which will automatically
     //   unregister the servlet

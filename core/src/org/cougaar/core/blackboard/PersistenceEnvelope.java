@@ -36,6 +36,7 @@ package org.cougaar.core.blackboard;
  * subscription.
  */
 public class PersistenceEnvelope extends Envelope {
-  protected boolean isVisible() { return false; }
+  @Override
+protected boolean isVisible() { return false; }
 }
 

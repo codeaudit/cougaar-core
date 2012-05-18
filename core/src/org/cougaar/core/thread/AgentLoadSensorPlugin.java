@@ -149,23 +149,21 @@ public class AgentLoadSensorPlugin
     }
 
     // Component
-    public void load() {
+    @Override
+   public void load() {
 	super.load();
 	
 
 	ServiceBroker sb = getServiceBroker();
 
 
-	loggingService = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
+	loggingService = sb.getService(this, LoggingService.class, null);
 
-	NodeIdentificationService nis = (NodeIdentificationService)
-	    sb.getService(this, NodeIdentificationService.class, null);
+	NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
  	MessageAddress my_node = nis.getMessageAddress();
 	sb.releaseService(this, NodeIdentificationService.class, nis);
 
-	MetricsService metricsService = (MetricsService)
-	    sb.getService(this, MetricsService.class, null);
+	MetricsService metricsService = sb.getService(this, MetricsService.class, null);
 
 	nodeRecord = new ConsumerRecord("NodeTotal_" + my_node);
 
@@ -199,15 +197,13 @@ public class AgentLoadSensorPlugin
 
 
 	// We need the root ServiceBroker's ThreadListenerService
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
 
 	if (ncs != null) {
 	    ServiceBroker rootsb = ncs.getRootServiceBroker();
 	    sb.releaseService(this, NodeControlService.class, ncs);
 
-	    ThreadListenerService tls = (ThreadListenerService)
-		rootsb.getService(this, ThreadListenerService.class, null);
+	    ThreadListenerService tls = rootsb.getService(this, ThreadListenerService.class, null);
 	    if (tls != null) {
 		for(int lane = 0; lane < ThreadService.LANE_COUNT; lane++) {
 		    tls.addListener(this,lane);
@@ -222,10 +218,12 @@ public class AgentLoadSensorPlugin
 
 
     // Plugin
-    protected void setupSubscriptions() {
+    @Override
+   protected void setupSubscriptions() {
     }
   
-    protected void execute() {
+    @Override
+   protected void execute() {
     }
 
 

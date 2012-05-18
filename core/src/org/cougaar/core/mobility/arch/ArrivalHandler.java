@@ -42,7 +42,8 @@ public class ArrivalHandler extends AbstractHandler {
     this.desc = desc;
   }
 
-  public void run() {
+  @Override
+public void run() {
     arrival();
   }
 
@@ -103,7 +104,8 @@ public class ArrivalHandler extends AbstractHandler {
 
   }
 
-  protected void addAgent(ComponentDescription desc) {
+  @Override
+protected void addAgent(ComponentDescription desc) {
     if (log.isInfoEnabled()) {
       log.info("Add   agent "+id);
     }
@@ -113,7 +115,8 @@ public class ArrivalHandler extends AbstractHandler {
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Move (arrival) of agent "+id;
   }
 }

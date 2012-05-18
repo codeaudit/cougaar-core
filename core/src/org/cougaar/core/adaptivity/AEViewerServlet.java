@@ -124,7 +124,8 @@ implements BlackboardClient
     return -1;  // N/A
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (blackboard != null) {
       serviceBroker.releaseService(
           this, BlackboardService.class, blackboard);
@@ -142,7 +143,8 @@ implements BlackboardClient
     super.unload();
   }
 
-  public void doGet(HttpServletRequest request, HttpServletResponse response) {
+  @Override
+public void doGet(HttpServletRequest request, HttpServletResponse response) {
     String frame = request.getParameter(FRAME);
     response.setContentType("text/html");
     try {
@@ -550,7 +552,8 @@ implements BlackboardClient
       throw new ClassCastException("Expecting OperatingMode");
     }
 
-    public boolean equals(Object other) {
+    @Override
+   public boolean equals(Object other) {
       if (other instanceof OMComparator) {
 	return true;
       }
@@ -576,7 +579,8 @@ implements BlackboardClient
       throw new ClassCastException("Expecting OperatingModePolicy");
     }
 
-    public boolean equals(Object other) {
+    @Override
+   public boolean equals(Object other) {
       if (other instanceof OMComparator) {
 	return true;
       }

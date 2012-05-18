@@ -74,7 +74,8 @@ public abstract class Request implements Serializable {
    */
   public abstract Response createResponse();
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       " oid="+System.identityHashCode(this)+
       " cacheOnly="+hasOption(CACHE_ONLY)+
@@ -163,10 +164,12 @@ public abstract class Request implements Serializable {
     }
     public String getName() { return name; }
     public String getType() { return type; }
-    public Response createResponse() {
+    @Override
+   public Response createResponse() {
       return new Response.Get(this);
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       if (_hc == 0) {
         int h = 0;
         h = 31*h + name.hashCode();
@@ -175,7 +178,8 @@ public abstract class Request implements Serializable {
       }
       return _hc;
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof Get)) {
@@ -187,7 +191,8 @@ public abstract class Request implements Serializable {
            type.equals(g.type));
       }
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "(get name="+getName()+
         " type="+getType()+
@@ -214,10 +219,12 @@ public abstract class Request implements Serializable {
     public String getName() { 
       return name;
     }
-    public Response createResponse() {
+    @Override
+   public Response createResponse() {
       return new Response.GetAll(this);
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof GetAll)) {
@@ -226,10 +233,12 @@ public abstract class Request implements Serializable {
         return name.equals(((GetAll) o).name);
       }
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return name.hashCode();
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "(getAll name="+getName()+
         super.toString();
@@ -261,10 +270,12 @@ public abstract class Request implements Serializable {
     public String getSuffix() { 
       return suffix;
     }
-    public Response createResponse() {
+    @Override
+   public Response createResponse() {
       return new Response.List(this);
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof List)) {
@@ -273,10 +284,12 @@ public abstract class Request implements Serializable {
         return suffix.equals(((List) o).suffix);
       }
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return suffix.hashCode();
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return
         "(list suffix="+getSuffix()+
         super.toString();
@@ -376,10 +389,12 @@ public abstract class Request implements Serializable {
     public boolean isPrefetch() {
       return prefetch;
     }
-    public Response createResponse() {
+    @Override
+   public Response createResponse() {
       return new Response.Flush(this);
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof Flush)) {
@@ -394,13 +409,15 @@ public abstract class Request implements Serializable {
            (prefetch == f.prefetch));
       }
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return 
         (name.hashCode() +
          (uncache ? 1 : 2) +
          (prefetch ? 3 : 4));
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "("+
         (isUncache() ?
@@ -466,10 +483,12 @@ public abstract class Request implements Serializable {
     public boolean isRenewal() {
       return renewal;
     }
-    public Response createResponse() {
+    @Override
+   public Response createResponse() {
       return new Response.Bind(this);
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof Bind)) {
@@ -482,13 +501,15 @@ public abstract class Request implements Serializable {
            renewal == b.renewal);
       }
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return 
         (ae.hashCode() + 
          (overWrite ? 1 : 2) +
          (renewal ? 3 : 4));
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "("+
         (hasOption(CACHE_ONLY) ? "hint_" : "")+
@@ -524,10 +545,12 @@ public abstract class Request implements Serializable {
     public AddressEntry getAddressEntry() {
       return ae;
     }
-    public Response createResponse() {
+    @Override
+   public Response createResponse() {
       return new Response.Unbind(this);
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof Unbind)) {
@@ -537,10 +560,12 @@ public abstract class Request implements Serializable {
         return ae.equals(u.ae);
       }
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return ae.hashCode();
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         "("+
         (hasOption(CACHE_ONLY) ? "unhint" : "unbind")+

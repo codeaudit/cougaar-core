@@ -57,11 +57,12 @@ public final class SingleNodeMTSProvider
   }
 
   // does all loading of services
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     loggingService = 
-      (LoggingService) sb.getService(this, LoggingService.class, null);
+      sb.getService(this, LoggingService.class, null);
 
     // Make router
     SingleNodeRouterImpl router = new SingleNodeRouterImpl(sb);
@@ -69,8 +70,7 @@ public final class SingleNodeMTSProvider
     // Make proxy
     proxy = new SingleNodeMTSProxy(router);
 
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
 
     ServiceBroker rootsb = ncs.getRootServiceBroker();
     rootsb.addService(MessageTransportService.class, this);

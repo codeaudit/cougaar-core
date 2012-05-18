@@ -57,7 +57,8 @@ public class OMCToRange extends OMCRange {
     undecrementedMax = max;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return min.toString() + " to " + undecrementedMax.toString();
   }
 }

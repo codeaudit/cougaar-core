@@ -176,14 +176,11 @@ public class SchedulerWatcher
 
     public SchedulerWatcher(ServiceBroker sb, String agent) {
 	agentName = agent;
-	metricsUpdateService = (MetricsUpdateService)
-	    sb.getService(this, MetricsUpdateService.class, null);
-	ThreadListenerService tls = (ThreadListenerService)
-	    sb.getService(this, ThreadListenerService.class, null);
+	metricsUpdateService = sb.getService(this, MetricsUpdateService.class, null);
+	ThreadListenerService tls = sb.getService(this, ThreadListenerService.class, null);
 	if (tls != null) tls.addListener(this);
 
-	ThreadService tsvc = (ThreadService)
-	    sb.getService(this, ThreadService.class, null);
+	ThreadService tsvc = sb.getService(this, ThreadService.class, null);
 	Runnable body = new SnapShotter();
 	Schedulable sched = tsvc.getThread(this, body);
 	sched.schedule(5000, 1000);

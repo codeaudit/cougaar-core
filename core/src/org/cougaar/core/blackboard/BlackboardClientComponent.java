@@ -201,18 +201,21 @@ public abstract class BlackboardClientComponent
   // implement GenericStateModel:
   //
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     
     // create a blackboard watcher
     this.watcher = 
       new SubscriptionWatcher() {
-        public void signalNotify(int event) {
+        @Override
+      public void signalNotify(int event) {
           // gets called frequently as the blackboard objects change
           super.signalNotify(event);
           requestCycle();
         }
-        public String toString() {
+        @Override
+      public String toString() {
           return "ThinWatcher("+BlackboardClientComponent.this.toString()+")";
         }
       };
@@ -259,7 +262,8 @@ public abstract class BlackboardClientComponent
             }
           }
         }
-        public String toString() {
+        @Override
+      public String toString() {
           return "Trigger("+BlackboardClientComponent.this.toString()+")";
         }
       };
@@ -279,34 +283,40 @@ public abstract class BlackboardClientComponent
     tm.load();
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
     tm.start();
     // Tell the scheduler to run me at least this once
     requestCycle();
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     tm.suspend();
   }
 
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     tm.resume();
   }
 
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
     tm.stop();
   }
 
-  public void halt() {
+  @Override
+public void halt() {
     super.halt();
     tm.halt();
   }
   
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (tm != null) {
       tm.unload();
@@ -440,7 +450,8 @@ public abstract class BlackboardClientComponent
       return System.currentTimeMillis();
   }
   
-  public String toString() {
+  @Override
+public String toString() {
     return getBlackboardClientName();
   }
 }

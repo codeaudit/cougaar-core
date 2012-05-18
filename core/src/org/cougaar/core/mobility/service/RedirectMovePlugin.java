@@ -76,12 +76,12 @@ extends ComponentPlugin
 
   private LoggingService log;
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService) 
-      getServiceBroker().getService(
-          this, LoggingService.class, null);
+    log = getServiceBroker().getService(
+       this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
@@ -96,9 +96,8 @@ extends ComponentPlugin
     }
 
     // get the mobility factory
-    DomainService domain = (DomainService)
-      getServiceBroker().getService(
-          this, DomainService.class, null);
+    DomainService domain = getServiceBroker().getService(
+       this, DomainService.class, null);
     if (domain == null) {
       throw new RuntimeException(
           "Unable to obtain the domain service");
@@ -116,7 +115,8 @@ extends ComponentPlugin
         this, DomainService.class, domain);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if ((log != null) &&
         (log != LoggingService.NULL)) {
       getServiceBroker().releaseService(
@@ -126,7 +126,8 @@ extends ComponentPlugin
     super.unload();
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     if (isNode) {
       // disabled if loaded into node
       return;
@@ -143,7 +144,8 @@ extends ComponentPlugin
           createOutgoingControlPredicate(agentId));
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     if (isNode) {
       return;
     }
@@ -427,11 +429,10 @@ extends ComponentPlugin
   private void getAgentId() {
     // get the agentId
     AgentIdentificationService agentIdService = 
-      (AgentIdentificationService)
       getServiceBroker().getService(
-          this,
-          AgentIdentificationService.class,
-          null);
+       this,
+       AgentIdentificationService.class,
+       null);
     if (agentIdService == null) {
       throw new RuntimeException(
           "Unable to obtain agent-id service");
@@ -448,11 +449,10 @@ extends ComponentPlugin
   private void getNodeId() {
     // get the nodeId
     NodeIdentificationService nodeIdService = 
-      (NodeIdentificationService)
       getServiceBroker().getService(
-          this,
-          NodeIdentificationService.class,
-          null);
+       this,
+       NodeIdentificationService.class,
+       null);
     if (nodeIdService == null) {
       throw new RuntimeException(
           "Unable to obtain node-id service");

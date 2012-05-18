@@ -74,7 +74,8 @@ public final class TimestampEntry implements java.io.Serializable {
     this.creationTime = creationTime;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "("+creationTime+" + "+(lastModTime-creationTime)+")";
   }
 

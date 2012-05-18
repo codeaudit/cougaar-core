@@ -46,16 +46,19 @@ public class UniqueObjectBase implements UniqueObject {
     throw new IllegalStateException("UID cannot be changed");
   }
 
-  public final boolean equals(Object o) {
+  @Override
+public final boolean equals(Object o) {
     return 
       ((o == this) ||
        ((o instanceof UniqueObject) &&
         uid.equals(((UniqueObject) o).getUID())));
   }
-  public final int hashCode() {
+  @Override
+public final int hashCode() {
     return uid.hashCode();
   }
-  public String toString() {
+  @Override
+public String toString() {
     return "("+getClass().getName()+" uid="+uid+")";
   }
 }

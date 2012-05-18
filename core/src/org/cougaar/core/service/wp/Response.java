@@ -207,7 +207,8 @@ public abstract class Response implements Callback, Serializable {
 
   // equals is ==
 
-  public String toString() {
+  @Override
+public String toString() {
     Object r = getResult();
     return
       "(response oid="+
@@ -243,6 +244,7 @@ public abstract class Response implements Callback, Serializable {
   public static class Get extends Response {
     public static final Object NULL = new Object() {
       private Object readResolve() { return NULL; }
+      @Override
       public String toString() { return "null_get"; }
     };
     public Get(Request q) {
@@ -288,7 +290,8 @@ public abstract class Response implements Callback, Serializable {
         return null;
       }
     }
-    protected Object getDefaultResult() {
+    @Override
+   protected Object getDefaultResult() {
       return NULL;
     }
   }
@@ -320,7 +323,8 @@ public abstract class Response implements Callback, Serializable {
         ((Map) r) :
         null;
     }
-    protected Object getDefaultResult() {
+    @Override
+   protected Object getDefaultResult() {
       return Collections.EMPTY_MAP;
     }
   }
@@ -351,7 +355,8 @@ public abstract class Response implements Callback, Serializable {
         ((Set) r) :
         null;
     }
-    protected Object getDefaultResult() {
+    @Override
+   protected Object getDefaultResult() {
       return Collections.EMPTY_SET;
     }
   }
@@ -372,7 +377,8 @@ public abstract class Response implements Callback, Serializable {
         ((Boolean) r).booleanValue() :
         false;
     }
-    protected Object getDefaultResult() {
+    @Override
+   protected Object getDefaultResult() {
       return Boolean.FALSE;
     }
   }
@@ -439,7 +445,8 @@ public abstract class Response implements Callback, Serializable {
         ((Request) r) :
         null;
     }
-    protected Object getDefaultResult() {
+    @Override
+   protected Object getDefaultResult() {
       return Boolean.FALSE;
     }
   }
@@ -461,7 +468,8 @@ public abstract class Response implements Callback, Serializable {
       Object r = getResult();
       return Boolean.TRUE.equals(r);
     }
-    protected Object getDefaultResult() {
+    @Override
+   protected Object getDefaultResult() {
       return Boolean.FALSE;
     }
   }

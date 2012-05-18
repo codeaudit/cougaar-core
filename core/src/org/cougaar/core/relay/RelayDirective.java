@@ -63,7 +63,8 @@ public abstract class RelayDirective extends DirectiveImpl {
     public Relay.TargetFactory getTargetFactory() {
       return tf;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return "(add uid="+uid+" content="+content+")";
     }
   }
@@ -83,7 +84,8 @@ public abstract class RelayDirective extends DirectiveImpl {
     public Relay.TargetFactory getTargetFactory() {
       return tf;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return "(change uid="+uid+" content="+content+")";
     }
   }
@@ -92,7 +94,8 @@ public abstract class RelayDirective extends DirectiveImpl {
     public Remove(UID uid) {
       super(uid);
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return "(remove uid="+uid+")";
     }
   }
@@ -106,7 +109,8 @@ public abstract class RelayDirective extends DirectiveImpl {
     public Object getResponse() {
       return response;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return "(response uid="+uid+" response="+response+")";
     }
   }

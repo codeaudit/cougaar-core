@@ -72,7 +72,8 @@ implements Component
     this.log = log;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     if (log.isDebugEnabled()) {
@@ -87,7 +88,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (sp != null) {
@@ -126,7 +128,7 @@ implements Component
           ret = new Long(Long.MAX_VALUE);
         } else {
           // already bound, return conflict
-          ret = (AddressEntry) m.get(type);
+          ret = m.get(type);
         }
       }
     } else if (req instanceof Request.Unbind) {
@@ -200,7 +202,7 @@ implements Component
          req instanceof Request.GetAll ? ((Request.GetAll) req).getName() :
          null);
       synchronized (table) {
-        ret = (Map) table.get(name);
+        ret = table.get(name);
       }
     }
 
@@ -214,7 +216,8 @@ implements Component
         ServiceBroker sb, Object requestor, Class serviceClass) {
       if (WhitePagesService.class.isAssignableFrom(serviceClass)) {
         return new WhitePagesService() {
-          public Response submit(Request req) {
+          @Override
+         public Response submit(Request req) {
             return LoopbackWhitePages.this.submit(req);
           }
         };

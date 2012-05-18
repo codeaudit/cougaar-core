@@ -67,7 +67,8 @@ public final class NameTag implements Serializable {
     return obj;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "(tag name="+name+" value="+obj+")";
   }
 }

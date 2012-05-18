@@ -72,7 +72,8 @@ public class SequenceNumbers implements Comparable {
         if (this.timestamp > that.timestamp) return  1;
         return this.current = that.current;
     }
-    public String toString() {
+    @Override
+   public String toString() {
         return first + ".." + current;
     }
 }

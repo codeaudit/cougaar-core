@@ -58,7 +58,8 @@ import org.cougaar.core.servlet.ComponentServlet;
  */
 public class CheckJarsServlet extends ComponentServlet {
 
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {
     response.setContentType("text/html");

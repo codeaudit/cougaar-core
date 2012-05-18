@@ -68,24 +68,28 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     obtainServices();
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
     event("Started");
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
     if (moveTargetNode != null) {
       event("Moving");
     }
   }
 
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     if (moveTargetNode != null) {
       event("NotMoved");
@@ -93,7 +97,8 @@ implements Component
     }
   }
 
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
     if (moveTargetNode == null) {
       event("Stopped");
@@ -102,30 +107,27 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     releaseServices();
   }
 
   private void obtainServices() {
-    log = (LoggingService)
-      sb.getService(
-          this, LoggingService.class, null);
+    log = sb.getService(
+       this, LoggingService.class, null);
 
-    eventService = (EventService)
-      sb.getService(
-          this, EventService.class, null);
+    eventService = sb.getService(
+       this, EventService.class, null);
     if (eventService == null) {
       throw new RuntimeException(
           "Unable to obtain EventService");
     }
 
-    wps = (WhitePagesService)
-      sb.getService(this, WhitePagesService.class, null);
+    wps = sb.getService(this, WhitePagesService.class, null);
 
     // local agent
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
@@ -133,8 +135,7 @@ implements Component
     }
 
     // local agent's incarnation
-    TopologyService ts = (TopologyService)
-      sb.getService(this, TopologyService.class, null);
+    TopologyService ts = sb.getService(this, TopologyService.class, null);
     if (ts != null) {
       localIncarnation = ts.getIncarnationNumber();
       sb.releaseService(
@@ -142,8 +143,7 @@ implements Component
     }
 
     // local node
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
     if (nis != null) {
       localNode = nis.getMessageAddress();
       InetAddress localAddr = nis.getInetAddress();
@@ -159,8 +159,7 @@ implements Component
           moveTargetNode = destinationNode;
         }
       };
-    mns = (MobilityNotificationService)
-      sb.getService(mnc, MobilityNotificationService.class, null);
+    mns = sb.getService(mnc, MobilityNotificationService.class, null);
     if (mns == null && log.isInfoEnabled()) {
       log.info(
          "Unable to obtain MobilityNotificationService"+

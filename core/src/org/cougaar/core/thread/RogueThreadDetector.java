@@ -71,8 +71,7 @@ final class RogueThreadDetector
 	    
 
 
-	NodeControlService ncs = (NodeControlService)
-	    sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
 
 	if (ncs == null) {
 	    throw new RuntimeException("Unable to obtain service");
@@ -80,13 +79,10 @@ final class RogueThreadDetector
 
 	ServiceBroker rootsb = ncs.getRootServiceBroker();
 
-	loggingService = (LoggingService)
-	    sb.getService(this, LoggingService.class, null);
+	loggingService = sb.getService(this, LoggingService.class, null);
 
-	statusService = (ThreadStatusService)
-	    rootsb.getService(this, ThreadStatusService.class, null);
-	controlService = (ThreadControlService)
-	    rootsb.getService(this, ThreadControlService.class, null);
+	statusService = rootsb.getService(this, ThreadStatusService.class, null);
+	controlService = rootsb.getService(this, ThreadControlService.class, null);
 	if (statusService == null) {
 	    throw new RuntimeException("Unable to obtain service");
 	}
@@ -161,7 +157,8 @@ final class RogueThreadDetector
 	
     }
 
-    public void run() 
+    @Override
+   public void run() 
     {
 	running = 0;
 	queued = 0;

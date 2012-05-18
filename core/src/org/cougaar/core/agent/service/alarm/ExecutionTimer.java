@@ -166,7 +166,8 @@ public class ExecutionTimer extends Timer {
       return 0;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return ("Time = "
               + new Date(computeTime(theChangeTime)).toString()
               + "*"
@@ -354,7 +355,8 @@ public class ExecutionTimer extends Timer {
   /**
    * Get the current execution time in millis.
    */
-  public long currentTimeMillis() {
+  @Override
+public long currentTimeMillis() {
     synchronized (sem) {
       long now = getNow();
       long newTime = theParameters[0].computeTime(now);
@@ -390,7 +392,8 @@ public class ExecutionTimer extends Timer {
     requestRun();
   }
 
-  protected long getMaxWait() {
+  @Override
+protected long getMaxWait() {
     if (theParameterCount > 1) {
       return theParameters[1].theChangeTime - System.currentTimeMillis();
     } else {
@@ -398,7 +401,8 @@ public class ExecutionTimer extends Timer {
     }
   }
 
-  public double getRate() {
+  @Override
+public double getRate() {
     synchronized (sem) {
       getNow();                   // Bring parameters up-to-now
       return theParameters[0].theRate;
@@ -515,7 +519,8 @@ public class ExecutionTimer extends Timer {
     }
   }
 
-  protected String getName() {
+  @Override
+protected String getName() {
     return "ExecutionTimer";
   }
 

@@ -76,7 +76,8 @@ public final class AddressEntry implements Serializable {
   /** @return the non-null cert (e.g.: Cert.NULL) */
   public Cert getCert() { return cert; }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof AddressEntry)) {
@@ -91,7 +92,8 @@ public final class AddressEntry implements Serializable {
     }
   }
 
-  public int hashCode() {
+  @Override
+public int hashCode() {
     if (_hc == 0) {
       int h = 0;
       h = 31*h + name.hashCode();
@@ -103,7 +105,8 @@ public final class AddressEntry implements Serializable {
     return  _hc;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "(name="+name+
       " type="+type+

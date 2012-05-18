@@ -53,21 +53,19 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get the logger
-    loggingS = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    loggingS = sb.getService(this, LoggingService.class, null);
 
     // get the thread service
-    threadS = (ThreadService)
-      sb.getService(this, ThreadService.class, null);
+    threadS = sb.getService(this, ThreadService.class, null);
 
     // get the local agent address
     String agentName = "Anonymous";
-    AgentIdentificationService agentIdS = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService agentIdS = sb.getService(this, AgentIdentificationService.class, null);
     if (agentIdS != null) {
       MessageAddress agentAddr = agentIdS.getMessageAddress();
       if (agentAddr != null) {
@@ -81,17 +79,20 @@ implements Component
     sb.addService(SchedulerService.class, schedSP);
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     schedSP.suspend();
     super.suspend();
   }
 
-  public void resume() {
+  @Override
+public void resume() {
     super.resume();
     schedSP.resume();
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // revoke our service
     if (schedSP != null) {
       sb.revokeService(SchedulerService.class, schedSP);

@@ -92,10 +92,11 @@ implements Component {
     params = (List) o;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService) sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
@@ -181,7 +182,8 @@ implements Component {
     sb.addServiceListener(sal);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (svc != null) {
       try {
         cb.setService(cl, null);

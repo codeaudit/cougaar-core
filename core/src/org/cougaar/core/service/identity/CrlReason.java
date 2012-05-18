@@ -75,7 +75,8 @@ public class CrlReason
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "Certificate revoked due to "+getReasonAsString();
   }
 }

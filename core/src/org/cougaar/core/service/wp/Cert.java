@@ -49,7 +49,8 @@ public abstract class Cert implements Serializable {
    */
   public static final Cert NULL = new Cert() {
     private Object readResolve() { return NULL; }
-    public String toString() { return "null_cert"; }
+    @Override
+   public String toString() { return "null_cert"; }
   };
 
   /**
@@ -60,7 +61,8 @@ public abstract class Cert implements Serializable {
    */
   public static final Cert PROXY = new Cert() {
     private Object readResolve() { return PROXY; }
-    public String toString() { return "proxy_cert"; }
+    @Override
+   public String toString() { return "proxy_cert"; }
   };
 
   /**
@@ -76,13 +78,16 @@ public abstract class Cert implements Serializable {
       }
     }
     public Certificate getCertificate() { return cert; }
-    public String toString() { return "(cert="+cert+")"; }
-    public boolean equals(Object o) {
+    @Override
+   public String toString() { return "(cert="+cert+")"; }
+    @Override
+   public boolean equals(Object o) {
       return 
         (o == this || 
          (o instanceof Direct && cert.equals(((Direct)o).cert)));
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       if (_hc == 0) _hc = cert.hashCode();
       return _hc;
     }
@@ -105,12 +110,15 @@ public abstract class Cert implements Serializable {
       }
     }
     public String getQuery() { return query; }
-    public String toString() { return "(query="+query+")"; }
-    public boolean equals(Object o) {
+    @Override
+   public String toString() { return "(query="+query+")"; }
+    @Override
+   public boolean equals(Object o) {
       return
         (o == this ||
          (o instanceof Indirect && query.equals(((Indirect)o).query)));
     }
-    public int hashCode() { return query.hashCode(); }
+    @Override
+   public int hashCode() { return query.hashCode(); }
   }
 }

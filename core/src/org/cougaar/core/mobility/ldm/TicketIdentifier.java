@@ -47,7 +47,8 @@ public final class TicketIdentifier implements Serializable {
     return uid;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "<ticket "+uid+">";
   }
 }

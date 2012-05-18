@@ -159,7 +159,8 @@ implements Component
     config = new SelectManagerConfig(o);
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     if (logger.isDebugEnabled()) {
@@ -229,7 +230,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (selectSP != null) {
       sb.revokeService(
           SelectService.class, selectSP);
@@ -762,7 +764,8 @@ implements Component
       return addr;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       long now = System.currentTimeMillis();
       return toString(now);
     }
@@ -780,15 +783,20 @@ implements Component
   }
 
   private class SelectSP extends ServiceProviderBase {
-    protected void register(Object client) {
+    @Override
+   protected void register(Object client) {
       SelectManager.this.register((SelectService.Client) client);
     }
-    protected void unregister(Object client) {
+    @Override
+   protected void unregister(Object client) {
       SelectManager.this.unregister((SelectService.Client) client);
     }
-    protected Class getServiceClass() { return SelectService.class; }
-    protected Class getClientClass() { return SelectService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected Class getServiceClass() { return SelectService.class; }
+    @Override
+   protected Class getClientClass() { return SelectService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements SelectService {
       public SI(Object client) { super(client); }
         public boolean contains(MessageAddress addr) {
@@ -801,7 +809,8 @@ implements Component
             MessageAddress addr, long duration, boolean timeout) {
           SelectManager.this.update(addr, duration, timeout);
         }
-        public String toString() {
+        @Override
+      public String toString() {
           return SelectManager.this.my_toString();
         }
     }
@@ -842,7 +851,7 @@ implements Component
       primaryWeight = d;
       pingTimeout = p.getLong("pingTimeout", 30000);
       double defaultScore = p.getDouble("defaultScore", 750.0);
-      d = Math.max(defaultScore, (double) (pingTimeout + 10000));
+      d = Math.max(defaultScore, (pingTimeout + 10000));
       initialScore = p.getDouble("initialScore", d);
       d = Math.max(defaultScore, 3000.0);
       lousyScore = p.getDouble("lousyScore", d);

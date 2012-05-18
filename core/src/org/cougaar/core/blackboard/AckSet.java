@@ -84,8 +84,8 @@ class AckSet implements Serializable {
    */
   private void computeIndexInfo(int sequenceNumber) {
     sequenceNumber -= baseSequence;
-    index = (int) (sequenceNumber / 64);
-    int bitIndex = (int) (sequenceNumber % 64);
+    index = (sequenceNumber / 64);
+    int bitIndex = (sequenceNumber % 64);
     bit = 1L << bitIndex;
   }
 
@@ -209,7 +209,8 @@ class AckSet implements Serializable {
     }
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     StringBuffer buf = new StringBuffer();
     buf.append(0);
     boolean inRange = false;

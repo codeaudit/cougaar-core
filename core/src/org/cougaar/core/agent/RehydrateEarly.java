@@ -89,7 +89,8 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     localAgent = find_local_agent();
@@ -115,7 +116,8 @@ implements Component
     //load_late();
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
 
     // once loaded we revoke our load_late service
@@ -125,7 +127,8 @@ implements Component
     }
   }
 
-  public void suspend() {
+  @Override
+public void suspend() {
     super.suspend();
 
     if (is_moving) {
@@ -140,7 +143,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (mnsp != null) {
@@ -153,8 +157,7 @@ implements Component
   }
 
   private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       return null;
     }
@@ -165,15 +168,13 @@ implements Component
   }
 
   private void get_logger() {
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
     String prefix = localAgent+": ";
     log = LoggingServiceWithPrefix.add(log, prefix);
   }
 
   private MessageAddress find_local_node() {
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
     if (nis == null) {
       return null;
     }
@@ -273,7 +274,6 @@ implements Component
         }
       };
     psfa = 
-      (PersistenceServiceForAgent)
       sb.getService(
           pc, PersistenceServiceForAgent.class, null);
   }
@@ -296,8 +296,7 @@ implements Component
     }
 
     // get the agent state model, required for mobility
-    agentModel = (AgentStateModelService)
-      sb.getService(this, AgentStateModelService.class, null); 
+    agentModel = sb.getService(this, AgentStateModelService.class, null); 
     if (agentModel == null) {
       throw new RuntimeException(
           "Unable to obtain AgentStateModelService");
@@ -333,8 +332,7 @@ implements Component
       public int getModelState() { return agentModel.getModelState(); }
     };
 
-    mobilityService = (MobilityService)
-      sb.getService(mobilityClient, MobilityService.class, null);
+    mobilityService = sb.getService(mobilityClient, MobilityService.class, null);
     if (mobilityService == null) {
       if (log.isInfoEnabled()) {
         log.info(
@@ -369,8 +367,7 @@ implements Component
   private void persist_blackboard() {
     // suspending after "announce_move", so capture blackboard state as
     // our mobile persistenceObject.
-    BlackboardForAgent bb = (BlackboardForAgent)
-      sb.getService(this, BlackboardForAgent.class, null);
+    BlackboardForAgent bb = sb.getService(this, BlackboardForAgent.class, null);
     if (bb == null) {
       throw new RuntimeException(
           "Unable to obtain BlackboardForAgent"+

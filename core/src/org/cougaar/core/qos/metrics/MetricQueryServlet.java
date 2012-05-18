@@ -63,8 +63,7 @@ public class MetricQueryServlet
   public MetricQueryServlet(ServiceBroker sb) {
      
     // Register our servlet with servlet service
-    ServletService servletService = (ServletService)
-      sb.getService(this, ServletService.class, null);
+    ServletService servletService = sb.getService(this, ServletService.class, null);
     if (servletService == null) {
       throw new RuntimeException("Unable to obtain ServletService");
     }
@@ -78,8 +77,7 @@ public class MetricQueryServlet
     // get metrics service
     try {
     variableEvaluator= new StandardVariableEvaluator(sb);
-    metricsService = (MetricsService)
-      sb.getService(this, MetricsService.class, null);
+    metricsService = sb.getService(this, MetricsService.class, null);
     } catch (Exception e) {
       throw new RuntimeException("Unable to get MetricsService at path <"
 				 +getPath()+ ">: " +e.getMessage());
@@ -224,7 +222,8 @@ public class MetricQueryServlet
   
   
   // servlet requirement - pass to our print method to handle
-  public void doGet(HttpServletRequest request,
+  @Override
+public void doGet(HttpServletRequest request,
 		      HttpServletResponse response) 
     throws java.io.IOException 
   {

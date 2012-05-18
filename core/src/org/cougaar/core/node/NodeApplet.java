@@ -115,7 +115,8 @@ public class NodeApplet extends Applet {
   // shutdown support
   private final NodeControlSupport ncs = new NodeControlSupport();
 
-  public void init() {
+  @Override
+public void init() {
     setLayout(new BorderLayout());
 
     // override properties table
@@ -254,12 +255,14 @@ public class NodeApplet extends Applet {
     }
   }
 
-  public void destroy() {
+  @Override
+public void destroy() {
     updateState(STOPPED, null);
     ncs.shutdown();
   }
 
-  public String getAppletInfo() {
+  @Override
+public String getAppletInfo() {
     return "Cougaar";
   }
 
@@ -361,10 +364,12 @@ public class NodeApplet extends Applet {
     this.paintHandler = (handler == null ? superPaintHandler : handler);
   }
 
-  public boolean action(Event evt, Object what) {
+  @Override
+public boolean action(Event evt, Object what) {
     return actionHandler.action(superActionHandler, evt, what);
   }
-  public void paint(Graphics g) {
+  @Override
+public void paint(Graphics g) {
     paintHandler.paint(superPaintHandler, g);
   }
 

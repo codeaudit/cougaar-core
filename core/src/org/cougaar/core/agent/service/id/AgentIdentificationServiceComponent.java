@@ -58,7 +58,8 @@ implements Component
     this.addr = MessageAddress.getMessageAddress(name);
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // create a single per-agent ai service instance
@@ -69,7 +70,8 @@ implements Component
     sb.addService(AgentIdentificationService.class, aiSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // revoke our service
     if (aiSP != null) {
       sb.revokeService(AgentIdentificationService.class, aiSP);
@@ -110,6 +112,7 @@ implements Component
       public String getName() {
         return addr.getAddress();
       }
+      @Override
       public String toString() {
         return getName();
       }

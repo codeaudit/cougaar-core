@@ -100,27 +100,27 @@ implements Component
     this.threadService = threadService;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     agentId = ais.getMessageAddress();
     sb.releaseService(this, AgentIdentificationService.class, ais);
     agentName = agentId.getAddress();
 
     // register our advertise client
-    advertiseService = (AdvertiseService)
-      sb.getService(
-          advertiseClient, AdvertiseService.class, null);
+    advertiseService = sb.getService(
+       advertiseClient, AdvertiseService.class, null);
     if (advertiseService == null) {
       throw new RuntimeException(
           "Unable to obtain AdvertiseService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     removeAllAdvertisers(); 
 
     if (advertiseService != null) {
@@ -404,7 +404,8 @@ implements Component
     }
     public String getName() { return name; }
     public Bundle getBundle() { return bundle; }
-    public String toString() {
+    @Override
+   public String toString() {
       return "(update name="+name+" bundle="+bundle+")";
     }
   }

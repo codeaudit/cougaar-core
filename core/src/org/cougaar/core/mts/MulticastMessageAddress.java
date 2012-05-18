@@ -95,11 +95,13 @@ public class MulticastMessageAddress
             super(clazz.getName());
         }
 
-        public boolean hasReceiverClass() {
+        @Override
+      public boolean hasReceiverClass() {
             return true;
         }
 
-        public synchronized Class<?> getReceiverClass() {
+        @Override
+      public synchronized Class<?> getReceiverClass() {
             if (klass != null) {
                 return klass;
             } else {

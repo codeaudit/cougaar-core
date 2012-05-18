@@ -186,7 +186,8 @@ implements AgentControl, Relay.Source, Relay.Target {
     return Relay.NO_CHANGE;
   }
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (!(o instanceof AgentControlImpl)) { 
@@ -196,7 +197,8 @@ implements AgentControl, Relay.Source, Relay.Target {
       return uid.equals(u);
     }
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return uid.hashCode();
   }
   private void readObject(ObjectInputStream stream) 
@@ -205,7 +207,8 @@ implements AgentControl, Relay.Source, Relay.Target {
       cacheTargets();
     }
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "Agent control request "+uid+
       " owned by "+ownerUID+
@@ -224,7 +227,8 @@ implements AgentControl, Relay.Source, Relay.Target {
     }
     public int getStatusCode() { return statusCode; }
     public Throwable getStack() { return stack; }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof ControlStatus)) {
@@ -238,7 +242,8 @@ implements AgentControl, Relay.Source, Relay.Target {
             (cs.stack == null)));
       }
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return "status ("+statusCode+") stack("+stack+")";
     }
   }

@@ -58,13 +58,13 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     AgentContainer agentContainer;
 
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs == null) {
       // not in the node agent
       return;
@@ -73,8 +73,7 @@ implements Component
     agentContainer = ncs.getRootContainer();
     sb.releaseService(this, NodeControlService.class, ncs);
 
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
@@ -96,14 +95,14 @@ implements Component
     // will occur after all other components have been loaded.
     //
     // note that we pass our MessageAddress as the requestor.
-    quiescenceReportService = (QuiescenceReportService)
-      sb.getService(
-          localAgent, QuiescenceReportService.class, null);
+    quiescenceReportService = sb.getService(
+       localAgent, QuiescenceReportService.class, null);
 
     quiescenceReportService.clearQuiescentState();
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
 
     if (quiescenceReportService != null) {
@@ -116,7 +115,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (qrsp != null) {

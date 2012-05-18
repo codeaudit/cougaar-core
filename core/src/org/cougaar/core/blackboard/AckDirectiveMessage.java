@@ -46,7 +46,8 @@ class AckDirectiveMessage extends ClusterMessage
     setContentsId(theSequenceNumber);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "<AckDirectiveMessage (" + super.toString() + ")" + ">";
   }
 }

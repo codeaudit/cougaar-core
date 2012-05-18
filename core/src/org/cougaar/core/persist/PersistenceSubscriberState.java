@@ -60,7 +60,8 @@ public class PersistenceSubscriberState implements java.io.Serializable {
     return clientName + "." + subscriberName;
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return super.toString() + " " + getKey();
   }
 }

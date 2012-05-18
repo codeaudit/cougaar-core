@@ -57,7 +57,8 @@ public class TrivialThreadServiceProvider
         this.sb = sb;
     }
 
-    public void load() 
+    @Override
+   public void load() 
     {
 	super.load();
 	/* if (!sb.hasService(ThreadService.class)) */ makeServices(sb);
@@ -66,7 +67,8 @@ public class TrivialThreadServiceProvider
     /**
      * @see org.cougaar.util.GenericStateModelAdapter#unload()
      */
-    public void unload() {
+    @Override
+   public void unload() {
       TreeNode.releaseTimer();
 
       TrivialThreadServiceProxy theProxy = (TrivialThreadServiceProxy) proxy;
@@ -106,8 +108,7 @@ public class TrivialThreadServiceProvider
 	proxy = makeThreadServiceProxy();
 	statusProxy = makeThreadStatusService();
 
-	NodeControlService ncs = (NodeControlService)
-	    the_sb.getService(this, NodeControlService.class, null);
+	NodeControlService ncs = the_sb.getService(this, NodeControlService.class, null);
 	if (ncs != null) {
 	    mysb = ncs.getRootServiceBroker();
 	    the_sb.releaseService(this, NodeControlService.class, ncs);

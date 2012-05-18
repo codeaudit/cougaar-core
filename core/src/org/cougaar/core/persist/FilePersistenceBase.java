@@ -98,7 +98,8 @@ public abstract class FilePersistenceBase
   private FileMutex mutex;
   private int deltaNumber;      // The number of the currently open output file.
 
-  protected void handleParameter(String param) {
+  @Override
+protected void handleParameter(String param) {
     String value;
     if ((value = parseParamValue(param, PERSISTENCE_ROOT_PREFIX)) != null) {
       persistenceRoot = new File(value);
@@ -155,7 +156,8 @@ public abstract class FilePersistenceBase
     }
   }
 
-  public boolean checkOwnership() throws PersistenceException {
+  @Override
+public boolean checkOwnership() throws PersistenceException {
     lockOwnership();
     try {
       DataInputStream i = new DataInputStream(new FileInputStream(ownerFile));
@@ -167,7 +169,8 @@ public abstract class FilePersistenceBase
     }
   }
 
-  public void lockOwnership() throws PersistenceException {
+  @Override
+public void lockOwnership() throws PersistenceException {
     try {
       mutex.lock();
     } catch (IOException ioe) {
@@ -175,7 +178,8 @@ public abstract class FilePersistenceBase
     }
   }
 
-  public void unlockOwnership() throws PersistenceException {
+  @Override
+public void unlockOwnership() throws PersistenceException {
     try {
       mutex.unlock();
     } catch (SecurityException ioe) {

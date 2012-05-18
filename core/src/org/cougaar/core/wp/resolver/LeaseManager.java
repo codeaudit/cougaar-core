@@ -121,15 +121,15 @@ implements Component
     config = new LeaserConfig(o);
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     configure(null);
 
     // register for lookups
-    modifyService = (ModifyService)
-      sb.getService(
-          myClient, ModifyService.class, null);
+    modifyService = sb.getService(
+       myClient, ModifyService.class, null);
     if (modifyService == null) {
       throw new RuntimeException(
           "Unable to obtain ModifyService");
@@ -148,8 +148,7 @@ implements Component
         "White pages server renew leases");
     renewLeasesThread.schedule(config.checkLeasesPeriod);
 
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs != null) {
       rootsb = ncs.getRootServiceBroker();
       sb.releaseService(this, NodeControlService.class, ncs);
@@ -163,7 +162,8 @@ implements Component
     bundleSB.addService(BundleService.class, bundleSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // cancel existing scheduled threads
     renewLeasesThread.cancel();
 
@@ -1043,7 +1043,8 @@ implements Component
       return l;
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       long now = System.currentTimeMillis();
       return toString(now);
     }

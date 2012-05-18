@@ -99,24 +99,23 @@ public abstract class AbstractMobilityPlugin
 
   private final List todo = new ArrayList(5);
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get the logger
-    log = (LoggingService) 
-      getServiceBroker().getService(
-          this, LoggingService.class, null);
+    log = getServiceBroker().getService(
+       this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
 
     // get the agentId
     AgentIdentificationService agentIdService = 
-      (AgentIdentificationService)
       getServiceBroker().getService(
-          this,
-          AgentIdentificationService.class,
-          null);
+       this,
+       AgentIdentificationService.class,
+       null);
     if (agentIdService == null) {
       throw new RuntimeException(
           "Unable to obtain agent-id service");
@@ -131,11 +130,10 @@ public abstract class AbstractMobilityPlugin
 
     // get the nodeId
     NodeIdentificationService nodeIdService = 
-      (NodeIdentificationService)
       getServiceBroker().getService(
-          this,
-          NodeIdentificationService.class,
-          null);
+       this,
+       NodeIdentificationService.class,
+       null);
     if (nodeIdService == null) {
       throw new RuntimeException(
           "Unable to obtain node-id service");
@@ -152,11 +150,10 @@ public abstract class AbstractMobilityPlugin
     isNode = (agentId.equals(nodeId));
 
     // get the mobility factory
-    DomainService domain = (DomainService)
-      getServiceBroker().getService(
-          this,
-          DomainService.class,
-          null);
+    DomainService domain = getServiceBroker().getService(
+       this,
+       DomainService.class,
+       null);
     if (domain == null) {
       throw new RuntimeException(
           "Unable to obtain the domain service");
@@ -177,8 +174,7 @@ public abstract class AbstractMobilityPlugin
 
     if (isNode) {
       // get control of the node
-      nodeControlService = (NodeControlService)
-        getServiceBroker().getService(
+      nodeControlService = getServiceBroker().getService(
             this,
             NodeControlService.class,
             null);
@@ -190,8 +186,7 @@ public abstract class AbstractMobilityPlugin
       this.agentContainer = nodeControlService.getRootContainer();
 
       // get the thread service
-      threadService = (ThreadService)
-        getServiceBroker().getService(
+      threadService = getServiceBroker().getService(
             this,
             ThreadService.class,
             null);
@@ -201,8 +196,7 @@ public abstract class AbstractMobilityPlugin
       }
 
       // get the white pages service
-      whitePagesService = (WhitePagesService)
-        getServiceBroker().getService(
+      whitePagesService = getServiceBroker().getService(
             this,
             WhitePagesService.class,
             null);
@@ -229,7 +223,8 @@ public abstract class AbstractMobilityPlugin
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (isNode) {
       if (mobileAgentSP != null) {
         nodeSB.revokeService(MobilityService.class, mobileAgentSP);
@@ -255,7 +250,8 @@ public abstract class AbstractMobilityPlugin
     super.unload();
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     // subscribe to control requests that we'll execute
     controlSub = (IncrementalSubscription)
       blackboard.subscribe(AGENT_CONTROL_PRED);
@@ -270,7 +266,8 @@ public abstract class AbstractMobilityPlugin
     }
   }
 
-  protected void execute() {
+  @Override
+protected void execute() {
     if (!isNode) return;
 
     // fire pending blackboard changes

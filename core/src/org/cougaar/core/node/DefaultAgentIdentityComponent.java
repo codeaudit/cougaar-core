@@ -68,11 +68,11 @@ implements Component
         ((o != null) ? o.getClass().getName() : "null"));
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
     }
@@ -94,7 +94,6 @@ implements Component
 
     // get our node's address
     NodeIdentificationService nodeIdService = 
-      (NodeIdentificationService)
       sb.getService(this, NodeIdentificationService.class, null);
     if (nodeIdService == null) {
       throw new RuntimeException(
@@ -116,7 +115,8 @@ implements Component
     // the identity-revoked handling
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     // revoke our service
     if (myAISP != null) {
       sb.revokeService(AgentIdentityService.class, myAISP);
@@ -289,6 +289,7 @@ implements Component
         return targetNode;
       }
 
+      @Override
       public String toString() {
         return 
           "Transferable identity for "+name+

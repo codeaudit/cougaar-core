@@ -44,11 +44,13 @@ public class NodeResourcesServlet
 	super(sb);
     }
 
-    public String getPath() {
+    @Override
+   public String getPath() {
 	return "/metrics/resources";
     }
 
-    public String getTitle () {
+    @Override
+   public String getTitle () {
 	return "Resources for Node " + getNodeID();
     }
 
@@ -72,7 +74,8 @@ public class NodeResourcesServlet
 	out.print("</tr>\n");	
     }
 
-    public void printPage(HttpServletRequest request, PrintWriter out) {
+    @Override
+   public void printPage(HttpServletRequest request, PrintWriter out) {
 	String nodePath = "Agent(" +getNodeID()+ ")"+PATH_SEPR;
 	
 

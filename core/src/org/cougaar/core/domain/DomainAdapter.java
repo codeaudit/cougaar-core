@@ -110,24 +110,22 @@ public abstract class DomainAdapter
     return myXPlan;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    LoggingService ls = (LoggingService) 
-      sb.getService(this, LoggingService.class, null);
+    LoggingService ls = sb.getService(this, LoggingService.class, null);
     if (ls != null) {
       logger = ls;
     }
 
-    xplanService = (XPlanService)
-      sb.getService(this, XPlanService.class, null);
+    xplanService = sb.getService(this, XPlanService.class, null);
     if (xplanService == null) {
       throw new RuntimeException(
           "Unable to obtain XPlanService");
     }
 
-    domainRegistryService = (DomainRegistryService)
-      sb.getService(this, DomainRegistryService.class, null);
+    domainRegistryService = sb.getService(this, DomainRegistryService.class, null);
     if (domainRegistryService == null) {
       throw new RuntimeException(
           "Unable to obtain DomainRegistryService");
@@ -140,7 +138,8 @@ public abstract class DomainAdapter
     domainRegistryService.registerDomain(this);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (domainRegistryService != null) {

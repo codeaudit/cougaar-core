@@ -213,7 +213,8 @@ implements Component
     this.wps = wps;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     configure(null);
@@ -223,17 +224,15 @@ implements Component
     }
 
     // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     agentId = ais.getMessageAddress();
     sb.releaseService(this, AgentIdentificationService.class, ais);
 
     // watch for peer servers
-    peersService = (PeersService)
-      sb.getService(
-          peersClient,
-          PeersService.class,
-          null);
+    peersService = sb.getService(
+       peersClient,
+       PeersService.class,
+       null);
     if (peersService == null) {
       throw new RuntimeException(
           "Unable to obtain PeersService");
@@ -300,7 +299,8 @@ implements Component
     sb.addService(ForwardService.class, forwardSP);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (forwardSP != null) {
       sb.revokeService(ForwardService.class, forwardSP);
       forwardSP = null;
@@ -451,8 +451,7 @@ implements Component
       }
       return;
     }
-    MessageSwitchService mss = (MessageSwitchService)
-      sb.getService(this, MessageSwitchService.class, null);
+    MessageSwitchService mss = sb.getService(this, MessageSwitchService.class, null);
     if (mss == null) {
       if (logger.isErrorEnabled()) {
         logger.error("Unable to obtain MessageSwitchService");
@@ -803,19 +802,25 @@ implements Component
 
   private abstract class SPBase extends ServiceProviderBase {
     protected abstract int getAction();
-    protected void register(Object client) {
+    @Override
+   protected void register(Object client) {
       ServerTransport.this.register(getAction(), client);
     }
-    protected void unregister(Object client) {
+    @Override
+   protected void unregister(Object client) {
       ServerTransport.this.unregister(getAction(), client);
     }
   }
 
   private class PingAckSP extends SPBase {
-    protected int getAction() { return WPAnswer.PING; }
-    protected Class getServiceClass() { return PingAckService.class; }
-    protected Class getClientClass() { return PingAckService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return WPAnswer.PING; }
+    @Override
+   protected Class getServiceClass() { return PingAckService.class; }
+    @Override
+   protected Class getClientClass() { return PingAckService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements PingAckService {
       public SI(Object client) { super(client); }
       public void pingAnswer(MessageAddress clientAddr, long clientTime, Map m) {
@@ -824,10 +829,14 @@ implements Component
     }
   }
   private class LookupAckSP extends SPBase {
-    protected int getAction() { return WPAnswer.LOOKUP; }
-    protected Class getServiceClass() { return LookupAckService.class; }
-    protected Class getClientClass() { return LookupAckService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return WPAnswer.LOOKUP; }
+    @Override
+   protected Class getServiceClass() { return LookupAckService.class; }
+    @Override
+   protected Class getClientClass() { return LookupAckService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements LookupAckService {
       public SI(Object client) { super(client); }
       public void lookupAnswer(MessageAddress clientAddr, long clientTime, Map m) {
@@ -836,10 +845,14 @@ implements Component
     }
   }
   private class ModifyAckSP extends SPBase {
-    protected int getAction() { return WPAnswer.MODIFY; }
-    protected Class getServiceClass() { return ModifyAckService.class; }
-    protected Class getClientClass() { return ModifyAckService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return WPAnswer.MODIFY; }
+    @Override
+   protected Class getServiceClass() { return ModifyAckService.class; }
+    @Override
+   protected Class getClientClass() { return ModifyAckService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements ModifyAckService {
       public SI(Object client) { super(client); }
       public void modifyAnswer(MessageAddress clientAddr, long clientTime, Map m) {
@@ -848,10 +861,14 @@ implements Component
     }
   }
   private class ForwardAckSP extends SPBase {
-    protected int getAction() { return WPAnswer.FORWARD; }
-    protected Class getServiceClass() { return ForwardAckService.class; }
-    protected Class getClientClass() { return ForwardAckService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return WPAnswer.FORWARD; }
+    @Override
+   protected Class getServiceClass() { return ForwardAckService.class; }
+    @Override
+   protected Class getClientClass() { return ForwardAckService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements ForwardAckService {
       public SI(Object client) { super(client); }
       public void forwardAnswer(MessageAddress clientAddr, long clientTime, Map m) {
@@ -860,10 +877,14 @@ implements Component
     }
   }
   private class ForwardSP extends SPBase {
-    protected int getAction() { return FORWARD_ANSWER; }
-    protected Class getServiceClass() { return ForwardService.class; }
-    protected Class getClientClass() { return ForwardService.Client.class; }
-    protected Service getService(Object client) { return new SI(client); }
+    @Override
+   protected int getAction() { return FORWARD_ANSWER; }
+    @Override
+   protected Class getServiceClass() { return ForwardService.class; }
+    @Override
+   protected Class getClientClass() { return ForwardService.Client.class; }
+    @Override
+   protected Service getService(Object client) { return new SI(client); }
     protected class SI extends MyServiceImpl implements ForwardService {
       public SI(Object client) { super(client); }
       public void forward(Map m, long ttd) {

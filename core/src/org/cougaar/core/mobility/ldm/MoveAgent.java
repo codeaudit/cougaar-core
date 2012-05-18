@@ -126,12 +126,14 @@ public interface MoveAgent extends UniqueObject {
       }
     }
 
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       int hc = code;
       if (message != null) hc += message.hashCode();
       return hc;
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) {
         return true;
       } else if (!(o instanceof Status)) {
@@ -148,7 +150,8 @@ public interface MoveAgent extends UniqueObject {
             (throwable.equals(s.throwable))));
       }
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return 
         (getCodeAsString()+" "+
          message+

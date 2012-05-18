@@ -36,18 +36,22 @@ import java.util.Iterator;
  */
 public final class BulkEnvelopeTuple extends EnvelopeTuple {
   private final Collection bulk;
-  public Object getObject() { return bulk; }
+  @Override
+public Object getObject() { return bulk; }
 
   public BulkEnvelopeTuple(Collection o) {
     if (o == null) throw new IllegalArgumentException("Collection is null");
     bulk = o;
   }
 
-  public final int getAction() { return Envelope.BULK; }
-  public final boolean isBulk() { return true; }
+  @Override
+public final int getAction() { return Envelope.BULK; }
+  @Override
+public final boolean isBulk() { return true; }
   public final Collection getCollection() { return bulk; }
 
-  boolean applyToSubscription(Subscription s, boolean isVisible) {
+  @Override
+boolean applyToSubscription(Subscription s, boolean isVisible) {
     boolean changedP = false;
 
     if (bulk instanceof ArrayList) {

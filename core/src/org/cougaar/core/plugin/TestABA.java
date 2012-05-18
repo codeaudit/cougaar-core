@@ -67,7 +67,8 @@ public class TestABA extends ComponentPlugin {
     logger = LoggingServiceWithPrefix.add(logger, getAgentIdentifier() + ": ");
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     String cid = getAgentIdentifier().toString();
     boolean is135ARBN = cid.equals("1-35-ARBN");
     relays = (IncrementalSubscription) blackboard.subscribe(relayPredicate);
@@ -84,7 +85,8 @@ public class TestABA extends ComponentPlugin {
     }
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (relays.hasChanged()) {
       int n = relays.size();
       printList("Added", relays.getAddedCollection(), n);

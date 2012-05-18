@@ -95,7 +95,8 @@ implements Component {
     param = o;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // parse parameters

@@ -183,6 +183,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
    * unless there might be a difference.
    */
   private Memo _quiescenceStatesMemo = Memo.get(new Memo.Function() {
+      @Override
       public String toString() { return "Memo<active quiescenceStates>"; }
       public Object eval(Object o) {
         Set agentAddresses = (Set) o;
@@ -426,8 +427,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
       if (isRunning) {
         if (schedulable == null) {
           // first time
-        ThreadService tsvc = (ThreadService)
-          sb.getService(this, ThreadService.class, null);
+        ThreadService tsvc = sb.getService(this, ThreadService.class, null);
           schedulable = tsvc.getThread(this, this, "Quiescence Announcer");
           sb.releaseService(this, ThreadService.class, tsvc);
         }
@@ -446,7 +446,7 @@ class QuiescenceReportServiceProvider implements ServiceProvider {
     private void event(String msg) {
       synchronized (eventServiceLock) {
         if (eventService == null) {
-          eventService = (EventService) sb.getService(QuiescenceReportServiceProvider.this, EventService.class, null);
+          eventService = sb.getService(QuiescenceReportServiceProvider.this, EventService.class, null);
           if (eventService == null) {
             logger.error("No EventService available for " + EOL + msg);
           }

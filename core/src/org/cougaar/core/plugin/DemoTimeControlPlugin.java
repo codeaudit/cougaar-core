@@ -124,7 +124,8 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
         alarmService.addAlarm(new MyAlarm(10000, false));
 
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return "<" + exp + ">";
     }
     public boolean cancel() {
@@ -142,7 +143,8 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
   /**
    * @see org.cougaar.core.blackboard.BlackboardClientComponent#setupSubscriptions()
    */
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     Collection params = this.getParameters();
     if (params.contains("true"))
       debug = true;
@@ -164,7 +166,8 @@ public class DemoTimeControlPlugin extends ComponentPlugin {
   /**
    * @see org.cougaar.core.blackboard.BlackboardClientComponent#execute()
    */
-  protected void execute() {
+  @Override
+protected void execute() {
     if (debug) {
       printTime("execute");
       alarmService.addRealTimeAlarm(new MyAlarm(10000, true));
@@ -266,11 +269,13 @@ out.println(
   }
 
   private class MyServlet extends HttpServlet {
-    public void doGet(HttpServletRequest req, HttpServletResponse res)
+    @Override
+   public void doGet(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
       doit(req, res);
     }
-    public void doPost(HttpServletRequest req, HttpServletResponse res)
+    @Override
+   public void doPost(HttpServletRequest req, HttpServletResponse res)
       throws IOException {
       doit(req, res);
     }

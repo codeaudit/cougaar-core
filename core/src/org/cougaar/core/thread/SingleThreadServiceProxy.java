@@ -48,7 +48,8 @@ final class SingleThreadServiceProxy
   /**
    * Clean up the data structures so they can be reclaimed by the GC.
    */
-  protected void unload() {
+  @Override
+protected void unload() {
     queue = null;
     for (int i = 0; i < runners.length; i++) {
       runners[i].stop();
@@ -63,7 +64,8 @@ final class SingleThreadServiceProxy
     initialize();
   }
 
-    public Schedulable getThread(Object consumer, 
+    @Override
+   public Schedulable getThread(Object consumer, 
 				 Runnable runnable, 
 				 String name) 
     {

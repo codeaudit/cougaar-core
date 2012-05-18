@@ -65,15 +65,17 @@ public abstract class ServiceUserPluginBase extends ComponentPlugin {
   /**
    * Override to get a logger on load
    **/
-  public void load() {
+  @Override
+public void load() {
     super.load();
-    logger = (LoggingService) getServiceBroker().getService(this, LoggingService.class, null);
+    logger = getServiceBroker().getService(this, LoggingService.class, null);
   }
 
   /**
    * Override to release a logger on load
    **/
-  public void unload() {
+  @Override
+public void unload() {
     if (logger != null) {
       getServiceBroker().releaseService(this, LoggingService.class, logger);
       logger = null;

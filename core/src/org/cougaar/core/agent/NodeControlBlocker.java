@@ -55,7 +55,8 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     MessageAddress localAgent = find_local_agent();
@@ -72,15 +73,15 @@ implements Component
       }
 
       // verify
-      NodeControlService ncs = (NodeControlService)
-       sb.getService(this, NodeControlService.class, null); 
+      NodeControlService ncs = sb.getService(this, NodeControlService.class, null); 
       if (ncs != null) {
         throw new RuntimeException("Could not block NodeControlService");
       }
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (ncsp != null) {
@@ -90,8 +91,7 @@ implements Component
   }
 
   private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       return null;
     }
@@ -102,8 +102,7 @@ implements Component
   }
 
   private MessageAddress find_local_node() {
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
     if (nis == null) {
       return null;
     }

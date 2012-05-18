@@ -51,7 +51,8 @@ public class LateOperatingModePlugin extends ServiceUserPlugin {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     if (haveServices()) check();
   }
 
@@ -59,14 +60,14 @@ public class LateOperatingModePlugin extends ServiceUserPlugin {
     if (omService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      omService = (OperatingModeService)
-        sb.getService(this, OperatingModeService.class, null);
+      omService = sb.getService(this, OperatingModeService.class, null);
       return true;
     }
     return false;
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       if (haveServices()) check();
     }

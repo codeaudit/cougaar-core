@@ -170,16 +170,19 @@ extends ContainerSupport
     // the node-internal threads keep it alive, until "shutdown()" is called
   }
 
-  protected String specifyContainmentPoint() {
+  @Override
+protected String specifyContainmentPoint() {
     return INSERTION_POINT;
   }
 
-  protected ServiceBroker createChildServiceBroker(BindingSite bs) {
+  @Override
+protected ServiceBroker createChildServiceBroker(BindingSite bs) {
     // node uses the root service broker
     return getServiceBroker();
   }
 
-  protected ComponentDescriptions findInitialComponentDescriptions() {
+  @Override
+protected ComponentDescriptions findInitialComponentDescriptions() {
     return null;
   }
 
@@ -202,7 +205,8 @@ extends ContainerSupport
   /**
    * This method initializes and loads the node.
    */
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // take params

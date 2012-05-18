@@ -83,17 +83,18 @@ extends AdvertiseBase
     this.socFacService = socFacService;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    configService = (ConfigService)
-      sb.getService(configClient, ConfigService.class, null);
+    configService = sb.getService(configClient, ConfigService.class, null);
     if (configService == null) {
       throw new RuntimeException("Unable to obtain ConfigService");
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (configService != null) {
       sb.releaseService(configClient, ConfigService.class, configService);
       configService = null;
@@ -128,7 +129,8 @@ extends AdvertiseBase
     return ae;
   }
 
-  protected Advertiser createAdvertiser(Object bootObj) {
+  @Override
+protected Advertiser createAdvertiser(Object bootObj) {
     return new RMIAdvertiser(bootObj);
   }
 
@@ -150,7 +152,8 @@ extends AdvertiseBase
       filter = RMIUtil.getFilter(bootEntry, agentId, log);
     }
 
-    public void start() {
+    @Override
+   public void start() {
       String name = bootEntry.getName();
       URI uri = bootEntry.getURI();
       int port = uri.getPort();
@@ -200,17 +203,20 @@ extends AdvertiseBase
       return ret;
     }
 
-    public void update(String name, Bundle bundle) {
+    @Override
+   public void update(String name, Bundle bundle) {
       // do nothing, since we server bundles (as opposed to posting
       // them at external server)
     }
 
-    public void stop() {
+    @Override
+   public void stop() {
       // not implemented yet
       //unbind from registry 
     }
 
-    public String toString() {
+    @Override
+   public String toString() {
       return
         "(rmi_bootstrap "+
         super.toString()+

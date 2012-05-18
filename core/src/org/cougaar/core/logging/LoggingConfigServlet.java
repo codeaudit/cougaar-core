@@ -35,6 +35,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Level;
+import org.apache.log4j.Priority;
 import org.cougaar.core.servlet.BaseServletComponent;
 import org.cougaar.util.log.Logger;
 import org.cougaar.util.log.log4j.DetailPriority;
@@ -47,11 +48,13 @@ import org.cougaar.util.log.log4j.ShoutPriority;
  */
 public class LoggingConfigServlet extends BaseServletComponent {
 
-  protected String getPath() {
+  @Override
+protected String getPath() {
     return "/log";
   }
 
-  protected Servlet createServlet() {
+  @Override
+protected Servlet createServlet() {
     return new MyServlet();
   }
 
@@ -59,7 +62,8 @@ public class LoggingConfigServlet extends BaseServletComponent {
 
   private class MyServlet extends HttpServlet {
 
-    public void doGet(
+    @Override
+   public void doGet(
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {
 
@@ -283,11 +287,11 @@ public class LoggingConfigServlet extends BaseServletComponent {
   // log4j private
   private int convertLevelToInt(Level level) {
     switch (level.toInt()) {
-      case Level.DEBUG_INT:      return Logger.DEBUG;
-      case Level.INFO_INT :      return Logger.INFO;
-      case Level.WARN_INT :      return Logger.WARN;
-      case Level.ERROR_INT:      return Logger.ERROR;
-      case Level.FATAL_INT:      return Logger.FATAL;
+      case Priority.DEBUG_INT:      return Logger.DEBUG;
+      case Priority.INFO_INT :      return Logger.INFO;
+      case Priority.WARN_INT :      return Logger.WARN;
+      case Priority.ERROR_INT:      return Logger.ERROR;
+      case Priority.FATAL_INT:      return Logger.FATAL;
       default: 
         if (level.equals(SHOUT)) {
           return Logger.SHOUT;

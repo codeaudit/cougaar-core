@@ -77,7 +77,8 @@ implements Component
     this.logger = logger;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     if (logger.isDebugEnabled()) {
@@ -85,14 +86,12 @@ implements Component
     }
 
     // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     agentId = ais.getMessageAddress();
     sb.releaseService(this, AgentIdentificationService.class, ais);
 
     // which node are we in?
-    NodeIdentificationService nis = (NodeIdentificationService)
-      sb.getService(this, NodeIdentificationService.class, null);
+    NodeIdentificationService nis = sb.getService(this, NodeIdentificationService.class, null);
     nodeId = nis.getMessageAddress();
     sb.releaseService(this, NodeIdentificationService.class, nis);
 
@@ -103,8 +102,7 @@ implements Component
     }
 
     // get the node's wp service
-    proxyWP = (WhitePagesService)
-      sb.getService(myClient, WhitePagesService.class, null);
+    proxyWP = sb.getService(myClient, WhitePagesService.class, null);
     if (proxyWP == null) {
       throw new RuntimeException(
           "Unable to obtain the WhitePagesService,"+
@@ -122,7 +120,8 @@ implements Component
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     // revoke white pages service

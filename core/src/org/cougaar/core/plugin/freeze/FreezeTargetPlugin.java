@@ -102,10 +102,12 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
       schedulable = s;
       hc = System.identityHashCode(t) + System.identityHashCode(s);
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
       return hc;
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
       if (o == this) return true;
       if (o instanceof BadGuy) {
         BadGuy that = (BadGuy) o;
@@ -113,7 +115,8 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
       }
       return false;
     }
-    public String toString() {
+    @Override
+   public String toString() {
       return schedulable.getState() + ": " + schedulable.getConsumer().toString();
     }
   }
@@ -129,7 +132,8 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
                                        // that have not left the run
                                        // state
 
-  public void unload() {
+  @Override
+public void unload() {
     if (threadControlService != null) {
       ServiceBroker sb = getServiceBroker();
       sb.releaseService(this, ThreadListenerService.class, threadListenerService);
@@ -181,7 +185,8 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
     threadControlService.setQualifier(null);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     super.setupSubscriptions();
     rules.addAllowRule(FreezePlugin.class);
     // Hope this is a List cause order is important.
@@ -197,16 +202,15 @@ public class FreezeTargetPlugin extends FreezePlugin implements ThreadListener {
     rules.addDenyRule(PluginBase.class);
     if (logger.isInfoEnabled()) logger.info("rules=" + rules);
     ServiceBroker sb = getServiceBroker();
-    threadControlService = (ThreadControlService)
-      sb.getService(this, ThreadControlService.class, null);
-    threadListenerService = (ThreadListenerService)
-      sb.getService(this, ThreadListenerService.class, null);
+    threadControlService = sb.getService(this, ThreadControlService.class, null);
+    threadListenerService = sb.getService(this, ThreadListenerService.class, null);
     threadListenerService.addListener(this);
     relaySubscription = (IncrementalSubscription)
       blackboard.subscribe(targetRelayPredicate);
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       cancelTimer();
       if (isFreezing) checkStopped();

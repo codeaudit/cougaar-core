@@ -132,14 +132,13 @@ implements Component
    * Note that the agents are added in bulk, which loads them in
    * sequence in our thread.
    */
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    log = (LoggingService)
-      sb.getService(this, LoggingService.class, null);
+    log = sb.getService(this, LoggingService.class, null);
 
-    NodeControlService ncs = (NodeControlService)
-      sb.getService(this, NodeControlService.class, null);
+    NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
     if (ncs == null) {
       throw new RuntimeException("Unable to obtain NodeControlService");
     }
@@ -151,8 +150,7 @@ implements Component
 
     register_persistence();
 
-    bb = (BlackboardForAgent)
-      sb.getService(this, BlackboardForAgent.class, null);
+    bb = sb.getService(this, BlackboardForAgent.class, null);
     if (bb == null && log.isWarnEnabled()) {
       log.warn("Unable to obtain BlackboardForAgent");
     }
@@ -195,7 +193,8 @@ implements Component
     addAgents(agentDescs);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (rasp != null) {
@@ -212,8 +211,7 @@ implements Component
   }
 
   private MessageAddress find_local_agent() {
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais == null) {
       return null;
     }
@@ -228,8 +226,7 @@ implements Component
 
     // backwards compatibility for non-XML configs!
     try {
-      ComponentInitializerService cis = (ComponentInitializerService)
-        sb.getService(this, ComponentInitializerService.class, null);
+      ComponentInitializerService cis = sb.getService(this, ComponentInitializerService.class, null);
       boolean oldStyle = !cis.includesDefaultComponents();
       if (oldStyle) {
         if (log.isInfoEnabled()) {
@@ -364,7 +361,6 @@ implements Component
         }
       };
     ps = 
-      (PersistenceService)
       sb.getService(
           pc, PersistenceService.class, null);
   }

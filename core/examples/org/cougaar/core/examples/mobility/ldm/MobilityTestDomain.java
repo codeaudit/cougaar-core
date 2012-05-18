@@ -50,7 +50,8 @@ public class MobilityTestDomain extends DomainAdapter {
   private AgentIdentificationService agentIdService;
   private UIDService uidService;
 
-  public String getDomainName() {
+  @Override
+public String getDomainName() {
     return MOBILTY_TEST_NAME;
   }
 
@@ -69,7 +70,8 @@ public class MobilityTestDomain extends DomainAdapter {
     this.uidService = uidService;
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     ServiceBroker sb = getServiceBroker();
     if (uidService != null) {
@@ -82,26 +84,32 @@ public class MobilityTestDomain extends DomainAdapter {
     }
   }
 
-  protected void loadFactory() {
+  @Override
+protected void loadFactory() {
     Factory f = new MobilityTestFactoryImpl(self, uidService);
     setFactory(f);
   }
 
-  protected void loadXPlan() {
+  @Override
+protected void loadXPlan() {
     // none
   }
 
   // zero LPs
-  protected void loadLPs() {
+  @Override
+protected void loadLPs() {
   }
-  public void invokeMessageLogicProviders(DirectiveMessage message) {
+  @Override
+public void invokeMessageLogicProviders(DirectiveMessage message) {
     return;
   }
-  public void invokeEnvelopeLogicProviders(
+  @Override
+public void invokeEnvelopeLogicProviders(
       EnvelopeTuple tuple, boolean isPersistenceEnvelope) {
     return;
   }
-  public void invokeRestartLogicProviders(MessageAddress cid) {
+  @Override
+public void invokeRestartLogicProviders(MessageAddress cid) {
     return;
   }
 

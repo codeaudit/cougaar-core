@@ -158,11 +158,9 @@ implements Component {
     gsm.load();
 
     // get the servlet service, if available
-    servletService = (ServletService)
-      serviceBroker.getService(this, ServletService.class, null);
+    servletService = serviceBroker.getService(this, ServletService.class, null);
     if (servletService == null) {
-      LoggingService log = (LoggingService)
-        serviceBroker.getService(this, LoggingService.class, null);
+      LoggingService log = serviceBroker.getService(this, LoggingService.class, null);
       if (log != null && log.isWarnEnabled()) {
         log.warn("Unable to obtain servlet service");
       }

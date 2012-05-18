@@ -57,7 +57,8 @@ public class ThreatconTestPlugin extends ServiceUserPlugin {
       super(name, allowedValues, value);
     }
 
-    public void setValue(Comparable newValue) {
+    @Override
+   public void setValue(Comparable newValue) {
       super.setValue(newValue);
     }
   }
@@ -70,7 +71,8 @@ public class ThreatconTestPlugin extends ServiceUserPlugin {
     super(requiredServices);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     ThreatconTestCondition threatcon =
       new ThreatconTestCondition(THREATCON_CONDITION_NAME, THREATCON_VALUES, threatconValues[0]);
     getBlackboardService().publishAdd(threatcon);
@@ -81,14 +83,14 @@ public class ThreatconTestPlugin extends ServiceUserPlugin {
     if (conditionService != null) return true;
     if (acquireServices()) {
       ServiceBroker sb = getServiceBroker();
-      conditionService = (ConditionService)
-        sb.getService(this, ConditionService.class, null);
+      conditionService = sb.getService(this, ConditionService.class, null);
       return true;
     }
     return false;
   }
 
-  public void execute() {
+  @Override
+public void execute() {
     if (timerExpired()) {
       if (haveServices()) {
         cancelTimer();

@@ -51,7 +51,8 @@ public class PluginServiceFilter
   extends ServiceFilter
 {
   //  This method specifies the Binder to use (defined later)
-  protected Class getBinderClass(Object child) {
+  @Override
+protected Class getBinderClass(Object child) {
     return PluginServiceFilterBinder.class;
   }
   
@@ -66,12 +67,14 @@ public class PluginServiceFilter
 
     // this method specifies a binder proxy to use, so as to avoid exposing the binder
     // itself to the lower level objects.
-    protected ContainerAPI createContainerProxy() {
+    @Override
+   protected ContainerAPI createContainerProxy() {
       return new ServiceFilterContainerProxy();
     }
 
     // this method installs the "filtering" service broker
-    protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
+    @Override
+   protected ServiceBroker createFilteringServiceBroker(ServiceBroker sb) {
       return new PluginFilteringServiceBroker(sb); 
     }
 
@@ -85,6 +88,7 @@ public class PluginServiceFilter
       }
       // here's where we catch the service request for Blackboard and proxy the
       // returned service.  See FilteringServiceBroker for more options.
+      @Override
       protected Object getServiceProxy(Object service, Class serviceClass, Object client) {
         if (service instanceof BlackboardService) {
           return new BlackboardServiceProxy((BlackboardService) service, client);
@@ -102,11 +106,13 @@ public class PluginServiceFilter
       super(bs);
       this.client=client;
     }
-    public Subscriber getSubscriber() { 
+    @Override
+   public Subscriber getSubscriber() { 
       System.err.println("Warning: "+client+" is calling BlackboardService.getSubscriber()!");
       return super.getSubscriber();
     }
-    public Subscription subscribe(UnaryPredicate isMember) { 
+    @Override
+   public Subscription subscribe(UnaryPredicate isMember) { 
       System.err.println("BlackboardService.subscribe("+isMember+") called by: "+client);
       return super.subscribe(isMember); 
     }

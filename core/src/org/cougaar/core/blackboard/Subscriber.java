@@ -1145,7 +1145,8 @@ public class Subscriber {
   // usability and debugability methods
   // 
 
-  public String toString() {
+  @Override
+public String toString() {
     String cs = "(self)";
     if (theClient != this)
       cs = theClient.toString();

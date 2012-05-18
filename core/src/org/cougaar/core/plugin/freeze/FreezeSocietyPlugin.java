@@ -63,26 +63,27 @@ public class FreezeSocietyPlugin extends FreezeSourcePlugin {
     demoControlService = dcs;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    wps = (WhitePagesService)
-      getServiceBroker().getService(
-          this, WhitePagesService.class, null);
+    wps = getServiceBroker().getService(
+       this, WhitePagesService.class, null);
   }
 
-  public void setupSubscriptions() {
+  @Override
+public void setupSubscriptions() {
     super.setupSubscriptions();
     try {
-      servletService = (ServletService)
-        getServiceBroker().getService(this, ServletService.class, null);
+      servletService = getServiceBroker().getService(this, ServletService.class, null);
       servletService.register("/freezeControl", new FreezeControlServlet());
     } catch (Exception e) {
       logger.error("Failed to register freezeControl servlet", e);
     }
   }
 
-  protected synchronized void setUnfrozenAgents(Set unfrozenAgents) {
+  @Override
+protected synchronized void setUnfrozenAgents(Set unfrozenAgents) {
     if (logger.isDebugEnabled()) logger.debug("unfrozen" + unfrozenAgents);
     if (unfrozenAgents.isEmpty()) {
       status = "Frozen";
@@ -98,12 +99,14 @@ public class FreezeSocietyPlugin extends FreezeSourcePlugin {
     demoControlService.setSocietyTimeRate(newRate);
   }
 
-  protected synchronized void thaw() {
+  @Override
+protected synchronized void thaw() {
     super.thaw();
     setRate(savedRate);
   }
 
-  protected Set getTargetNames() {
+  @Override
+protected Set getTargetNames() {
     Set names;
     try {
       names = ListAllNodes.listAllNodes(wps); // not scalable!
@@ -124,10 +127,12 @@ public class FreezeSocietyPlugin extends FreezeSourcePlugin {
   }
 
   private class FreezeControlServlet extends HttpServlet {
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @Override
+   protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
       doPostOrGet(request, response, false);
     }
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    @Override
+   protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
       doPostOrGet(request, response, true);
     }
     protected void doPostOrGet(HttpServletRequest request, HttpServletResponse response, boolean doUpdate)

@@ -74,7 +74,8 @@ public class JoinCommunity extends ComponentSupport {
     this.cs = cs;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // parse our comma-separated "community" argument, e.g.
@@ -99,13 +100,15 @@ public class JoinCommunity extends ComponentSupport {
     }
   }
 
-  public void start() {
+  @Override
+public void start() {
     super.start();
 
     joinAll(communities);
   }
 
-  public void stop() {
+  @Override
+public void stop() {
     super.stop();
 
     // it's not clear if we want to remove our entries if we're moving.

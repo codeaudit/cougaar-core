@@ -43,12 +43,14 @@ public class PropagatingScheduler extends Scheduler {
     }
 
     
-    public void setRightsSelector(RightsSelector selector) {
+    @Override
+   public void setRightsSelector(RightsSelector selector) {
 	this.selector = selector;
 	selector.setScheduler(this);
     }
 
-    boolean requestRights(Scheduler requestor) {
+    @Override
+   boolean requestRights(Scheduler requestor) {
 	if (!allowRightFor(requestor)) {
 	    return false;
 	}
@@ -77,7 +79,8 @@ public class PropagatingScheduler extends Scheduler {
     }
 
     
-    void releaseRights(Scheduler consumer) { 
+    @Override
+   void releaseRights(Scheduler consumer) { 
 	TreeNode parent_node = getTreeNode().getParent();
 	if (parent_node == null) {
 	    // This is the root
@@ -91,7 +94,8 @@ public class PropagatingScheduler extends Scheduler {
 	}
     }
     
-    SchedulableObject getNextPending() {
+    @Override
+   SchedulableObject getNextPending() {
 	return selector.getNextPending();
     }
 

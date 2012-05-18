@@ -56,7 +56,8 @@ import org.cougaar.core.servlet.ComponentServlet;
  * just like a regular Cougaar plugin.
  */
 public class HelloServlet extends ComponentServlet {
-  public void doGet(
+  @Override
+public void doGet(
       HttpServletRequest request,
       HttpServletResponse response) throws IOException {
     response.setContentType("text/html");

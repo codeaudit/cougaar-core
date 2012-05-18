@@ -80,7 +80,8 @@ implements Component
     this.threadService = threadService;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     if (logger.isDebugEnabled()) {
@@ -88,8 +89,7 @@ implements Component
     }
 
     // which agent are we in?
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     agentId = ais.getMessageAddress();
     sb.releaseService(this, AgentIdentificationService.class, ais);
 
@@ -116,7 +116,8 @@ implements Component
         sb, MessageSwitchService.class, null, sfc);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     MessageSwitchService mss;
     synchronized (sendLock) {
       mss = messageSwitchService;

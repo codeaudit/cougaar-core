@@ -129,11 +129,13 @@ implements BlackboardClient
     };
 
 
-  protected String getPath() {
+  @Override
+protected String getPath() {
     return "/move";
   }
 
-  protected Servlet createServlet() {
+  @Override
+protected Servlet createServlet() {
     // create inner class
     return new MyServlet();
   }
@@ -171,7 +173,8 @@ implements BlackboardClient
   }
 
   // release services:
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
     if (blackboard != null) {
       serviceBroker.releaseService(
@@ -267,7 +270,8 @@ implements BlackboardClient
    */
   private class MyServlet extends HttpServlet {
 
-    public void doGet(
+    @Override
+   public void doGet(
         HttpServletRequest req,
         HttpServletResponse res) throws IOException {
       MyWorker mw = new MyWorker(req, res);
@@ -763,7 +767,8 @@ implements BlackboardClient
         "a \"trigger\" event: "+event);
   }
 
-  public String toString() {
+  @Override
+public String toString() {
     return "\""+getPath()+"\" servlet";
   }
 }

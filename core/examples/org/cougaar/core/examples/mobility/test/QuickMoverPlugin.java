@@ -74,7 +74,8 @@ extends AbstractMoverPlugin
     int i;
   }
 
-  protected void setupSubscriptions() {
+  @Override
+protected void setupSubscriptions() {
     super.setupSubscriptions();
 
     id = DEFAULT_ID;
@@ -155,7 +156,8 @@ extends AbstractMoverPlugin
         t.getIdentifier()+" with ticket: "+t);
   }
 
-  protected void handleCompletedMove(MoveAgent ma) {
+  @Override
+protected void handleCompletedMove(MoveAgent ma) {
     MoveAgent.Status mstat = ma.getStatus();
     if ((mstat == null) || 
         (mstat.getCode() !=  MoveAgent.Status.OKAY)) {

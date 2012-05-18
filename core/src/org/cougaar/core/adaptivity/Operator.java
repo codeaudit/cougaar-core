@@ -53,10 +53,12 @@ public class Operator implements java.io.Serializable {
     public int getOperandCount() {
         return nOperands;
     }
-    public int hashCode() {
+    @Override
+   public int hashCode() {
         return op.hashCode();
     }
-    public boolean equals(Object o) {
+    @Override
+   public boolean equals(Object o) {
         if (this == o) return true;
         if (o instanceof Operator) {
             Operator that = (Operator) o;
@@ -65,7 +67,8 @@ public class Operator implements java.io.Serializable {
         }
         return false;
     }
-    public String toString() {
+    @Override
+   public String toString() {
         return op;
     }
 }

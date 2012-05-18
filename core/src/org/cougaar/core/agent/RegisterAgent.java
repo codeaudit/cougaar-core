@@ -55,25 +55,25 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
-    AgentIdentificationService ais = (AgentIdentificationService)
-      sb.getService(this, AgentIdentificationService.class, null);
+    AgentIdentificationService ais = sb.getService(this, AgentIdentificationService.class, null);
     if (ais != null) {
       localAgent = ais.getMessageAddress();
       sb.releaseService(
           this, AgentIdentificationService.class, ais);
     }
 
-    ras = (RegisterAgentService)
-      sb.getService(this, RegisterAgentService.class, null);
+    ras = sb.getService(this, RegisterAgentService.class, null);
     if (ras != null) {
       ras.addAgent(localAgent);
     }
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     super.unload();
 
     if (ras != null) {

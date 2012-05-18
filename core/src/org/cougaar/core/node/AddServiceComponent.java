@@ -88,7 +88,8 @@ implements Component {
     params = (List) o;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     try {
@@ -112,8 +113,7 @@ implements Component {
     the_sb = sb;
     boolean is_root = "true".equals(is_root_obj);
     if (is_root) {
-      NodeControlService ncs = (NodeControlService) 
-        sb.getService(this, NodeControlService.class, null);
+      NodeControlService ncs = sb.getService(this, NodeControlService.class, null);
       if (ncs == null) {
         throw new RuntimeException("Unable to obtain NodeControlService");
       }
@@ -187,7 +187,8 @@ implements Component {
     the_sb.addService(cl, sp);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (sp != null) {
       the_sb.revokeService(cl, sp);
       sp = null;

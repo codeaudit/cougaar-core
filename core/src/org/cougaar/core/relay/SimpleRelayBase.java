@@ -86,7 +86,8 @@ implements SimpleRelay {
 
   // Object:
 
-  public boolean equals(Object o) {
+  @Override
+public boolean equals(Object o) {
     if (o == this) {
       return true;
     } else if (o instanceof SimpleRelay) { 
@@ -96,10 +97,12 @@ implements SimpleRelay {
       return false;
     }
   }
-  public int hashCode() {
+  @Override
+public int hashCode() {
     return uid.hashCode();
   }
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "(SimpleRelay"+
       " uid="+uid+

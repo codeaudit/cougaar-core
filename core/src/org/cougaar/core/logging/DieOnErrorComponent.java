@@ -105,12 +105,12 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
 
     // get the suicide service
-    suicideService = (SuicideService)
-      sb.getService(this, SuicideService.class, null);
+    suicideService = sb.getService(this, SuicideService.class, null);
     if (suicideService == null) {
       throw new RuntimeException("Unable to obtain SuicideService");
     }
@@ -118,12 +118,15 @@ implements Component
     // attach our log4j appender to observe error logging
     Logger cat = Logger.getRootLogger();
     AppenderSkeleton a = new AppenderSkeleton() {
+      @Override
       protected void append(LoggingEvent event) {
         handleError(event);
       }
+      @Override
       public boolean requiresLayout() {
         return false;
       }
+      @Override
       public void close() {
       }
     };
@@ -132,7 +135,8 @@ implements Component
     cat.addAppender(appender);
   }
 
-  public void unload() {
+  @Override
+public void unload() {
     if (appender != null) {
       Logger cat = Logger.getRootLogger();
       cat.removeAppender(appender);

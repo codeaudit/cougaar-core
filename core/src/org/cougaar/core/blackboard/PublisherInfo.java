@@ -65,7 +65,8 @@ public final class PublisherInfo implements Serializable {
    */
   public Set getChangeStacks() { return change_stacks; }
 
-  public String toString() {
+  @Override
+public String toString() {
     return 
       "(publisherInfo "+
       "\n  publisher="+publisher+

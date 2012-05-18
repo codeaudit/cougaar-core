@@ -83,7 +83,8 @@ implements Component
     this.sb = sb;
   }
 
-  public void load() {
+  @Override
+public void load() {
     super.load();
     List l = getInitialComponents();
     overrideComponentList(l);
@@ -94,8 +95,7 @@ implements Component
 
     // query comp-init service
     boolean includesDefaultComponents = true;
-    ComponentInitializerService cis = (ComponentInitializerService)
-      sb.getService(this, ComponentInitializerService.class, null);
+    ComponentInitializerService cis = sb.getService(this, ComponentInitializerService.class, null);
     try {
       includesDefaultComponents = cis.includesDefaultComponents();
       ComponentDescription[] descs =
@@ -142,8 +142,7 @@ implements Component
   }
 
   private void overrideComponentList(List l) {
-    AgentBootstrapService abs = (AgentBootstrapService)
-      sb.getService(this, AgentBootstrapService.class, null);
+    AgentBootstrapService abs = sb.getService(this, AgentBootstrapService.class, null);
     if (abs == null) {
       throw new RuntimeException(
           "Unable to obtain AgentBootstrapService"+

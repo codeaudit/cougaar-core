@@ -32,12 +32,14 @@ package org.cougaar.core.thread;
  */
 enum SchedulableLifecyle {
     Start {
-	void doWork(SchedulableObject schedulable) {
+	@Override
+   void doWork(SchedulableObject schedulable) {
 	    schedulable.getScheduler().startOrQueue(schedulable);
 	}
     },
     Reclaim {
-	void doWork(SchedulableObject schedulable) {
+	@Override
+   void doWork(SchedulableObject schedulable) {
 	    schedulable.reclaimNotify();
 	}
     };

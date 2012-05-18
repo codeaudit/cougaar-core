@@ -60,22 +60,26 @@ public class BufferedFilePersistence
 {
   BufferedFileSystem bfs;
 
-  public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
+  @Override
+public void init(PersistencePluginSupport pps, String name, String[] params, boolean deleteOldPersistence)
     throws PersistenceException
   {
     super.init(pps, name, params, deleteOldPersistence);
     bfs = new BufferedFileSystem(pps.getLogger());
   }
 
-  protected OutputStream openFileOutputStream(File file) throws FileNotFoundException {
+  @Override
+protected OutputStream openFileOutputStream(File file) throws FileNotFoundException {
     return bfs.openOutputStream(file);
   }
 
-  protected InputStream openFileInputStream(File file) throws FileNotFoundException {
+  @Override
+protected InputStream openFileInputStream(File file) throws FileNotFoundException {
     return bfs.openInputStream(file);
   }
 
-  protected boolean rename(File from, File to) {
+  @Override
+protected boolean rename(File from, File to) {
     return bfs.rename(from, to);
   }
 }
