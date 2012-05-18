@@ -122,11 +122,6 @@ public abstract class DecayingHistory
 	    full = false;
 	}
 
-	DecayingHistoryList(int column, int length) {
-	    this(column, length, 1);
-	}
-
-
 	public void addSnapShot(SnapShot new_elt) {
 	    //First Element (No calculation)
 	    if ( size() == 0) {

@@ -141,9 +141,6 @@ public class PersistenceMetricsServlet extends ServiceUserPlugin {
     public SortItem(int ix) {
       this(ix, new Integer(ix));
     }
-    public SortItem(int ix, long l) {
-      this(ix, new Long(l));
-    }
     public SortItem(int ix, Comparable key) {
       this.ix = ix;
       this.key = key;
