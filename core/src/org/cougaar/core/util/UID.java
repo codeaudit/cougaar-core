@@ -47,7 +47,7 @@ import java.io.ObjectOutput;
  * agents are created.
  */
 public final class UID 
-  implements Externalizable, Comparable
+  implements Externalizable, Comparable<UID>
 {
   private String owner;
   private long id;
@@ -100,24 +100,17 @@ public boolean equals(Object other) {
     }
   }
 
-  public int compareTo(Object other) {
+  public int compareTo(UID other) {
     if (this == other) return 0;
-
-    if (other instanceof UID) {
-      UID o = (UID) other;
-      String oo = o.owner;
-      long oid = o.id;
-      /* compare first by string order with owners, then by id */
-      int c1 = owner.compareTo(oo);
-      if (c1 == 0) {
-        if (id == oid) return 0;
-        return (id>oid)?1:-1;
-      } else {
-        return c1;
-      }
+    String oo = other.owner;
+    long oid = other.id;
+    /* compare first by string order with owners, then by id */
+    int c1 = owner.compareTo(oo);
+    if (c1 == 0) {
+       if (id == oid) return 0;
+       return (id>oid)?1:-1;
     } else {
-      /* if they aren't both UIDs than the ordering is undefined. */
-      return -1;
+       return c1;
     }
   }
 
