@@ -33,6 +33,7 @@ import java.util.List;
 
 import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
 import org.cougaar.core.mts.MessageAddress;
@@ -285,6 +286,10 @@ public void load() {
 
   @Override
 public void start() {
+     // FIXME: need new life-cycle state to activate subscriptions (ie, requestCycle).
+     BindingUtility.setUnboundServices(this, getServiceBroker());
+     
+     // super will change the run-state from LOADED to ACTIVE 
     super.start();
     tm.start();
     // Tell the scheduler to run me at least this once
