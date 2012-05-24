@@ -35,98 +35,88 @@ import org.cougaar.core.service.ServletService;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
- * Abstract base-class for a Component that obtains the ServletService
- * and registers a Servlet.
+ * Abstract base-class for a Component that obtains the ServletService and
+ * registers a Servlet.
  */
 public abstract class BaseServletComponent
-  extends GenericStateModelAdapter
-  implements Component
-{
-  // subclasses are free to use both of these:
-  protected BindingSite bindingSite;
-  protected ServiceBroker serviceBroker;
+      extends GenericStateModelAdapter
+      implements Component {
+   // subclasses are free to use both of these:
+   protected BindingSite bindingSite;
+   protected ServiceBroker serviceBroker;
 
-  // this class handles the "servletService" details:
-  protected ServletService servletService;
+   // this class handles the "servletService" details:
+   protected ServletService servletService;
 
-  public BaseServletComponent() {
-    super();
-  }
+   public BaseServletComponent() {
+      super();
+   }
 
-  public void setBindingSite(BindingSite bindingSite) {
-    this.bindingSite = bindingSite;
-  }
+   public void setBindingSite(BindingSite bindingSite) {
+      this.bindingSite = bindingSite;
+   }
 
-  public void setServiceBroker(ServiceBroker sb) {
-    this.serviceBroker = sb;
-  }
+   public void setServiceBroker(ServiceBroker sb) {
+      this.serviceBroker = sb;
+   }
 
-  /**
-   * Capture the (optional) load-time parameters.
-   * <p>
-   * This is typically a List of Strings.
-   */
-  public void setParameter(Object o) {
-  }
+   /**
+    * Capture the (optional) load-time parameters.
+    * <p>
+    * This is typically a List of Strings.
+    */
+   public void setParameter(Object o) {
+   }
 
-  @Override
-public void load() {
-    super.load();
-    
-    // get the servlet service
-    servletService = serviceBroker.getService(
-       this,
-       ServletService.class,
-       null);
-    if (servletService == null) {
-      throw new RuntimeException(
-          "Unable to obtain servlet service");
-    }
+   @Override
+   public void load() {
+      super.load();
 
-    // get the path for the servlet
-    String path = getPath();
-
-    // load the servlet instance
-    Servlet servlet = createServlet();
-
-    // register the servlet
-    if (servlet != null) {
-      try {
-        servletService.register(path, servlet);
-      } catch (Exception e) {
-        throw new RuntimeException(
-            "Unable to register servlet \""+
-            servlet.getClass().getName()+
-            "\" with path \""+
-            path+"\"", e);
+      // get the servlet service
+      servletService = serviceBroker.getService(this, ServletService.class, null);
+      if (servletService == null) {
+         throw new RuntimeException("Unable to obtain servlet service");
       }
-    }
-  }
 
-  @Override
-public void unload() {
-    super.unload();
-    // release the servlet service, which will automatically
-    //   unregister the servlet
-    if (servletService != null) {
-      serviceBroker.releaseService(
-        this, ServletService.class, servletService);
-    }
-    // your subclass should also release its services here!
-  }
+      // get the path for the servlet
+      String path = getPath();
 
-  /**
-   * Get the path for the Servlet's registration.
-   */
-  protected abstract String getPath();
+      // load the servlet instance
+      Servlet servlet = createServlet();
 
-  /**
-   * Create the Servlet instance.
-   * <p>
-   * This is done within "load()", and is also a good time to 
-   * aquire additional services from the "serviceBroker"
-   * (for example, BlackboardService).
-   */
-  protected abstract Servlet createServlet();
+      // register the servlet
+      if (servlet != null) {
+         try {
+            servletService.register(path, servlet);
+         } catch (Exception e) {
+            String message = "Unable to register servlet \"" + servlet.getClass().getName() + "\" with path \"" + path  + "\"";
+            throw new RuntimeException(message, e);
+         }
+      }
+   }
+
+   @Override
+   public void unload() {
+      super.unload();
+      // release the servlet service, which will automatically
+      // unregister the servlet
+      if (servletService != null) {
+         serviceBroker.releaseService(this, ServletService.class, servletService);
+      }
+      // your subclass should also release its services here!
+   }
+
+   /**
+    * Get the path for the Servlet's registration.
+    */
+   protected abstract String getPath();
+
+   /**
+    * Create the Servlet instance.
+    * <p>
+    * This is done within "load()", and is also a good time to aquire additional
+    * services from the "serviceBroker" (for example, BlackboardService).
+    */
+   protected abstract Servlet createServlet();
 
 }
