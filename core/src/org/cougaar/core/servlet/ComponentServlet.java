@@ -40,7 +40,9 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ServletService;
+import org.cougaar.util.annotations.Argument;
 import org.cougaar.util.annotations.Cougaar;
+import org.cougaar.util.Arguments;
 import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.StateModelException;
@@ -69,7 +71,6 @@ public abstract class ComponentServlet
    private final GenericStateModel gsm = new GenericStateModelAdapter() {
    };
 
-   // path parameter:
    private String myPath;
 
    private ServiceBroker serviceBroker;
@@ -78,31 +79,6 @@ public abstract class ComponentServlet
    private MessageAddress agentId;
    private String encAgentName;
 
-   //
-   // inherits "doGet(..)" and all other HttpServlet methods
-   //
-
-   /**
-    * Capture the (optional) load-time parameters.
-    * <p>
-    * This is typically a List of Strings.
-    */
-   public void setParameter(Object o) {
-      if (o instanceof String) {
-         myPath = (String) o;
-      } else if (o instanceof List) {
-         List l = (List) o;
-         if (l.size() > 0) {
-            Object o1 = l.get(0);
-            if (o1 instanceof String) {
-               myPath = (String) o1;
-            }
-         }
-      }
-      if (myPath != null && myPath.startsWith("path=")) {
-         myPath = myPath.substring("path=".length());
-      }
-   }
 
    /**
     * Get the path for the Servlet's registration.
@@ -138,6 +114,46 @@ public abstract class ComponentServlet
       serviceBroker.releaseService(requestor, serviceClass, service);
    }
 
+   /**
+    * Handle servlet path argument, which is not necessarily in the name=value form.
+    */
+   public void setParameter(Object o) {
+      String candidate = null;
+      if (o instanceof String) {
+         candidate = (String) o;
+      } else if (o instanceof List) {
+         List stringsList = (List) o;
+         if (!stringsList.isEmpty()) {
+            Object o1 = stringsList.get(0);
+            if (o1 instanceof String) {
+               candidate = (String) o1;
+            }
+         }
+      }
+      if (candidate != null) {
+         if (candidate.startsWith("path=")) {
+            candidate = candidate.substring("path=".length());
+         }
+         myPath = candidate;
+      }
+   }
+   
+   /**
+    * Standard support for annotated Args.
+    * Can't handle path myPath this way since it isn't in the right form. [?]
+    */
+   public void setArguments(Arguments args) {
+      try {
+          new Argument(args).setAllFields(this);
+      } catch (Exception e) {
+         LoggingService log = serviceBroker.getService(this, LoggingService.class, null);
+         if (log != null && log.isWarnEnabled()) {
+            log.warn("Unable to set arguments");
+         }
+      }
+  }
+
+
    public void initialize()
          throws StateModelException {
       gsm.initialize();
@@ -147,17 +163,20 @@ public abstract class ComponentServlet
       gsm.load();
       
       if (agentIdService == null) {
-         // Revocation
-      } else {
-         this.agentId = agentIdService.getMessageAddress();
-         if (agentId != null) {
-            try {
-               String name = agentId.getAddress();
-               encAgentName = URLEncoder.encode(name, "UTF-8");
-            } catch (java.io.UnsupportedEncodingException e) {
-               // should never happen
-               throw new RuntimeException("Unable to encode to UTF-8?");
-            }
+         LoggingService log = serviceBroker.getService(this, LoggingService.class, null);
+         if (log != null && log.isWarnEnabled()) {
+            log.warn("Unable to obtain agent id service");
+         }
+         return;
+      }
+      this.agentId = agentIdService.getMessageAddress();
+      if (agentId != null) {
+         try {
+            String name = agentId.getAddress();
+            encAgentName = URLEncoder.encode(name, "UTF-8");
+         } catch (java.io.UnsupportedEncodingException e) {
+            // should never happen
+            throw new RuntimeException("Unable to encode to UTF-8?");
          }
       }
 
