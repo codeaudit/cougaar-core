@@ -45,173 +45,189 @@ import org.cougaar.util.StateModelException;
 /**
  * Abstract base-class for a Component that is also a Servlet.
  * <p>
- * This is very similar to BaseServletComponent, except that
- * the component itself is registered as the servlet.
+ * This is very similar to BaseServletComponent, except that the component
+ * itself is registered as the servlet.
  */
 public abstract class ComponentServlet
-extends HttpServlet
-implements Component {
+      extends HttpServlet
+      implements Component {
 
-  /**
-    * 
-    */
    private static final long serialVersionUID = 1L;
 
-// default state model (no multiple inheritence!):
-  private final GenericStateModel gsm = 
-    new GenericStateModelAdapter() {};
+   // default state model (no multiple inheritence!):
+   private final GenericStateModel gsm = new GenericStateModelAdapter() {
+   };
 
-  // path parameter:
-  private String myPath;
+   // path parameter:
+   private String myPath;
 
-  // subclasses are free to use both of these:
-  protected BindingSite bindingSite;
-  protected ServiceBroker serviceBroker;
+   // subclasses are free to use both of these:
+   protected BindingSite bindingSite;
+   protected ServiceBroker serviceBroker;
 
-  // this class handles the "servletService" details:
-  protected ServletService servletService;
+   // this class handles the "servletService" details:
+   protected ServletService servletService;
 
-  // the local agent address:
-  protected AgentIdentificationService agentIdService;
-  protected MessageAddress agentId;
-  protected String encAgentName;
+   // the local agent address:
+   protected AgentIdentificationService agentIdService;
+   protected MessageAddress agentId;
+   protected String encAgentName;
 
-  public ComponentServlet() {
-    super();
-  }
+   public ComponentServlet() {
+      super();
+   }
 
-  //
-  // inherits "doGet(..)" and all other HttpServlet methods
-  //
+   //
+   // inherits "doGet(..)" and all other HttpServlet methods
+   //
 
-  /**
-   * Capture the (optional) load-time parameters.
-   * <p>
-   * This is typically a List of Strings.
-   */
-  public void setParameter(Object o) {
-    if (o instanceof String) {
-      myPath = (String) o;
-    } else if (o instanceof List) {
-      List l = (List) o;
-      if (l.size() > 0) {
-        Object o1 = l.get(0);
-        if (o1 instanceof String) {
-          myPath = (String) o1;
-        }
+   /**
+    * Capture the (optional) load-time parameters.
+    * <p>
+    * This is typically a List of Strings.
+    */
+   public void setParameter(Object o) {
+      if (o instanceof String) {
+         myPath = (String) o;
+      } else if (o instanceof List) {
+         List l = (List) o;
+         if (l.size() > 0) {
+            Object o1 = l.get(0);
+            if (o1 instanceof String) {
+               myPath = (String) o1;
+            }
+         }
       }
-    }
-    if (myPath != null && myPath.startsWith("path=")) {
-      myPath = myPath.substring("path=".length());
-    }
-  }
-
-  /**
-   * Get the path for the Servlet's registration.
-   * <p>
-   * Typically supplied by the component parameter, but
-   * subclasses can hard-code the path by overriding
-   * this method.
-   */
-  protected String getPath() {
-    return myPath;
-  }
-
-  protected MessageAddress getAgentIdentifier() {
-    return agentId;
-  }
-
-  /** URL-encoded name of the local agent */
-  protected String getEncodedAgentName() {
-    return encAgentName;
-  }
-
-  public void setBindingSite(BindingSite bindingSite) {
-    this.bindingSite = bindingSite;
-  }
-
-  public void setServiceBroker(ServiceBroker sb) {
-    this.serviceBroker = sb;
-  }
-
-  protected ServiceBroker getServiceBroker() {
-    return serviceBroker;
-  }
-
-  public void setAgentIdentificationService(
-      AgentIdentificationService agentIdService) {
-    this.agentIdService = agentIdService;
-    if (agentIdService == null) {
-      // Revocation
-    } else {
-      this.agentId = agentIdService.getMessageAddress();
-      if (agentId != null) {
-        try {
-          String name = agentId.getAddress();
-          encAgentName = URLEncoder.encode(name, "UTF-8");
-        } catch (java.io.UnsupportedEncodingException e) {
-          // should never happen
-          throw new RuntimeException("Unable to encode to UTF-8?");
-        }
+      if (myPath != null && myPath.startsWith("path=")) {
+         myPath = myPath.substring("path=".length());
       }
-    }
-  }
+   }
 
-  public void initialize() throws StateModelException { gsm.initialize(); }
+   /**
+    * Get the path for the Servlet's registration.
+    * <p>
+    * Typically supplied by the component parameter, but subclasses can
+    * hard-code the path by overriding this method.
+    */
+   protected String getPath() {
+      return myPath;
+   }
 
-  public void load() {
-    gsm.load();
+   protected MessageAddress getAgentIdentifier() {
+      return agentId;
+   }
 
-    // get the servlet service, if available
-    servletService = serviceBroker.getService(this, ServletService.class, null);
-    if (servletService == null) {
-      LoggingService log = serviceBroker.getService(this, LoggingService.class, null);
-      if (log != null && log.isWarnEnabled()) {
-        log.warn("Unable to obtain servlet service");
+   /** URL-encoded name of the local agent */
+   protected String getEncodedAgentName() {
+      return encAgentName;
+   }
+
+   public void setBindingSite(BindingSite bindingSite) {
+      this.bindingSite = bindingSite;
+   }
+
+   public void setServiceBroker(ServiceBroker sb) {
+      this.serviceBroker = sb;
+   }
+
+   protected ServiceBroker getServiceBroker() {
+      return serviceBroker;
+   }
+
+   public void setAgentIdentificationService(AgentIdentificationService agentIdService) {
+      this.agentIdService = agentIdService;
+      if (agentIdService == null) {
+         // Revocation
+      } else {
+         this.agentId = agentIdService.getMessageAddress();
+         if (agentId != null) {
+            try {
+               String name = agentId.getAddress();
+               encAgentName = URLEncoder.encode(name, "UTF-8");
+            } catch (java.io.UnsupportedEncodingException e) {
+               // should never happen
+               throw new RuntimeException("Unable to encode to UTF-8?");
+            }
+         }
       }
-      return;
-    }
+   }
 
-    // register this servlet
-    String path = getPath();
-    try {
-      servletService.register(path, this);
-    } catch (Exception e) {
-      String failMsg =
-        (path == null ? "Servlet path not specified" :
-         "Unable to register servlet with path \""+path+"\"");
-      throw new RuntimeException(failMsg, e);
-    }
+   public void initialize()
+         throws StateModelException {
+      gsm.initialize();
+   }
 
-    // unlike ComponentPlugin, we typically do NOT want
-    //   BlackboardService or AlarmService or SchedulerService,
-    // since servlets run in the servlet server's thread.
-    //
-    // see the BlackboardQueryService for simple blackboard
-    // access.
-  }
+   public void load() {
+      gsm.load();
 
-  public void start()   throws StateModelException { gsm.start();   }
-  public void suspend() throws StateModelException { gsm.suspend(); }
-  public void resume()  throws StateModelException { gsm.resume();  }
-  public void stop()    throws StateModelException { gsm.stop();    }
-  public void halt()    throws StateModelException { gsm.halt();    }
-  public int getModelState() { return gsm.getModelState(); }
+      // get the servlet service, if available
+      servletService = serviceBroker.getService(this, ServletService.class, null);
+      if (servletService == null) {
+         LoggingService log = serviceBroker.getService(this, LoggingService.class, null);
+         if (log != null && log.isWarnEnabled()) {
+            log.warn("Unable to obtain servlet service");
+         }
+         return;
+      }
 
-  public void unload() {
-    gsm.unload();
-    // release the servlet service, which will automatically
-    //   unregister the servlet
-    if (servletService != null) {
-      serviceBroker.releaseService(
-        this, ServletService.class, servletService);
-      servletService = null;
-    }
-    if (agentIdService != null) {
-      serviceBroker.releaseService(
-          this, AgentIdentificationService.class, agentIdService);
-      agentIdService = null;
-    }
-    // your subclass should also release its services here!
-  }
+      // register this servlet
+      String path = getPath();
+      try {
+         servletService.register(path, this);
+      } catch (Exception e) {
+         String failMsg = (path == null ? "Servlet path not specified" : "Unable to register servlet with path \"" + path + "\"");
+         throw new RuntimeException(failMsg, e);
+      }
+
+      // unlike ComponentPlugin, we typically do NOT want
+      // BlackboardService or AlarmService or SchedulerService,
+      // since servlets run in the servlet server's thread.
+      //
+      // see the BlackboardQueryService for simple blackboard
+      // access.
+   }
+
+   public void start()
+         throws StateModelException {
+      gsm.start();
+   }
+
+   public void suspend()
+         throws StateModelException {
+      gsm.suspend();
+   }
+
+   public void resume()
+         throws StateModelException {
+      gsm.resume();
+   }
+
+   public void stop()
+         throws StateModelException {
+      gsm.stop();
+   }
+
+   public void halt()
+         throws StateModelException {
+      gsm.halt();
+   }
+
+   public int getModelState() {
+      return gsm.getModelState();
+   }
+
+   public void unload() {
+      gsm.unload();
+      // release the servlet service, which will automatically
+      // unregister the servlet
+      if (servletService != null) {
+         serviceBroker.releaseService(this, ServletService.class, servletService);
+         servletService = null;
+      }
+      if (agentIdService != null) {
+         serviceBroker.releaseService(this, AgentIdentificationService.class, agentIdService);
+         agentIdService = null;
+      }
+      // your subclass should also release its services here!
+   }
 }
