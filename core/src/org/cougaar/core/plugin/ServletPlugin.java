@@ -39,13 +39,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import org.cougaar.bootstrap.SystemProperties;
 import org.cougaar.core.blackboard.Subscription;
 import org.cougaar.core.blackboard.TodoSubscription;
 import org.cougaar.core.service.ServletService;
-import org.cougaar.util.Arguments;
 import org.cougaar.util.FutureResult;
 import org.cougaar.util.UnaryPredicate;
+import org.cougaar.util.annotations.Cougaar;
 
 /**
  * This plugin is a base class for servlets that either modify or subscribe
@@ -64,21 +63,21 @@ import org.cougaar.util.UnaryPredicate;
  * Default timeout for ServletPlugin requests, which are processed
  * in the plugin's "execute()" thread.
  */
-public abstract class ServletPlugin extends ComponentPlugin {
+public abstract class ServletPlugin extends AnnotatedSubscriptionsPlugin {
 
-  private static final long DEFAULT_TIMEOUT =
-    SystemProperties.getLong(
-        "org.cougaar.core.servlet.ServletPlugin.timeout",
-        60000);
+  @Cougaar.Arg(name = "path")
+  public String path;
+  
+  
+  @Cougaar.Arg(name = "timeout", defaultValue = "60000")
+  public long timeout;
 
-  private String path;
+  @Cougaar.ObtainService()
+  public ServletService servletService;
+
   private boolean isTrans;
-  private long timeout;
-  private String encAgentName;
-
-  private ServletService servletService;
-
   private TodoSubscription todo;
+  private String encAgentName;
 
   public ServletPlugin() {
     super();
@@ -125,39 +124,12 @@ public abstract class ServletPlugin extends ComponentPlugin {
 public void load() {
     super.load();
 
-    Collection params = getParameters();
-    Arguments args = new Arguments(params);
-
     // set threading
     isTrans = isTransactional();
-
-    // set path
-    path = getPath();
-    if (path == null) {
-      path = args.getString("path");
-      if (path == null && !params.isEmpty()) {
-        String s = (String) params.iterator().next();
-        if (s.indexOf('=') < 0) {
-          path = s;
-        }
-      }
-      if (path == null) {
-        throw new IllegalArgumentException("Missing path parameter");
-      }
-    }
-
-    // set timeout
-    timeout = args.getLong("timeout", DEFAULT_TIMEOUT);
 
     // get encoded agent name
     String agentName = (agentId == null ? null : agentId.getAddress());
     encAgentName = (agentName == null ? null : encode(agentName));
-
-    // get our servlet service
-    servletService = getServiceBroker().getService(this, ServletService.class, null);
-    if (servletService == null) {
-      throw new RuntimeException("Unable to obtain ServletService");
-    }
 
     // register our servlet
     try {
@@ -187,6 +159,7 @@ public void unload() {
 
   @Override
 protected void setupSubscriptions() {
+     super.setupSubscriptions();
     if (isTrans) {
       todo = (TodoSubscription) blackboard.subscribe(new TodoSubscription("x"));
     }
