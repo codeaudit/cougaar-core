@@ -33,7 +33,9 @@ import javax.servlet.http.HttpServlet;
 
 import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.Component;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
@@ -61,17 +63,15 @@ public abstract class ComponentServlet
    // path parameter:
    private String myPath;
 
-   // subclasses are free to use both of these:
-   protected BindingSite bindingSite;
-   protected ServiceBroker serviceBroker;
+   private ServiceBroker serviceBroker;
 
    // this class handles the "servletService" details:
-   protected ServletService servletService;
+   private ServletService servletService;
 
    // the local agent address:
-   protected AgentIdentificationService agentIdService;
-   protected MessageAddress agentId;
-   protected String encAgentName;
+   private AgentIdentificationService agentIdService;
+   private MessageAddress agentId;
+   private String encAgentName;
 
    public ComponentServlet() {
       super();
@@ -123,16 +123,20 @@ public abstract class ComponentServlet
    }
 
    public void setBindingSite(BindingSite bindingSite) {
-      this.bindingSite = bindingSite;
    }
 
    public void setServiceBroker(ServiceBroker sb) {
       this.serviceBroker = sb;
    }
 
-   protected ServiceBroker getServiceBroker() {
-      return serviceBroker;
+   protected <T extends Service> T getService(Object requestor, Class<T> serviceClass, ServiceRevokedListener srl) {
+      return serviceBroker.getService(requestor, serviceClass, srl);
    }
+   
+   protected  <T extends Service> void releaseService(Object requestor, Class<T> serviceClass, T service) {
+      serviceBroker.releaseService(requestor, serviceClass, service);
+   }
+
 
    public void setAgentIdentificationService(AgentIdentificationService agentIdService) {
       this.agentIdService = agentIdService;

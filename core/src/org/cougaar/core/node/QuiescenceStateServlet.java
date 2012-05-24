@@ -68,8 +68,8 @@ protected String getPath() {
 
   @Override
 public void load() {
-    log = serviceBroker.getService(this, LoggingService.class, null);
-    aqs = serviceBroker.getService(this, AgentQuiescenceStateService.class, null);
+    log = getService(this, LoggingService.class, null);
+    aqs = getService(this, AgentQuiescenceStateService.class, null);
     super.load();
   }
 
@@ -91,13 +91,13 @@ public void unload() {
     super.unload();
     // release logger, aqs
     if (aqs != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, AgentQuiescenceStateService.class, aqs);
       aqs = null;
     }
 
     if (log != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, LoggingService.class, log);
       log = null;
     }

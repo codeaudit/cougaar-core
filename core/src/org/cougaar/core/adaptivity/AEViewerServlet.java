@@ -146,17 +146,17 @@ public static final String FRAME = "frame";
   @Override
 public void unload() {
     if (blackboard != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, BlackboardService.class, blackboard);
       blackboard = null;
     }
     if (blackboardQuery != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, BlackboardQueryService.class, blackboardQuery);
       blackboardQuery = null;
     }
     if (logger != LoggingService.NULL) {
-      serviceBroker.releaseService(this, LoggingService.class, logger);
+      releaseService(this, LoggingService.class, logger);
       logger = LoggingService.NULL;
     }
     super.unload();

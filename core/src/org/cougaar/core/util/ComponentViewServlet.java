@@ -114,12 +114,12 @@ private LoggingService log;
 public void load() {
     super.load();
 
-    log = serviceBroker.getService(this, LoggingService.class, null);
+    log = getService(this, LoggingService.class, null);
 
-    ViewService viewService = serviceBroker.getService(this, ViewService.class, null);
+    ViewService viewService = getService(this, ViewService.class, null);
     if (viewService != null) {
       view = viewService.getComponentView();
-      serviceBroker.releaseService(
+      releaseService(
           this, ViewService.class, viewService);
     }
     if (view == null && log.isWarnEnabled()) {
