@@ -40,6 +40,7 @@ import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.LoggingService;
 import org.cougaar.core.service.ServletService;
+import org.cougaar.util.annotations.Cougaar;
 import org.cougaar.util.GenericStateModel;
 import org.cougaar.util.GenericStateModelAdapter;
 import org.cougaar.util.StateModelException;
@@ -56,6 +57,14 @@ public abstract class ComponentServlet
 
    private static final long serialVersionUID = 1L;
 
+   // this class handles the "servletService" details:
+   @Cougaar.ObtainService()
+   public ServletService servletService;
+   
+   // the local agent address:
+   @Cougaar.ObtainService()
+   public AgentIdentificationService agentIdService;
+   
    // default state model (no multiple inheritence!):
    private final GenericStateModel gsm = new GenericStateModelAdapter() {
    };
@@ -65,17 +74,9 @@ public abstract class ComponentServlet
 
    private ServiceBroker serviceBroker;
 
-   // this class handles the "servletService" details:
-   private ServletService servletService;
 
-   // the local agent address:
-   private AgentIdentificationService agentIdService;
    private MessageAddress agentId;
    private String encAgentName;
-
-   public ComponentServlet() {
-      super();
-   }
 
    //
    // inherits "doGet(..)" and all other HttpServlet methods
@@ -137,9 +138,14 @@ public abstract class ComponentServlet
       serviceBroker.releaseService(requestor, serviceClass, service);
    }
 
+   public void initialize()
+         throws StateModelException {
+      gsm.initialize();
+   }
 
-   public void setAgentIdentificationService(AgentIdentificationService agentIdService) {
-      this.agentIdService = agentIdService;
+   public void load() {
+      gsm.load();
+      
       if (agentIdService == null) {
          // Revocation
       } else {
@@ -154,18 +160,7 @@ public abstract class ComponentServlet
             }
          }
       }
-   }
 
-   public void initialize()
-         throws StateModelException {
-      gsm.initialize();
-   }
-
-   public void load() {
-      gsm.load();
-
-      // get the servlet service, if available
-      servletService = serviceBroker.getService(this, ServletService.class, null);
       if (servletService == null) {
          LoggingService log = serviceBroker.getService(this, LoggingService.class, null);
          if (log != null && log.isWarnEnabled()) {
