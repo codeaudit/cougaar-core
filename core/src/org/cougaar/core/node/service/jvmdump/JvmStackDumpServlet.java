@@ -67,25 +67,25 @@ protected String getPath() {
   @Override
 public void load() {
     // get the jvm stack dump service
-    jsds = serviceBroker.getService(
+    jsds = getService(
         this, JvmStackDumpService.class, null);
     // get the host name
     // get the agent id
-    AgentIdentificationService ais = serviceBroker.getService(
+    AgentIdentificationService ais = getService(
        this, AgentIdentificationService.class, null);
     if (ais != null) {
       agentId = ais.getMessageAddress();
-      serviceBroker.releaseService(
+      releaseService(
           this, AgentIdentificationService.class, ais);
     }
     // get the node id
-    NodeIdentificationService nis = serviceBroker.getService(
+    NodeIdentificationService nis = getService(
        this, NodeIdentificationService.class, null);
     if (nis != null) {
       InetAddress hostAddr = nis.getInetAddress();
       hostId = hostAddr != null ? hostAddr.getHostName() : null;
       nodeId = nis.getMessageAddress();
-      serviceBroker.releaseService(
+      releaseService(
           this, NodeIdentificationService.class, nis);
     }
     super.load();
@@ -95,7 +95,7 @@ public void load() {
 public void unload() {
     super.unload();
     if (jsds != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, JvmStackDumpService.class, jsds);
       jsds = null;
     }

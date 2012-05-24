@@ -31,7 +31,6 @@ import java.util.List;
 
 import javax.servlet.Servlet;
 
-import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
@@ -197,7 +196,7 @@ protected Servlet createServlet() {
         throw new RuntimeException(
             "Unable to setParameter("+path+")", e);
       }
-      BindingUtility.activate(inst, bindingSite, serviceBroker);
+      activate(inst);
       return null;
     }
 
@@ -243,7 +242,7 @@ protected Servlet createServlet() {
     // the agentId is known from "setAgentIdentificationService(..)"
 
     // get the blackboard query service
-    blackboardQuery = serviceBroker.getService(
+    blackboardQuery = getService(
        servlet,
        BlackboardQueryService.class,
        null);
@@ -253,7 +252,7 @@ protected Servlet createServlet() {
     }
 
     // get the logging service (for "getLogger")
-    log = serviceBroker.getService(
+    log = getService(
        servlet,
        LoggingService.class,
        null);
@@ -274,12 +273,12 @@ public void unload() {
 
     if (servlet != null) {
       if (log != null) {
-        serviceBroker.releaseService(
+        releaseService(
             servlet, LoggingService.class, log);
         log = null;
       }
       if (blackboardQuery != null) {
-        serviceBroker.releaseService(
+        releaseService(
             servlet, BlackboardQueryService.class, blackboardQuery);
         blackboardQuery = null;
       }

@@ -131,7 +131,7 @@ protected Servlet createServlet() {
 public void load() {
 
     // get the log
-    log = serviceBroker.getService(
+    log = getService(
        this, LoggingService.class, null);
     if (log == null) {
       log = LoggingService.NULL;
@@ -139,7 +139,7 @@ public void load() {
 
     // get the agentId
     AgentIdentificationService agentIdService = 
-      serviceBroker.getService(
+      getService(
        this,
        AgentIdentificationService.class,
        null);
@@ -148,7 +148,7 @@ public void load() {
           "Unable to obtain agent-id service");
     }
     this.agentId = agentIdService.getMessageAddress();
-    serviceBroker.releaseService(
+    releaseService(
         this, AgentIdentificationService.class, agentIdService);
     if (agentId == null) {
       throw new RuntimeException(
@@ -157,7 +157,7 @@ public void load() {
 
     // get the nodeId
     NodeIdentificationService nodeIdService = 
-      serviceBroker.getService(
+      getService(
        this,
        NodeIdentificationService.class,
        null);
@@ -166,7 +166,7 @@ public void load() {
           "Unable to obtain node-id service");
     }
     this.nodeId = nodeIdService.getMessageAddress();
-    serviceBroker.releaseService(
+    releaseService(
         this, NodeIdentificationService.class, nodeIdService);
     if (nodeId == null) {
       throw new RuntimeException(
@@ -174,7 +174,7 @@ public void load() {
     }
 
     // get the mobility domain
-    this.domain = serviceBroker.getService(
+    this.domain = getService(
        this,
        DomainService.class,
        null);
@@ -193,7 +193,7 @@ public void load() {
     }
 
     // get the blackboard
-    this.blackboard = serviceBroker.getService(
+    this.blackboard = getService(
        this,
        BlackboardService.class,
        null);
@@ -210,18 +210,18 @@ public void load() {
 public void unload() {
     super.unload();
     if (blackboard != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, BlackboardService.class, blackboard);
       blackboard = null;
     }
     if (domain != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, DomainService.class, domain);
       domain = null;
       mobilityTestFactory = null;
     }
     if ((log != null) && (log != LoggingService.NULL)) {
-      serviceBroker.releaseService(
+      releaseService(
           this, LoggingService.class, log);
       log = LoggingService.NULL;
     }

@@ -29,9 +29,13 @@ package org.cougaar.core.servlet;
 import javax.servlet.Servlet;
 
 import org.cougaar.core.component.BindingSite;
+import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.Component;
+import org.cougaar.core.component.Service;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.ServiceRevokedListener;
 import org.cougaar.core.service.ServletService;
+import org.cougaar.util.annotations.Cougaar;
 import org.cougaar.util.GenericStateModelAdapter;
 
 /**
@@ -42,16 +46,41 @@ public abstract class BaseServletComponent
       extends GenericStateModelAdapter
       implements Component {
    // subclasses are free to use both of these:
-   protected BindingSite bindingSite;
-   protected ServiceBroker serviceBroker;
+   private BindingSite bindingSite;
+   private ServiceBroker serviceBroker;
 
-   // this class handles the "servletService" details:
-   protected ServletService servletService;
+   @Cougaar.ObtainService()
+   public ServletService servletService;
 
    public BaseServletComponent() {
       super();
    }
 
+   /**
+    * Get the path for the Servlet's registration.
+    */
+   protected abstract String getPath();
+
+   /**
+    * Create the Servlet instance.
+    * <p>
+    * This is done within "load()", and is also a good time to aquire additional
+    * services from the "serviceBroker" (for example, BlackboardService).
+    */
+   protected abstract Servlet createServlet();
+
+   protected <T extends Service> T getService(Object requestor, Class<T> serviceClass, ServiceRevokedListener srl) {
+      return serviceBroker.getService(requestor, serviceClass, srl);
+   }
+   
+   protected  <T extends Service> void releaseService(Object requestor, Class<T> serviceClass, T service) {
+      serviceBroker.releaseService(requestor, serviceClass, service);
+   }
+   
+   protected void activate(Object target) {
+      BindingUtility.activate(target, bindingSite, serviceBroker);
+   }
+   
    public void setBindingSite(BindingSite bindingSite) {
       this.bindingSite = bindingSite;
    }
@@ -72,8 +101,6 @@ public abstract class BaseServletComponent
    public void load() {
       super.load();
 
-      // get the servlet service
-      servletService = serviceBroker.getService(this, ServletService.class, null);
       if (servletService == null) {
          throw new RuntimeException("Unable to obtain servlet service");
       }
@@ -105,18 +132,5 @@ public abstract class BaseServletComponent
       }
       // your subclass should also release its services here!
    }
-
-   /**
-    * Get the path for the Servlet's registration.
-    */
-   protected abstract String getPath();
-
-   /**
-    * Create the Servlet instance.
-    * <p>
-    * This is done within "load()", and is also a good time to aquire additional
-    * services from the "serviceBroker" (for example, BlackboardService).
-    */
-   protected abstract Servlet createServlet();
 
 }

@@ -182,22 +182,22 @@ protected Servlet createServlet() {
 public void unload() {
     super.unload();
     if (blackboard != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, BlackboardService.class, blackboard);
       blackboard = null;
     }
     if (domain != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, DomainService.class, domain);
       domain = null;
     }
     if (nodeIdService != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, NodeIdentificationService.class, nodeIdService);
       nodeIdService = null;
     }
     if (agentIdService != null) {
-      serviceBroker.releaseService(
+      releaseService(
           this, AgentIdentificationService.class, agentIdService);
       agentIdService = null;
     }
