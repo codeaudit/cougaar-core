@@ -28,7 +28,7 @@ public abstract class AnnotatedSubscriptionsPlugin
       extends ParameterizedPlugin {
    private final Map<String, IncrementalSubscription> subscriptions = new HashMap<String, IncrementalSubscription>();
    private final List<SubscriptionInvoker> subscriptionInvokers = new ArrayList<SubscriptionInvoker>();
-   private final List<QueryRunner> queryRunners = new ArrayList<QueryRunner>();
+   private final Map<String,QueryRunner> queryRunners = new HashMap<String, QueryRunner>();
 
    @Override
    protected void execute() {
@@ -37,9 +37,12 @@ public abstract class AnnotatedSubscriptionsPlugin
       }
    }
 
-   public void runQueries() {
-      for (QueryRunner runner : queryRunners) {
+   public void runQuery(String id) {
+      QueryRunner runner = queryRunners.get(id);
+      if (runner != null) {
          runner.execute();
+      } else {
+         log.warn("\"" + id + "\" is not the name of a query");
       }
    }
    
@@ -65,7 +68,7 @@ public abstract class AnnotatedSubscriptionsPlugin
          }
          Cougaar.Query annotation = method.getAnnotation(Cougaar.Query.class);
          QueryRunner runner = new QueryRunner(method, annotation);
-         queryRunners.add(runner);
+         queryRunners.put(annotation.name(), runner);
       }
    }
 
