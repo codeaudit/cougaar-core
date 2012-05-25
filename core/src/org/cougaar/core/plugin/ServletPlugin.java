@@ -65,11 +65,11 @@ import org.cougaar.util.annotations.Cougaar;
  */
 public abstract class ServletPlugin extends AnnotatedSubscriptionsPlugin {
 
-  @Cougaar.Arg(name = "path")
+  @Cougaar.Arg()
   public String path;
   
   
-  @Cougaar.Arg(name = "timeout", defaultValue = "60000")
+  @Cougaar.Arg(defaultValue = "60000")
   public long timeout;
 
   @Cougaar.ObtainService()
