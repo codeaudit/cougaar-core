@@ -37,12 +37,13 @@ public abstract class AnnotatedSubscriptionsPlugin
       }
    }
 
-   public void runQuery(String id) {
+   public Collection runQuery(String id, Object... args) {
       QueryRunner runner = queryRunners.get(id);
       if (runner != null) {
-         runner.execute();
+         return runner.execute(args);
       } else {
          log.warn("\"" + id + "\" is not the name of a query");
+         return java.util.Collections.emptyList();
       }
    }
    
@@ -59,7 +60,7 @@ public abstract class AnnotatedSubscriptionsPlugin
       for (Method method : methods) {
          // Use the type of the first arg as an implicit 'isa'
          Class<?>[] parameterTypes = method.getParameterTypes();
-         if (parameterTypes.length != 1) {
+         if (parameterTypes.length == 0) {
             String message =
                   "@Query method" + method.getName() + " of class " + getClass().getName()
                         + " has the wrong number of arguments (should be 1)";
@@ -188,11 +189,15 @@ public abstract class AnnotatedSubscriptionsPlugin
          predicate = createPredicate(method, annotation.where());
       }
       
-      void execute() {
+      Collection execute(Object...args) {
+         Object[] completeArgs = new Object[args.length+1];
+         System.arraycopy(args, 0, completeArgs, 1, args.length);
+         
          Collection matches = blackboard.query(predicate);
          for (Object match : matches) {
+            completeArgs[0] = match;
             try {
-               method.invoke(AnnotatedSubscriptionsPlugin.this, match);
+               method.invoke(AnnotatedSubscriptionsPlugin.this, completeArgs);
             } catch (IllegalArgumentException e) {
                log.error("Failed to invoke annotated method", e);
             } catch (IllegalAccessException e) {
@@ -201,6 +206,7 @@ public abstract class AnnotatedSubscriptionsPlugin
                log.error("Failed to invoke annotated method", e);
             }
          }
+         return new ArrayList(matches);
       }
    }
 
