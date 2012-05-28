@@ -10,6 +10,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,13 +38,22 @@ public abstract class AnnotatedSubscriptionsPlugin
       }
    }
 
-   public Collection runQuery(String id, Object... args) {
+   /**
+    * Run the query with the given id and context
+    * 
+    * @param <T> the expected query result type.
+    * @param id name of the query.
+    * @param type The expected query result class.
+    * @param queryContext optional data that preserves context between iterations.
+    * @return the blackboard query result, or an empty list if the id doesn't match any known query.
+    */
+   public <T> Collection<T> runQuery(String id, Class<T> type, Object... queryContext) {
       QueryRunner runner = queryRunners.get(id);
       if (runner != null) {
-         return runner.execute(args);
+         return runner.execute(type, queryContext);
       } else {
          log.warn("\"" + id + "\" is not the name of a query");
-         return java.util.Collections.emptyList();
+         return Collections.emptyList();
       }
    }
    
@@ -150,6 +160,12 @@ public abstract class AnnotatedSubscriptionsPlugin
       Class<?> pluginClass = AnnotatedSubscriptionsPlugin.this.getClass();
       Method[] methods = pluginClass.getMethods();
       Class<?> argClass = method.getParameterTypes()[0];
+      
+      if (Cougaar.NO_VALUE.equals(testerMethodName)) {
+         // Implicit instanceof if no 'when'
+        return new IsInstanceOf(argClass);
+      }
+      
       Method testerMethod = null;
       for (Method candidate : methods) {
          if (isTesterMethod(candidate, testerMethodName, argClass)) {
@@ -185,24 +201,30 @@ public abstract class AnnotatedSubscriptionsPlugin
       return predicate;
    }
 
-   private class QueryRunner {
+   private class QueryRunner<T> {
       private final Method method;
-      private UnaryPredicate predicate;
+      private final UnaryPredicate predicate;
+      private final String id;
 
       QueryRunner(Method method, Cougaar.Query annotation) {
          this.method = method;
-         predicate = createPredicate(method, annotation.where());
+         this.id = annotation.name();
+         this.predicate = createPredicate(method, annotation.where());
       }
       
-      Collection execute(Object...args) {
-         Object[] completeArgs = new Object[args.length+1];
-         System.arraycopy(args, 0, completeArgs, 1, args.length);
-         
+      Collection <T> execute(Class<T> type, Object...context) {
+         Object[] completeArgs = new Object[context.length+1];
+         System.arraycopy(context, 0, completeArgs, 1, context.length);
          Collection matches = blackboard.query(predicate);
+         List<T> results = new ArrayList<T>();
          for (Object match : matches) {
-            completeArgs[0] = match;
             try {
+               T typedMatch = type.cast(match);
+               results.add(typedMatch);
+               completeArgs[0] = typedMatch;
                method.invoke(AnnotatedSubscriptionsPlugin.this, completeArgs);
+            } catch (ClassCastException e) {
+               log.error("query result " + match + " from query \"" +id+ "\" is not the expected type: " + e.getMessage());
             } catch (IllegalArgumentException e) {
                log.error("Failed to invoke annotated method", e);
             } catch (IllegalAccessException e) {
@@ -211,7 +233,7 @@ public abstract class AnnotatedSubscriptionsPlugin
                log.error("Failed to invoke annotated method", e);
             }
          }
-         return new ArrayList(matches);
+         return results;
       }
    }
 
@@ -252,15 +274,7 @@ public abstract class AnnotatedSubscriptionsPlugin
 
       private IncrementalSubscription createIncrementalSubscription(Cougaar.Execute annotation) {
          String when = annotation.when();
-         UnaryPredicate predicate;
-         if (Cougaar.NO_VALUE.equals(when)) {
-            // Implicit instanceof if no 'when'
-            Class<?> isa = method.getParameterTypes()[0];
-            predicate = new IsInstanceOf(isa);
-         } else {
-            
-            predicate = createPredicate(method, when);
-         }
+         UnaryPredicate predicate = createPredicate(method, when);
          return (IncrementalSubscription) blackboard.subscribe(predicate);
       }
 
