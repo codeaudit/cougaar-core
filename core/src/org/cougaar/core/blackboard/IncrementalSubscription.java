@@ -117,7 +117,7 @@ protected void resetChanges() {
    * changed since the last transaction. Will not return null.
    * @see #getChangeReports(Object) 
    */
-  public Collection getChangedCollection() {
+  public Collection<E> getChangedCollection() {
     return super.privateGetChangedCollection();
   }
 
