@@ -27,6 +27,7 @@ package org.cougaar.core.examples;
 
 import java.util.Collection;
 
+import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.SubscriberException;
 import org.cougaar.core.blackboard.Subscription;
@@ -112,7 +113,7 @@ protected Class getBinderClass(Object child) {
       return super.getSubscriber();
     }
     @Override
-   public Subscription subscribe(UnaryPredicate isMember) { 
+   public IncrementalSubscription subscribe(UnaryPredicate isMember) { 
       System.err.println("BlackboardService.subscribe("+isMember+") called by: "+client);
       return super.subscribe(isMember); 
     }
@@ -127,10 +128,10 @@ protected Class getBinderClass(Object child) {
     public Subscriber getSubscriber() { 
       return bs.getSubscriber();
     }
-    public Subscription subscribe(UnaryPredicate isMember) { 
+    public IncrementalSubscription subscribe(UnaryPredicate isMember) { 
       return bs.subscribe(isMember); 
     }
-    public Subscription subscribe(UnaryPredicate isMember, Collection realCollection) {
+    public IncrementalSubscription subscribe(UnaryPredicate isMember, Collection realCollection) {
       return bs.subscribe(isMember, realCollection);
     }
     public Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {

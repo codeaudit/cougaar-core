@@ -65,12 +65,12 @@ protected void setupSubscriptions() {
 protected void execute() {
   }
 
-  protected Collection query(UnaryPredicate pred) {
+  protected <T> Collection<T> query(UnaryPredicate<T> pred) {
     if (blackboard.isTransactionOpen()) {
       return blackboard.query(pred);
     } else {
       blackboard.openTransaction();
-      Collection c = blackboard.query(pred);
+      Collection<T> c = blackboard.query(pred);
       blackboard.closeTransactionDontReset();
       return c;
     }

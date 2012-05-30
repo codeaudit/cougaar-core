@@ -12,6 +12,7 @@ import java.util.List;
 
 import org.cougaar.core.agent.service.alarm.Alarm;
 import org.cougaar.core.agent.service.alarm.AlarmBase;
+import org.cougaar.core.blackboard.ChangeReport;
 import org.cougaar.core.blackboard.TodoSubscription;
 import org.cougaar.core.util.UniqueObject;
 
@@ -138,13 +139,13 @@ public class TodoPlugin extends AnnotatedSubscriptionsPlugin {
         });
     }
 
-    protected void publishChangeLater(UniqueObject object, Collection<?> changeReports) {
+    protected void publishChangeLater(UniqueObject object, Collection<ChangeReport> changeReports) {
         publishChangeLater(0, object, changeReports);
     }
 
     protected Alarm publishChangeLater(long delay,
                                        final UniqueObject object,
-                                       final Collection<?> changeReports) {
+                                       final Collection<ChangeReport> changeReports) {
         return executeLater(delay, new Runnable() {
             public void run() {
                 blackboard.publishChange(object, changeReports);

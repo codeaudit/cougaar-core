@@ -54,10 +54,10 @@ public final class AnonymousChangeReport implements ChangeReport {
     new AnonymousChangeReport();
 
   // a list containing the singleton
-  public static final List LIST = new AnonList();
+  public static final List<ChangeReport> LIST = new AnonList();
 
   // a set containing the singleton
-  public static final Set SET = new AnonSet();
+  public static final Set<ChangeReport> SET = new AnonSet();
 
 
   private AnonymousChangeReport() { }
@@ -72,7 +72,7 @@ public String toString() {
   static final long serialVersionUID = 1209837181010093282L;
 
   // singleton LIST with singleton-friendly "readResolve()":
-  private static class AnonList extends AbstractList
+  private static class AnonList extends AbstractList<ChangeReport>
     implements RandomAccess, Serializable {
       private AnonList() { }
       @Override
@@ -80,7 +80,7 @@ public String toString() {
       @Override
       public boolean contains(Object obj) {return (obj == INSTANCE);}
       @Override
-      public Object get(int index) {
+      public ChangeReport get(int index) {
         if (index != 0)
           throw new IndexOutOfBoundsException("Index: "+index+", Size: 1");
         return INSTANCE;
@@ -90,18 +90,18 @@ public String toString() {
     }
 
   // singleton SET with singleton-friendly "readResolve()":
-  private static class AnonSet extends AbstractSet
+  private static class AnonSet extends AbstractSet<ChangeReport>
     implements Serializable
     {
       private AnonSet() {}
       @Override
-      public Iterator iterator() {
-        return new Iterator() {
+      public Iterator<ChangeReport> iterator() {
+        return new Iterator<ChangeReport>() {
           private boolean hasNext = true;
           public boolean hasNext() {
             return hasNext;
           }
-          public Object next() {
+          public ChangeReport next() {
             if (hasNext) {
               hasNext = false;
               return INSTANCE;

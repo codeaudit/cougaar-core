@@ -28,6 +28,8 @@ package org.cougaar.core.service;
 
 import java.util.Collection;
 
+import org.cougaar.core.blackboard.ChangeReport;
+import org.cougaar.core.blackboard.IncrementalSubscription;
 import org.cougaar.core.blackboard.Subscriber;
 import org.cougaar.core.blackboard.SubscriberException;
 import org.cougaar.core.blackboard.Subscription;
@@ -62,7 +64,7 @@ public interface BlackboardService extends Service {
    * subscribe() may be called any time after 
    * load() completes.
    */
-  Subscription subscribe(UnaryPredicate isMember);
+  <T> IncrementalSubscription<T> subscribe(UnaryPredicate<T> isMember);
 
   /**
    * like subscribe(UnaryPredicate), but allows specification of
@@ -70,12 +72,12 @@ public interface BlackboardService extends Service {
    * of the collection.
    * Alias for getSubscriber().subscribe(UnaryPredicate, Collection);
    */
-  Subscription subscribe(UnaryPredicate isMember, Collection realCollection);
+  <T> IncrementalSubscription<T> subscribe(UnaryPredicate<T> isMember, Collection<T> realCollection);
 
   /**
    * Alias for getSubscriber().subscribe(UnaryPredicate, boolean);
    */
-  Subscription subscribe(UnaryPredicate isMember, boolean isIncremental);
+  <T> Subscription<T> subscribe(UnaryPredicate<T> isMember, boolean isIncremental);
   
   /**
    * Alias for <code>getSubscriber().subscribe(UnaryPredicate, Collection, boolean);</code>
@@ -88,12 +90,12 @@ public interface BlackboardService extends Service {
    * @see org.cougaar.core.blackboard.Subscriber#subscribe
    * @see org.cougaar.core.blackboard.Subscription
    */
-  Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental);
+  <T> Subscription<T> subscribe(UnaryPredicate<T> isMember, Collection<T> realCollection, boolean isIncremental);
 
   /**
    * Primary subscribe method, which registers a new subscription.
    */
-  Subscription subscribe(Subscription subscription);
+  <S extends Subscription> S subscribe(S subscription);
 
   /**
    * Issue a query against the logplan.  Similar in function to
@@ -101,7 +103,7 @@ public interface BlackboardService extends Service {
    * closing the subscription, but can be implemented much more efficiently.
    * Note: the initial implementation actually does exactly this.
    */
-  Collection query(UnaryPredicate isMember);
+  <T> Collection<T> query(UnaryPredicate<T> isMember);
 
   /**
    * Cancels the given Subscription which must have been returned by a
@@ -110,7 +112,7 @@ public interface BlackboardService extends Service {
    * @param subscription the subscription to cancel
    * @see org.cougaar.core.blackboard.Subscriber#unsubscribe
    */
-  void unsubscribe(Subscription subscription);
+  void unsubscribe(Subscription<?> subscription);
   
   int getSubscriptionCount();
   
@@ -150,7 +152,7 @@ public interface BlackboardService extends Service {
    * merged in <em>after</em> automatically collected reports.
    * @param changes a set of ChangeReport instances or null.
    */
-  void publishChange(Object o, Collection changes); 
+  void publishChange(Object o, Collection<? extends ChangeReport> changes); 
 
   // 
   // aliases for Transaction handling 
@@ -289,25 +291,25 @@ public interface BlackboardService extends Service {
     public Subscriber getSubscriber() { 
       return bs.getSubscriber();
     }
-    public Subscription subscribe(UnaryPredicate isMember) { 
+    public <T> IncrementalSubscription<T> subscribe(UnaryPredicate<T> isMember) { 
       return bs.subscribe(isMember); 
     }
-    public Subscription subscribe(UnaryPredicate isMember, Collection realCollection) {
+    public <T> IncrementalSubscription<T> subscribe(UnaryPredicate<T> isMember, Collection<T> realCollection) {
       return bs.subscribe(isMember, realCollection);
     }
-    public Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
+    public <T> Subscription<T> subscribe(UnaryPredicate<T> isMember, boolean isIncremental) {
       return bs.subscribe(isMember, isIncremental);
     }
-    public Subscription subscribe(UnaryPredicate isMember, Collection realCollection, boolean isIncremental) {
+    public <T> Subscription<T> subscribe(UnaryPredicate<T> isMember, Collection<T> realCollection, boolean isIncremental) {
       return bs.subscribe(isMember, realCollection, isIncremental);
     }
-    public Subscription subscribe(Subscription subscription) {
+    public <S extends Subscription> S subscribe(S subscription) {
       return bs.subscribe(subscription);
     }
-    public Collection query(UnaryPredicate isMember) {
+    public <T> Collection<T> query(UnaryPredicate<T> isMember) {
       return bs.query(isMember);
     }
-    public void unsubscribe(Subscription subscription) {
+    public void unsubscribe(Subscription<?> subscription) {
       bs.unsubscribe(subscription);
     }
     public int getSubscriptionCount() {
@@ -337,7 +339,7 @@ public interface BlackboardService extends Service {
     public void publishChange(Object o) {
       bs.publishChange(o);
     }
-    public void publishChange(Object o, Collection changes) {
+    public void publishChange(Object o, Collection<? extends ChangeReport> changes) {
       bs.publishChange(o,changes);
     }
     public void openTransaction() {

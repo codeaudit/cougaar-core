@@ -35,16 +35,16 @@ import org.cougaar.util.UnaryPredicate;
  * A lightweight {@link CollectionSubscription} used to take a
  * single "query" snapshot of the blackboard. 
  */
-public class QuerySubscription 
-  extends CollectionSubscription
+public class QuerySubscription<E> 
+  extends CollectionSubscription<E>
 {
 
-  public QuerySubscription(UnaryPredicate p, Collection c) {
+  public QuerySubscription(UnaryPredicate<E> p, Collection<E> c) {
     super(p,c);
   }
 
-  public QuerySubscription(UnaryPredicate p) {
-    super(p, new ArrayList(5));
+  public QuerySubscription(UnaryPredicate<E> p) {
+    super(p, new ArrayList<E>(5));
   }
 
   // override Subscription.fill to avoid kicking the subscriber due to

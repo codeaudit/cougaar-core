@@ -46,5 +46,5 @@ public interface BlackboardQueryService extends Service {
    * opening a new subscription, getting the results and immediately
    * closing the subscription, but can be implemented much more efficiently.
    */
-  Collection query(UnaryPredicate isMember);
+  <T> Collection<T> query(UnaryPredicate<T> isMember);
 }

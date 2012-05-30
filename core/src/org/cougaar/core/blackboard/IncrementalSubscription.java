@@ -42,14 +42,14 @@ import org.cougaar.util.UnaryPredicate;
  * A {@link CollectionSubscription} that records add/change/remove
  * deltas.
  */
-public class IncrementalSubscription extends CollectionSubscription {
+public class IncrementalSubscription<E> extends CollectionSubscription<E> {
 
-  public IncrementalSubscription(UnaryPredicate p, Collection c) {
+  public IncrementalSubscription(UnaryPredicate<E> p, Collection<E> c) {
     super(p, c);
   }
 
-  private Set myAddedSet = null; 
-  private List myRemovedList = null;
+  private Set<E> myAddedSet = null; 
+  private List<E> myRemovedList = null;
 
   @Override
 protected void resetChanges() {
@@ -64,38 +64,42 @@ protected void resetChanges() {
    * @return an enumeration of the objects that have been added
    * since the last transaction.
    */
-  public Enumeration getAddedList() {
+  public Enumeration<E> getAddedList() {
     checkTransactionOK("getAddedList()");
     if (myAddedSet == null || myAddedSet.isEmpty()) 
-      return Empty.enumeration;
-    return new Enumerator(myAddedSet);
+      return Empty.elements();
+    return new Enumerator<E>(myAddedSet);
   }
 
   /**
    * @return a possibly empty collection of objects that have been
    * added since the last transaction. Will not return null.
    */
-  public Collection getAddedCollection() {
-    return (myAddedSet!=null)?myAddedSet:Collections.EMPTY_SET;
+  public Collection<E> getAddedCollection() {
+    if (myAddedSet == null)
+      return Collections.emptySet();
+    return myAddedSet;
   }
 
   /**
    * @return a enumeration of the objects that have been removed
    * since the last transaction.
    */
-  public Enumeration getRemovedList() {
+  public Enumeration<E> getRemovedList() {
     checkTransactionOK("getRemovedList()");
     if (myRemovedList == null || myRemovedList.isEmpty())
-      return Empty.enumeration;
-    return new Enumerator(myRemovedList);
+      return Empty.elements();
+    return new Enumerator<E>(myRemovedList);
   }
 
   /**
    * @return a possibly empty collection of objects that have been
    * removed since the last transaction.  Will not return null.
    */
-  public Collection getRemovedCollection() {
-    return (myRemovedList!=null)?myRemovedList:Collections.EMPTY_LIST;
+  public Collection<E> getRemovedCollection() {
+    if (myRemovedList == null)
+      return Collections.emptyList();
+    return myRemovedList;
   }
 
   /**
@@ -103,7 +107,7 @@ protected void resetChanges() {
    * since the last transaction.
    * @see #getChangeReports(Object)
    */
-  public Enumeration getChangedList() {
+  public Enumeration<E> getChangedList() {
     checkTransactionOK("getChangedList()");
     return super.privateGetChangedList();
   }
@@ -118,23 +122,23 @@ protected void resetChanges() {
   }
 
   /** override this for sorted sets */
-  protected Set createAddedSet() {
-    return new HashSet(5);
+  protected Set<E> createAddedSet() {
+    return new HashSet<E>(5);
   }
 
   /** called by privateAdd */
-  private void addToAddedList( Object o ) {
+  private void addToAddedList( E o ) {
     if (myAddedSet == null) myAddedSet = createAddedSet();
     myAddedSet.add(o);
   }
   /** called by privateRemove */
-  private void addToRemovedList( Object o ) {
-    if (myRemovedList == null) myRemovedList = new ArrayList(3);
+  private void addToRemovedList( E o ) {
+    if (myRemovedList == null) myRemovedList = new ArrayList<E>(3);
     myRemovedList.add( o );
   }
 
   @Override
-protected void privateAdd(Object o, boolean isVisible) { 
+protected void privateAdd(E o, boolean isVisible) { 
     super.privateAdd(o, isVisible);
     if (isVisible) {
       setChanged(true);
@@ -142,7 +146,7 @@ protected void privateAdd(Object o, boolean isVisible) {
     }
   }
   @Override
-protected void privateRemove(Object o, boolean isVisible) {
+protected void privateRemove(E o, boolean isVisible) {
     super.privateRemove(o, isVisible);
     if (isVisible) {
       setChanged(true);
@@ -151,7 +155,7 @@ protected void privateRemove(Object o, boolean isVisible) {
   }
 
   @Override
-protected void privateChange(Object o, List changes, boolean isVisible) {
+protected void privateChange(E o, List<ChangeReport> changes, boolean isVisible) {
     if (isVisible) {
       setChanged(true);
       super.privateChange(o, changes, true);

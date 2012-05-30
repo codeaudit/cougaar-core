@@ -43,7 +43,7 @@ import org.cougaar.util.log.Logging;
  * @see CollectionSubscription 
  * @see IncrementalSubscription 
  */
-public abstract class Subscription {
+public abstract class Subscription<E> {
 
   private static final Logger _logger = Logging.getLogger(Subscription.class);
 
@@ -100,7 +100,7 @@ public abstract class Subscription {
   }
 
   /** The predicate that represents this subscription */
-  protected final UnaryPredicate predicate;
+  protected final UnaryPredicate<E> predicate;
 
   /** stack tracker which selects the first frame that isn't core/lib stuff */
   private static final CallerTracker pTracker = 
@@ -128,7 +128,7 @@ public abstract class Subscription {
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
    */
-  public Subscription(UnaryPredicate p) {
+  public Subscription(UnaryPredicate<E> p) {
     if (Blackboard.PEDANTIC && 
         p instanceof org.cougaar.util.DynamicUnaryPredicate
         && pTracker.isNew()) {
@@ -149,9 +149,10 @@ public abstract class Subscription {
    * rehydration from persistence plugin.
    * @return true IFF the subscription was changed as a result of the call.
    */
+  @SuppressWarnings("unchecked")
   boolean conditionalAdd(Object o, boolean isVisible) { 
     if (predicate.execute(o)) {
-      privateAdd(o, isVisible);
+      privateAdd((E) o, isVisible);
       return true;
     } else {
       return false;
@@ -167,9 +168,10 @@ public abstract class Subscription {
    * rehydration from persistence plugin.
    * @return true IFF the subscription was changed as a result of the call.
    */
+  @SuppressWarnings("unchecked")
   boolean conditionalRemove(Object o, boolean isVisible) {
     if (predicate.execute(o)) {
-      privateRemove(o, isVisible);
+      privateRemove((E) o, isVisible);
       return true;
     } else {
       return false;
@@ -187,9 +189,10 @@ public abstract class Subscription {
    * rehydration from persistence plugin.
    * @return true IFF the subscription was changed as a result of the call.
    */
-  boolean conditionalChange(Object o, List changes, boolean isVisible) {
+  @SuppressWarnings("unchecked")
+  boolean conditionalChange(Object o, List<ChangeReport> changes, boolean isVisible) {
     if (predicate.execute(o)) {
-      privateChange(o, changes, isVisible);
+      privateChange((E) o, changes, isVisible);
       return true;
     } else {
       return false;
@@ -197,9 +200,9 @@ public abstract class Subscription {
   }
 
 
-  abstract protected void privateAdd(Object o, boolean isVisible);
-  abstract protected void privateRemove(Object o, boolean isVisible);
-  abstract protected void privateChange(Object o, List changes, boolean isVisible);
+  abstract protected void privateAdd(E o, boolean isVisible);
+  abstract protected void privateRemove(E o, boolean isVisible);
+  abstract protected void privateChange(E o, List<ChangeReport> changes, boolean isVisible);
 
   //
   // Want to move them down to a SubscriptionWithDeltas interface

@@ -334,8 +334,9 @@ public class Subscriber {
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
    */
-  public Subscription subscribe(UnaryPredicate isMember) {
-    return subscribe(isMember, null, true);
+  @SuppressWarnings("unchecked")
+  public <T> IncrementalSubscription<T> subscribe(UnaryPredicate<T> isMember) {
+    return (IncrementalSubscription<T>) subscribe(isMember, null, true);
   }
 
   /**
@@ -347,7 +348,7 @@ public class Subscriber {
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
    */
-  public Subscription subscribe(UnaryPredicate isMember, boolean isIncremental) {
+  public <T> Subscription<T> subscribe(UnaryPredicate<T> isMember, boolean isIncremental) {
     return subscribe(isMember, null, isIncremental);
   }
 
@@ -360,8 +361,9 @@ public class Subscriber {
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
    */
-  public Subscription subscribe(UnaryPredicate isMember, Collection realCollection){
-    return subscribe(isMember, realCollection, true);
+  @SuppressWarnings("unchecked")
+  public <T> IncrementalSubscription<T> subscribe(UnaryPredicate<T> isMember, Collection<T> realCollection){
+    return (IncrementalSubscription<T>) subscribe(isMember, realCollection, true);
   }
 
   /**
@@ -381,25 +383,25 @@ public class Subscriber {
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
    */
-  public Subscription subscribe(
-      UnaryPredicate isMember,
-      Collection realCollection,
+  public <T> Subscription<T> subscribe(
+      UnaryPredicate<T> isMember,
+      Collection<T> realCollection,
       boolean isIncremental) {
-    Subscription sn;
+    Subscription<T> sn;
 
     if (realCollection == null) 
-      realCollection = new HashSet();
+      realCollection = new HashSet<T>();
 
     if (isIncremental) {
-      sn = new IncrementalSubscription(isMember, realCollection);
+      sn = new IncrementalSubscription<T>(isMember, realCollection);
     } else {
-      sn = new CollectionSubscription(isMember, realCollection);
+      sn = new CollectionSubscription<T>(isMember, realCollection);
     }
     return subscribe(sn);
   }
 
   /** Primary subscribe method.  Register a new subscription. */
-  public final Subscription subscribe(Subscription subscription) {
+  public final <S extends Subscription> S subscribe(S subscription) {
     // Strictly speaking, subscribe can be done outside a transaction, but the 
     // state of filled subscription w/rt the rest of the subscriptions
     // is suspect if it isn't.
@@ -415,7 +417,7 @@ public class Subscriber {
   }
     
   /** lightweight query of Blackboard */
-  public final Collection query(UnaryPredicate isMember) {
+  public final <T> Collection<T> query(UnaryPredicate<T> isMember) {
     checkTransactionOK("query(UnaryPredicate)");
     QuerySubscription s = new QuerySubscription(isMember);
     s.setSubscriber(this);      // shouldn't really be needed
@@ -607,7 +609,7 @@ public class Subscriber {
    * to notify the rest of the world of the change.
    * Actual Changes to the collection only happen via this api.
    */
-  protected EnvelopeTuple clientChangedObject(Object o, List changes) {
+  protected EnvelopeTuple clientChangedObject(Object o, List<? extends ChangeReport> changes) {
     return outbox.changeObject(o, changes);
   }
   
@@ -705,7 +707,7 @@ public class Subscriber {
    * such warnings if you are sure you want to do this.
    * @see Blackboard#PEDANTIC
    */
-  public final void publishChange(Object o, Collection changes) {
+  public final void publishChange(Object o, Collection<? extends ChangeReport> changes) {
     checkTransactionOK("change", o);    
 
     if (theDistributor.history != null) theDistributor.history.publishChange(o);
@@ -741,7 +743,7 @@ public class Subscriber {
     publishChangedCount++;
   }
 
-  private final boolean isZeroChanges(final Collection c) {
+  private final boolean isZeroChanges(final Collection<? extends ChangeReport> c) {
     return
       ((c == null) || 
        (c == AnonymousChangeReport.LIST) || 

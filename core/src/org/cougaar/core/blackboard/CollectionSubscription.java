@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.cougaar.bootstrap.SystemProperties;
@@ -53,9 +54,9 @@ import org.cougaar.util.UnaryPredicate;
  * DeltaSubscriptions, which would reduce the memory footprint.
  * (defaults to false)
  */
-public class CollectionSubscription 
-  extends Subscription 
-  implements Collection
+public class CollectionSubscription<E>
+  extends Subscription<E>
+  implements Collection<E>
 {
 
   private static final boolean TRACK_UNUSED_COLLECTIONS =
@@ -63,9 +64,10 @@ public class CollectionSubscription
         "org.cougaar.core.blackboard.trackUnusedCollections");
 
   /** The actual (delegate) Container */
-  protected Collection real;
+  protected Collection<E> real;
   private final boolean hasDynamicPredicate;
-  private final HashMap changeMap = new HashMap(13);
+  private final Map<E, Set<ChangeReport>> changeMap =
+      new HashMap<E, Set<ChangeReport>>(13);
   private boolean usedReal;
 
   private static final ObjectTracker USE_TRACKER;
@@ -83,16 +85,16 @@ public class CollectionSubscription
     USE_TRACKER = u;
   }
 
-  public CollectionSubscription(UnaryPredicate p, Collection c) {
+  public CollectionSubscription(UnaryPredicate<E> p, Collection<E> c) {
     super(p);
     real = c;
     hasDynamicPredicate = (p instanceof DynamicUnaryPredicate);
     recordCreation();
   }
 
-  public CollectionSubscription(UnaryPredicate p) {
+  public CollectionSubscription(UnaryPredicate<E> p) {
     super(p);
-    real = new HashSet(13);
+    real = new HashSet<E>(13);
     hasDynamicPredicate = (p instanceof DynamicUnaryPredicate);
     recordCreation();
   }
@@ -106,7 +108,7 @@ public class CollectionSubscription
    * @return the subscription's collection -- use <code>this</code>
    * instead.
    */
-  public Collection getCollection() { recordUse(); return real; }
+  public Collection<E> getCollection() { recordUse(); return real; }
 
   /**
    * Return the set of {@link ChangeReport}s for publishChanges made
@@ -125,9 +127,9 @@ public class CollectionSubscription
    *    more ChangeReport instances, possibly containing the 
    *    AnonymousChangeReport; otherwise null.
    */
-  public Set getChangeReports(Object o) {
+  public Set<ChangeReport> getChangeReports(E o) {
     checkTransactionOK("hasChanged()");
-    return (Set) changeMap.get(o);
+    return changeMap.get(o);
   }
 
   //
@@ -139,7 +141,7 @@ public class CollectionSubscription
   /** @return {@link #size} == 0 */
   public boolean isEmpty() { recordUse(); return real.isEmpty(); }
   /** @return an Iterator of the subscription contents */
-  public Iterator iterator() { recordUse(); return real.iterator(); }
+  public Iterator<E> iterator() { recordUse(); return real.iterator(); }
   /** @return true of the subscription contains the object */
   public boolean contains(Object o) { recordUse(); return real.contains(o); }
   /** @return true of the subscription contains all the objects */
@@ -149,7 +151,7 @@ public class CollectionSubscription
   /** @return an array of the subscription contents */
   public Object[] toArray() { recordUse(); return real.toArray(); }
   /** @return an array of the subscription contents */
-  public Object[] toArray(Object[] a) { recordUse(); return real.toArray(a); }
+  public <T> T[] toArray(T[] a) { recordUse(); return real.toArray(a); }
 
   // semi-bogus collection methods:
 
@@ -157,12 +159,12 @@ public class CollectionSubscription
    * Use {@link org.cougaar.core.service.BlackboardService#publishAdd} instead.
    * Add an object to the backing collection, <i>not</i> the blackboard. 
    */
-  public boolean add(Object o) { recordUse(); return real.add(o); }
+  public boolean add(E o) { recordUse(); return real.add(o); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishAdd} instead.
    * Add objects to the backing collection, <i>not</i> the blackboard. 
    */
-  public boolean addAll(Collection c) { recordUse(); return real.addAll(c); }
+  public boolean addAll(Collection<? extends E> c) { recordUse(); return real.addAll(c); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
    * Clear the backing collection, <i>not</i> the blackboard. 
@@ -177,12 +179,12 @@ public class CollectionSubscription
    * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
    * Remove objects from the backing collection, <i>not</i> the blackboard. 
    */ 
-  public boolean removeAll(Collection c) { recordUse(); return real.removeAll(c); }
+  public boolean removeAll(Collection<?> c) { recordUse(); return real.removeAll(c); }
   /**
    * Use {@link org.cougaar.core.service.BlackboardService#publishRemove} instead.
    * Retain objects in the backing collection, <i>not</i> the blackboard. 
    */
-  public boolean retainAll(Collection c) { recordUse(); return real.retainAll(c); }
+  public boolean retainAll(Collection<?> c) { recordUse(); return real.retainAll(c); }
 
   @Override
 public boolean equals(Object o) { return (this == o); }
@@ -191,15 +193,16 @@ public boolean equals(Object o) { return (this == o); }
 public String toString() { return "Subscription of "+real; }
 
   /** @return an enumeration of the subscription objects */
-  public Enumeration elements() { 
-    recordUse(); return new Enumerator(real);
+  public Enumeration<E> elements() { 
+    recordUse(); return new Enumerator<E>(real);
   }
   
   /** @return the first object in the collection. */
-  public Object first() {
+  public E first() {
     recordUse();
-    Iterator i = real.iterator();
-    return (i.hasNext())?(i.next()):null;
+    Iterator<E> i = real.iterator();
+    if (!i.hasNext()) return null;
+    return i.next();
   }
 
   //
@@ -207,8 +210,9 @@ public String toString() { return "Subscription of "+real; }
   //
 
   @Override
+  @SuppressWarnings("unchecked")
 /** overrides Subscription.conditionalChange */
-  boolean conditionalChange(Object o, List changes, boolean isVisible) {
+  boolean conditionalChange(Object o, List<ChangeReport> changes, boolean isVisible) {
     if (hasDynamicPredicate) {
       // this logic could be written more tersely, but I think this
       // is more clear.
@@ -217,19 +221,19 @@ public String toString() { return "Subscription of "+real; }
       if (wasIn) {
         if (isIn) {            
           // it was and still is in the collection
-          privateChange(o, changes, isVisible);
+          privateChange((E) o, changes, isVisible);
           return true;
         } else {
           // it was in the collection but isn't any more
-          privateRemove(o, isVisible);
-          privateChange(o, changes, isVisible);
+          privateRemove((E) o, isVisible);
+          privateChange((E) o, changes, isVisible);
           return true;
         }
       } else {
         if (isIn) {
           // it wasn't in the collection but it is now
-          privateAdd(o, isVisible);
-          privateChange(o, changes, isVisible);
+          privateAdd((E) o, isVisible);
+          privateChange((E) o, changes, isVisible);
           return true;
         } else {
           // is wasn't in and isn't now
@@ -243,21 +247,21 @@ public String toString() { return "Subscription of "+real; }
 
   /** {@link Subscriber} method to add an object */
   @Override
-protected void privateAdd(Object o, boolean isVisible) { 
+protected void privateAdd(E o, boolean isVisible) { 
     real.add(o); 
   }
 
   /** {@link Subscriber} method to remove an object */
   @Override
-protected void privateRemove(Object o, boolean isVisible) {
+protected void privateRemove(E o, boolean isVisible) {
     real.remove(o);
   }
 
   /** {@link Subscriber} method to change an object */
   @Override
-protected void privateChange(Object o, List changes, boolean isVisible) {
+protected void privateChange(E o, List<ChangeReport> changes, boolean isVisible) {
     if (isVisible) {
-      Set set = (Set) changeMap.get(o);
+      Set<ChangeReport> set = changeMap.get(o);
       // here we avoid creating a new set instance if it will only
       //   contain the anonymous change report
       if (changes == AnonymousChangeReport.LIST) {
@@ -269,10 +273,10 @@ protected void privateChange(Object o, List changes, boolean isVisible) {
       } else {
         if (set == null) {
           int l = changes.size();
-          changeMap.put(o, set = new HashSet(l));
+          changeMap.put(o, set = new HashSet<ChangeReport>(l));
         } else if (set == AnonymousChangeReport.SET) {
           int l = 1 + changes.size();
-          changeMap.put(o, set = new HashSet(l));
+          changeMap.put(o, set = new HashSet<ChangeReport>(l));
           set.add(AnonymousChangeReport.INSTANCE);
         }
         // this should be sufficient because "Set.add" is defined
@@ -281,7 +285,7 @@ protected void privateChange(Object o, List changes, boolean isVisible) {
         // match be included in the set.
 	int size = changes.size();
 	for (int i=0; i<size; i++) {
-	    Object change = changes.get(i);
+	    ChangeReport change = changes.get(i);
 	    if (change instanceof OverrideChangeReport) set.remove(change);
 	    set.add(change);
 	}
@@ -291,14 +295,14 @@ protected void privateChange(Object o, List changes, boolean isVisible) {
   }
 
   /** {@link IncrementalSubscription} method to get the changed enumeration */
-  protected Enumeration privateGetChangedList() {
-    if (changeMap.isEmpty()) return Empty.enumeration;
-    return new Enumerator(changeMap.keySet());
+  protected Enumeration<E> privateGetChangedList() {
+    if (changeMap.isEmpty()) return Empty.elements();
+    return new Enumerator<E>(changeMap.keySet());
   }
 
   /** {@link IncrementalSubscription} method to get the changed collection */
-  protected Collection privateGetChangedCollection() {
-    if (changeMap.isEmpty()) return Collections.EMPTY_SET;
+  protected Collection<E> privateGetChangedCollection() {
+    if (changeMap.isEmpty()) return Collections.emptySet();
     return changeMap.keySet();
   }
 

@@ -116,8 +116,8 @@ public class BlackboardServiceProvider implements ServiceProvider {
     private BlackboardQueryServiceImpl(Object requestor) {
       // ignore the requestor (for now).
     }
-    public final Collection query(UnaryPredicate isMember) {
-      QuerySubscription qs = new QuerySubscription(isMember);
+    public final <T> Collection query(UnaryPredicate<T> isMember) {
+      QuerySubscription<T> qs = new QuerySubscription<T>(isMember);
       //qs.setSubscriber(null);  // ignored
       distributor.fillQuery(qs);
       return qs.getCollection();

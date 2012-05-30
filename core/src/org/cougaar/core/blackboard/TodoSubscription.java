@@ -83,7 +83,7 @@ import org.cougaar.util.UnaryPredicate;
  * where the Runnable is put on a queue and will be "run()" in the Swing
  * thread.
  */
-public class TodoSubscription extends Subscription {
+public class TodoSubscription<E> extends Subscription<E> {
 
   // this is never used, but is required by our super class
   private static final UnaryPredicate FALSE_P =
@@ -97,7 +97,7 @@ public class TodoSubscription extends Subscription {
     };
 
   private final String name;
-  private Collection active = null; 
+  private Collection<E> active = null; 
 
   /**
    * Create a TodoSubscription with the given non-null, unique name.
@@ -145,8 +145,8 @@ public class TodoSubscription extends Subscription {
    * <p>
    * Another useful option is a LinkedHashSet, which filters out duplicates.
    */
-  protected Collection createCollection() {
-    return new ArrayList(5);
+  protected Collection<E> createCollection() {
+    return new ArrayList<E>(5);
   }
 
   /**
@@ -160,13 +160,13 @@ public class TodoSubscription extends Subscription {
    * @param o the object to put on the queue, which can be any non-null object
    * (either data or a Runnable)
    */
-  public void add(Object o) {
+  public void add(E o) {
     if (o == null) throw new NullPointerException();
     addLater(o, false);
   }
 
   /** @see #add(Object) */
-  public void addAll(Collection c) { 
+  public void addAll(Collection<E> c) { 
     if (!c.isEmpty()) {
       addLater(c, true);
     }
@@ -184,13 +184,13 @@ public class TodoSubscription extends Subscription {
     if (active == null) {
       active = createCollection();
     }
-    if (!isBulk) return active.add(o);
+    if (!isBulk) return active.add((E) o);
     boolean ret = false;
     Collection c = (Collection) o;
     for (Iterator iter = c.iterator(); iter.hasNext(); ) {
       Object oi = iter.next();
       if (oi != null) {
-        ret |= active.add(oi);
+        ret |= active.add((E) oi);
       }
     }
     return ret;
@@ -200,18 +200,19 @@ public class TodoSubscription extends Subscription {
    * @return an enumeration of the objects that have been added
    * since the last transaction.
    */
-  public Enumeration getAddedList() {
+  public Enumeration<E> getAddedList() {
     checkTransactionOK("getAddedList()");
-    if (active == null || active.isEmpty()) return Empty.enumeration;
-    return new Enumerator(active);
+    if (active == null || active.isEmpty()) return Empty.elements();
+    return new Enumerator<E>(active);
   }
 
   /**
    * @return a possibly empty collection of objects that have been
    * added since the last transaction. Will not return null.
    */
-  public Collection getAddedCollection() {
-    return (active == null ? Collections.EMPTY_SET : active);
+  public Collection<E> getAddedCollection() {
+    if (active == null) return Collections.emptySet();
+    return active;
   }
 
   @Override
