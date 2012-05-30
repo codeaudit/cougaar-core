@@ -107,19 +107,6 @@ public void close() throws IOException {
     this.logger = logger;
   }
 
-  static void checkSuperclass() {
-    try {
-      PersistenceInputStream.class.getSuperclass().getDeclaredMethod("newInstanceFromDesc", new Class[] {ObjectStreamClass.class});
-    }
-    catch (Exception e) {
-      System.err.println("Fatal error " + e.toString());
-      System.err.println("Incorrect boot class path does not contain modified java/io/ObjectInputStream.class");
-      System.err.println("class loader is " +
-                         PersistenceInputStream.class.getClassLoader().getClass().getName());
-      System.exit(13);
-    }
-  }
-
   /**
    * Read the association for one object. This is the inverse of
    * PersistenceOutputStream.writeAssociation. The active state of the

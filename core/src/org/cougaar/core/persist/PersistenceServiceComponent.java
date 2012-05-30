@@ -375,14 +375,6 @@ public class PersistenceServiceComponent
     }
   }
 
-  static {
-    boolean checkPatch = 
-      SystemProperties.getBoolean(PERSISTENCE_VERIFY_JAVA_IO_PATCH_PROP, true);
-    if (checkPatch) {
-      PersistenceInputStream.checkSuperclass();
-    }
-  }
-
   // Component implementation
 
   public void setServiceBroker(ServiceBroker sb) {
