@@ -168,8 +168,7 @@ public void unload() {
   @Override
 public void setupSubscriptions() {
     synchronized (omSet) {
-      operatingModes = (IncrementalSubscription)
-        getBlackboardService().subscribe(operatingModePredicate);
+      operatingModes = getBlackboardService().subscribe(operatingModePredicate);
       omSet.addAll(operatingModes);
     }
   }

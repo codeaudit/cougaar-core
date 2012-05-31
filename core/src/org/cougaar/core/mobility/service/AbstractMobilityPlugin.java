@@ -258,8 +258,7 @@ public void unload() {
   @Override
 protected void setupSubscriptions() {
     // subscribe to control requests that we'll execute
-    controlSub = (IncrementalSubscription)
-      blackboard.subscribe(AGENT_CONTROL_PRED);
+    controlSub = blackboard.subscribe(AGENT_CONTROL_PRED);
     
     if (isNode) {
       if (blackboard.didRehydrate()) {

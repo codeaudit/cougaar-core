@@ -275,7 +275,7 @@ public abstract class AnnotatedSubscriptionsPlugin
       private IncrementalSubscription createIncrementalSubscription(Cougaar.Execute annotation) {
          String when = annotation.when();
          UnaryPredicate predicate = createPredicate(method, when);
-         return (IncrementalSubscription) blackboard.subscribe(predicate);
+         return blackboard.subscribe(predicate);
       }
 
       private Collection<?> getCollection(Subscribe.ModType op) {

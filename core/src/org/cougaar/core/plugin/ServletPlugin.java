@@ -161,7 +161,7 @@ public void unload() {
 protected void setupSubscriptions() {
      super.setupSubscriptions();
     if (isTrans) {
-      todo = (TodoSubscription) blackboard.subscribe(new TodoSubscription("x"));
+      todo = blackboard.subscribe(new TodoSubscription("x"));
     }
   }
 

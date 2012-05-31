@@ -89,7 +89,7 @@ protected void setupSubscriptions() {
     // add the AgentControl request
     addAgent(newAgent, destNode);
 
-    sub = (IncrementalSubscription) blackboard.subscribe(AGENT_CONTROL_PRED);
+    sub = blackboard.subscribe(AGENT_CONTROL_PRED);
   }
   
   @Override

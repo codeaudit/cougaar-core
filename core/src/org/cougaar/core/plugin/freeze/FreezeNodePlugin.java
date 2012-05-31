@@ -68,8 +68,7 @@ public void load() {
   @Override
 public void setupSubscriptions() {
     super.setupSubscriptions();
-    relaySubscription = (IncrementalSubscription)
-      blackboard.subscribe(targetRelayPredicate);
+    relaySubscription = blackboard.subscribe(targetRelayPredicate);
   }
 
   /**

@@ -210,8 +210,7 @@ public void setupSubscriptions() {
     threadControlService = sb.getService(this, ThreadControlService.class, null);
     threadListenerService = sb.getService(this, ThreadListenerService.class, null);
     threadListenerService.addListener(this);
-    relaySubscription = (IncrementalSubscription)
-      blackboard.subscribe(targetRelayPredicate);
+    relaySubscription = blackboard.subscribe(targetRelayPredicate);
   }
 
   @Override

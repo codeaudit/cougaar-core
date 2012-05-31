@@ -166,8 +166,7 @@ public void setupSubscriptions() {
     // if all the agents are local then we'll never publish a relay, but
     // we won't know that until we've processed the agents list
     pluginId = uidService.nextUID();
-    sub = (IncrementalSubscription) 
-      blackboard.subscribe(new AgentControlPredicate(pluginId));
+    sub = blackboard.subscribe(new AgentControlPredicate(pluginId));
 
     // TODO handle rehydration?
 

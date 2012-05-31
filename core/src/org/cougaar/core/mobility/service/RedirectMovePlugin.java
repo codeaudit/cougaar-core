@@ -134,14 +134,12 @@ protected void setupSubscriptions() {
     }
 
     // agent control requests with this agent as the target
-    incomingControlSub = (IncrementalSubscription) 
-      blackboard.subscribe(
-          createIncomingControlPredicate(agentId));
+    incomingControlSub = blackboard.subscribe(
+       createIncomingControlPredicate(agentId));
 
     // agent control requests with this agent as the source
-    outgoingControlSub = (IncrementalSubscription) 
-      blackboard.subscribe(
-          createOutgoingControlPredicate(agentId));
+    outgoingControlSub = blackboard.subscribe(
+       createOutgoingControlPredicate(agentId));
   }
 
   @Override

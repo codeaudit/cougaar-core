@@ -104,7 +104,7 @@ public class PersistenceControlPlugin extends ServiceUserPlugin {
 
   @Override
 public void setupSubscriptions() {
-    myOperatingModes = (IncrementalSubscription) blackboard.subscribe(myOperatingModePredicate);
+    myOperatingModes = blackboard.subscribe(myOperatingModePredicate);
   }
 
   @Override

@@ -202,16 +202,13 @@ public void unload() {
   @Override
 protected void setupSubscriptions() {
     // subscribe to procs that we'll execute
-    procSub = (IncrementalSubscription)
-      blackboard.subscribe(PROCESS_PRED);
+    procSub = blackboard.subscribe(PROCESS_PRED);
 
     // subscribe to scripts, in case they're removed
-    scriptSub = (IncrementalSubscription)
-      blackboard.subscribe(SCRIPT_PRED);
+    scriptSub = blackboard.subscribe(SCRIPT_PRED);
 
     // subscribe to our own steps
-    stepSub = (IncrementalSubscription)
-      blackboard.subscribe(createStepPredicate(agentId));
+    stepSub = blackboard.subscribe(createStepPredicate(agentId));
 
     if (blackboard.didRehydrate()) {
       // recreate cache from blackboard

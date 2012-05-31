@@ -125,10 +125,10 @@ public void setupSubscriptions() {
 
   private void reallySetupSubscriptions() {
 
-    policySubscription = (IncrementalSubscription) blackboard.subscribe(policyPredicate);
+    policySubscription = blackboard.subscribe(policyPredicate);
 
     omPred = new OMPredicate();
-    omSubscription = (IncrementalSubscription) blackboard.subscribe(omPred);
+    omSubscription = blackboard.subscribe(omPred);
   }
 
   private boolean haveServices() {

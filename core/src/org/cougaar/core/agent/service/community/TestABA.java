@@ -65,7 +65,7 @@ public void setParameter(Object o) {
 
   @Override
 protected void setupSubscriptions() {
-    sub = (IncrementalSubscription) blackboard.subscribe(
+    sub = blackboard.subscribe(
         new UnaryPredicate() {
           /**
           * 

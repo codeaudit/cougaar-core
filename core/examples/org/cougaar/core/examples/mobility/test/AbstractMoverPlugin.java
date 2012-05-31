@@ -82,9 +82,8 @@ protected void setupSubscriptions() {
     agentId = getAgentIdentifier();
 
     // watch for changed MoveAgent objects
-    moveAgentSub = (IncrementalSubscription) 
-      blackboard.subscribe(
-          createMovePredicate(agentId));
+    moveAgentSub = blackboard.subscribe(
+       createMovePredicate(agentId));
   }
 
   @Override

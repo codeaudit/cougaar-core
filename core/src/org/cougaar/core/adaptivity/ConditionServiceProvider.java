@@ -145,8 +145,7 @@ public void unload() {
   @Override
 public void setupSubscriptions() {
     synchronized (smSet) {
-      conditions = (IncrementalSubscription)
-        getBlackboardService().subscribe(ConditionPredicate);
+      conditions = getBlackboardService().subscribe(ConditionPredicate);
       smSet.addAll(conditions);
     }
   }

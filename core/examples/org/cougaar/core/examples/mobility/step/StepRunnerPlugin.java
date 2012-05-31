@@ -189,13 +189,11 @@ public void unload() {
 protected void setupSubscriptions() {
     // subscribe to steps with a target matching this agent
     UnaryPredicate stepPred = createStepPredicate(agentId);
-    stepSub = (IncrementalSubscription)
-      blackboard.subscribe(stepPred);
+    stepSub = blackboard.subscribe(stepPred);
 
     // subscribe to our own move requests
     UnaryPredicate movePred = createMovePredicate(agentId);
-    moveSub = (IncrementalSubscription)
-      blackboard.subscribe(movePred);
+    moveSub = blackboard.subscribe(movePred);
 
     if (blackboard.didRehydrate()) {
       // recreate cache from blackboard

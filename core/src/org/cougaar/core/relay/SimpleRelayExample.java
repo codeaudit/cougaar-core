@@ -106,8 +106,7 @@ protected void setupSubscriptions() {
     }
 
     // create relay subscription
-    sub = (IncrementalSubscription) 
-      blackboard.subscribe(new MyPred(agentId));
+    sub = blackboard.subscribe(new MyPred(agentId));
 
     // send relays
     for (Iterator iter = getParameters().iterator(); iter.hasNext();) {
