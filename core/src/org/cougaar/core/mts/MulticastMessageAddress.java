@@ -87,8 +87,9 @@ public class MulticastMessageAddress
             extends MulticastMessageAddress {
         private transient Class<?> klass = null;
 
-        // for externalizable ?
-        public MMAWithClass() {
+        // for externalizable
+        @SuppressWarnings("unused")
+      public MMAWithClass() {
         }
         
         public MMAWithClass(Class<?> clazz) {
