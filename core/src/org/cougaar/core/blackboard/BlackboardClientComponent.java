@@ -36,6 +36,7 @@ import org.cougaar.core.component.BindingSite;
 import org.cougaar.core.component.BindingUtility;
 import org.cougaar.core.component.Component;
 import org.cougaar.core.component.ServiceBroker;
+import org.cougaar.core.component.SubscriptionLifeCycle;
 import org.cougaar.core.mts.MessageAddress;
 import org.cougaar.core.service.AgentIdentificationService;
 import org.cougaar.core.service.AlarmService;
@@ -67,7 +68,7 @@ import org.cougaar.util.TriggerModel;
  */
 public abstract class BlackboardClientComponent 
   extends org.cougaar.util.GenericStateModelAdapter
-  implements Component, BlackboardClient 
+  implements Component, BlackboardClient, SubscriptionLifeCycle
 {
   private Object parameter = null;
 
@@ -284,19 +285,21 @@ public void load() {
     tm.load();
   }
 
-  @Override
-public void start() {
-     // FIXME: need new life-cycle state to activate subscriptions (ie, requestCycle).
-     BindingUtility.setUnboundServices(this, getServiceBroker());
-     
-     // super will change the run-state from LOADED to ACTIVE 
-    super.start();
-    tm.start();
-    // Tell the scheduler to run me at least this once
-    requestCycle();
-  }
+   @Override
+   public void start() {
+      BindingUtility.setUnboundServices(this, getServiceBroker());
 
-  @Override
+      // super will change the run-state from LOADED to ACTIVE
+      super.start();
+      tm.start();
+   }
+
+   // Tell the scheduler to run me at least this once
+   public void startSubscriptions() {
+      requestCycle();
+   }
+
+@Override
 public void suspend() {
     super.suspend();
     tm.suspend();

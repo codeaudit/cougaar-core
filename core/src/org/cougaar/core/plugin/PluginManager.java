@@ -26,7 +26,10 @@
 
 package org.cougaar.core.plugin;
 
+import java.util.Iterator;
+
 import org.cougaar.core.agent.Agent;
+import org.cougaar.core.component.Binder;
 import org.cougaar.core.component.ComponentDescriptions;
 import org.cougaar.core.component.ComponentRuntimeException;
 import org.cougaar.core.component.ContainerSupport;
@@ -130,7 +133,19 @@ public void unload() {
   // other services
   //
   
-  public MessageAddress getMessageAddress() {
+   @Override
+   public void start() {
+      super.start();
+      for (Iterator itr = binderIterator(); itr.hasNext();) {
+         Object child = itr.next();
+         if (child instanceof Binder) {
+            Binder binder = ((Binder) child);
+            binder.startSubscriptions();
+         }
+      }
+   }
+
+public MessageAddress getMessageAddress() {
     return agentId;
   }
   public MessageAddress getAgentIdentifier() {
