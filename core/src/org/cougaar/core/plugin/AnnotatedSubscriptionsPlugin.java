@@ -131,7 +131,7 @@ public abstract class AnnotatedSubscriptionsPlugin
       }
    }
 
-   public IncrementalSubscription getSubscription(String id) {
+   public <T> IncrementalSubscription<T> getSubscription(String id, Class<T> type) {
       return subscriptions.get(id);
    }
 
