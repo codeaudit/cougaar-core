@@ -115,7 +115,7 @@ extends ContainerSupport
    * file on the jar path (typically "lib/" and "sys/").  Otherwise, this
    * method will rely solely on the classpath.
    *
-   * @see #launch(String[])
+   * @see #launch
    */
   // @deprecated
   public static void main(String[] args) {

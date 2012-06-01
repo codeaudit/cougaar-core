@@ -34,7 +34,6 @@ package org.cougaar.core.persist;
 public interface PersistenceServiceForAgent extends PersistenceService {
   /**
    * Get the rehydration envelope from the most recent persisted state.
-   * @return null if there is no persisted state.
    */
   void rehydrate(PersistenceObject pObject);
 

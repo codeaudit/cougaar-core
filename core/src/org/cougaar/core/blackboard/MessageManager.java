@@ -81,7 +81,6 @@ public interface MessageManager {
   /**
    * Advance epoch.  Bring the current epoch to an end in preparation
    * for a persistence delta.
-   * @return true if the message manager actually requires the epoch to advance
    */
   void advanceEpoch();
 

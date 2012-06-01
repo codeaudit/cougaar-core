@@ -176,7 +176,6 @@ public interface DemoControlService extends Service {
     public void updatedTime(MessageAddress addr, long rtt);
     /**
      * All targets have been advanced. 
-     * @return a Map from the targets to their Long round-trip-times.
      */
     public void completed(Map addrsToRTT);
   }

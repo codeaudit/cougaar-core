@@ -71,7 +71,7 @@ public interface Schedulable
     void suspend(SuspendCallback callback);
 
     /**
-     * Restart after a {@link #suspend).
+     * Restart after a {@link #suspend}.
      *
      */
     void resume();
