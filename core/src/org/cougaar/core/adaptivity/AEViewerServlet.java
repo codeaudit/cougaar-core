@@ -57,8 +57,8 @@ implements BlackboardClient
   /**
     * 
     */
-   private static final long serialVersionUID = 1L;
-public static final String FRAME = "frame";
+  private static final long serialVersionUID = 1L;
+  public static final String FRAME = "frame";
   public static final String AE_FRAME = "ae";
 
   public static final String OPERATINGMODE = "OperatingMode";
@@ -586,6 +586,12 @@ public void doGet(HttpServletRequest request, HttpServletResponse response) {
       }
       return false;
     }
+
+   @Override
+   public int hashCode() {
+      // TODO Auto-generated method stub
+      return super.hashCode();
+   }
   }
 
 
@@ -613,6 +619,12 @@ public void doGet(HttpServletRequest request, HttpServletResponse response) {
       }
       return false;
     }
+
+   @Override
+   public int hashCode() {
+      // TODO Auto-generated method stub
+      return super.hashCode();
+   }
   }
 }
 

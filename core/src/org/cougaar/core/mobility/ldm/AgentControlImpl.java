@@ -255,6 +255,11 @@ public String toString() {
    public String toString() {
       return "status ("+statusCode+") stack("+stack+")";
     }
+    
+   @Override
+   public int hashCode() {
+      return statusCode + stack.hashCode();
+   }
   }
 
   /**
