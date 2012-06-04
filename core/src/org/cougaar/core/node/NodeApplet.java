@@ -81,8 +81,6 @@ private static final String[] REQUIRED_PROPS = new String[] {
   private static final String[] DEFAULT_PROPS = new String[] {
     // read the node from XML
     "-Dorg.cougaar.core.node.InitializationComponent=XML",
-    // avoid javaiopatch check in persistence
-    "-Dorg.cougaar.core.persistence.verifyJavaIOPatch=false",
     // don't set thread name (access denied)
     "-Dorg.cougaar.core.blackboard.client.setThreadName=false",
     // local-only wp
