@@ -26,7 +26,7 @@
 
 /* @generated Wed Jun 06 07:47:27 EDT 2012 from version.def - DO NOT HAND EDIT */
 
-package .;
+package org.cougaar;
 public final class Version {
   public final static String version = "12.6";
   public final static long buildTime = 1338983247287L;
