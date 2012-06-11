@@ -24,12 +24,12 @@
  * </copyright>
  */
 
-/* @generated Wed Jun 06 07:47:27 EDT 2012 from version.def - DO NOT HAND EDIT */
+/* was original @generated Wed Jun 06 07:47:27 EDT 2012 from version.def */
 
 package org.cougaar;
 public final class Version {
-  public final static String version = "12.6";
-  public final static long buildTime = 1338983247287L;
+  public final static String version = "12.7";
+  public final static long buildTime = 0L; // no longer setting right
   public final static String repositoryTag = null;
   public final static boolean repositoryModified = false;
   public final static long repositoryTime = -1L;
