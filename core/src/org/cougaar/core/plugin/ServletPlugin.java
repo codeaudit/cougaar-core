@@ -165,6 +165,7 @@ public abstract class ServletPlugin
 
    @Override
    protected void execute() {
+      super.execute();
       if (!isTrans) {
          return;
       }
