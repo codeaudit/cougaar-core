@@ -32,7 +32,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.util.Collection;
-import java.util.Iterator;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -173,8 +172,8 @@ public abstract class ServletPlugin
       if (!todo.hasChanged()) {
          return;
       }
-      for (Iterator iter = todo.getAddedCollection().iterator(); iter.hasNext();) {
-         HttpJob job = (HttpJob) iter.next();
+      Collection<HttpJob> addedCollection = todo.getAddedCollection();
+      for (HttpJob job : addedCollection) {
          try {
             service(job.getHttpServletRequest(), job.getHttpServletResponse());
             job.notifySuccess();
