@@ -331,6 +331,7 @@ public void unload() {
       tm = null;
     }
     blackboard.unregisterInterest(watcher);
+    BindingUtility.releaseAnnotatedServices(this, getServiceBroker());
     if (alarmService != null) {
       sb.releaseService(this, AlarmService.class, alarmService);
       alarmService = null;
