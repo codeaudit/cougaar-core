@@ -139,17 +139,6 @@ public abstract class ServletPlugin
       }
    }
 
-   @Override
-   public void unload() {
-      if (servletService != null) {
-         // this will automatically unregister our servlet
-         getServiceBroker().releaseService(this, ServletService.class, servletService);
-         servletService = null;
-      }
-
-      super.unload();
-   }
-
    /** Get the URL-encoded name of the local agent */
    protected String getEncodedAgentName() {
       return encAgentName;

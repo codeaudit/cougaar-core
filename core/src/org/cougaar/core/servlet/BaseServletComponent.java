@@ -121,16 +121,4 @@ public abstract class BaseServletComponent
          }
       }
    }
-
-   @Override
-   public void unload() {
-      super.unload();
-      // release the servlet service, which will automatically
-      // unregister the servlet
-      if (servletService != null) {
-         serviceBroker.releaseService(this, ServletService.class, servletService);
-      }
-      // your subclass should also release its services here!
-   }
-
 }

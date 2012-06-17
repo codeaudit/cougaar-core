@@ -236,16 +236,5 @@ public abstract class ComponentServlet
 
    public void unload() {
       gsm.unload();
-      // release the servlet service, which will automatically
-      // unregister the servlet
-      if (servletService != null) {
-         serviceBroker.releaseService(this, ServletService.class, servletService);
-         servletService = null;
-      }
-      if (agentIdService != null) {
-         serviceBroker.releaseService(this, AgentIdentificationService.class, agentIdService);
-         agentIdService = null;
-      }
-      // your subclass should also release its services here!
    }
 }
