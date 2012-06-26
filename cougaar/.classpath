@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/concurrent.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/fesi-111.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/hsqldb.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/icu4j.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/jena.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/jms-1.1.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/juddi.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/junit.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/log4j.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/servlet.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/smack.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/SNMP4J.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/tomcat_40.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/uddi4j.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/xercesImpl.jar"/>
+	<classpathentry exported="true" kind="lib" path="/jars/lib/xml-apis.jar"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/bootstrap"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/core"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/datafeeds"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mtslinks"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mtsstd"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/planning"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/profile"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/qos"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/qrs"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/util"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/webmicro"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/webserver"/>
+	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/webtomcat"/>
+	<classpathentry kind="output" path="core/tmp/regress"/>
+</classpath>
