@@ -7,264 +7,313 @@
 <h1> Versions and download locations for standard third-party jar files </h1>
  
 <p> Jar files should not be added or updated without updating this file. </p>
-<p> 
+
+
+<h1>Versions and download locations for standard third-party jar files (to be) contained in Cougaar Release 12.7</h1>
 <table border="1">
- <tbody>
+<tbody>
 <tr>
- <td valign="Top"> activation.jar </td>
- <td valign="Top"> 1.0.2 </td>
- <td valign="Top"> <a href="http://java.sun.com/products/javabeans/glasgow/jaf.html">JavaBeans Activation Framework</a> Used by Robustness, webaxis. </td>
+<td valign="Top">concurrent.jar</td>
+<td valign="Top">1.3.2</td>
+<td valign="Top">Doug Lea's Concurrent package - basis for JSR-166 <a href="http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html">http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> antlr.jar </td>
- <td valign="Top"> ? </td>
- <td valign="Top"> Used by Jena2. </td>
+<td valign="Top">fesi-111.jar</td>
+<td valign="Top">1.1.1</td>
+<td valign="Top">Free EcmaScript Interpreter <a href="http://www.lugrin.ch/fesi/">http://www.lugrin.ch/fesi/</a><br>Only used in glm/mlm module.</td>
 </tr>
-
 <tr>
- <td valign="Top"> axis_1_2_beta.jar </td>
- <td valign="Top"> 1.2 beta, merged </td>
- <td valign="Top"> 
-   <a name="axis">
-   BBN merge of 7 Axis WebServices jars:<ol>
-     <li>axis.jar</li>
-     <li>axis-ant.jar</li>
-     <li>wsdl4j.jar</li>
-     <li>saaj.jar</li>
-     <li>jaxrpc.jar</li>
-     <li>commons-logging.jar</li>
-     <li>commons-discovery.jar</li>
-   </ol>
-   This merge helps reduce clutter, but the jars could be separated
-   out again if there is developer demand to do so.
- </td>
+<td valign="Top">hsqldb.jar</td>
+<td valign="Top">1.7.1 plus Cougaar mods</td>
+<td valign="Top">100% Java Database Engine. Cougaar version in our source tree module hsqldb. Original: <a href="http://hsqldb.sourceforge.net/">http://hsqldb.sourceforge.net/</a>
+Used by YellowPages.</td>
 </tr>
-
 <tr>
- <td valign="Top"> bsh.jar </td>
- <td valign="Top"> 1.3b2 </td>
- <td valign="Top"> Bean Shell, interactive Java interpreter, very handy 
-	 for debugging. See <a href="http://www.beanshell.org/">
-http://www.beanshell.org/</a> </td>
+<td valign="Top">icu4j.jar</td>
+<td valign="Top">?</td>
+<td valign="Top">Used by Jena2.</td>
 </tr>
-
 <tr>
- <td valign="Top"> chart.jar </td>
- <td valign="Top"> July 2000 </td>
- <td valign="Top"> IBM Lightweight Chart Beans <a href="http://www.alphaworks.ibm.com/ab.nsf/bean/Lightweight+Chart+Beans">
-http://www.alphaworks.ibm.com/ab.nsf/bean/Lightweight+Chart+Beans</a> </td>
+<td valign="Top">jena.jar</td>
+<td valign="Top">2.0 (+)</td>
+<td valign="Top">Jena is a Java API for manipulating RDF
+models.   See <a href="http://jena.sourceforge.net/">http://jena.sourceforge.net/</a>.  <em>NOTE: The included jar file has been modified
+to include the full vocabularies and etc directories
+that are distributed in the Jena2 installation. The code
+has not been modified.</em></td>
 </tr>
-
 <tr>
- <td valign="Top"> concurrent.jar </td>
- <td valign="Top"> 1.3.2 </td>
- <td valign="Top"> Doug Lea's Concurrent package - basis for JSR-166 <a href="http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html">
-http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html</a> </td>
+<td valign="Top">jms-1.1.jar</td>
+<td valign="Top">1.1</td>
+<td valign="Top">Java Message Service <a href="http://www.oracle.com/technetwork/java/jms/index.html">http://java.sun.com/products/jms/</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> fesi-111.jar </td>
- <td valign="Top"> 1.1.1 </td>
- <td valign="Top"> Free EcmaScript Interpreter <a href="http://home.worldcom.ch/%7Ejmlugrin/fesi/index.html">
-http://home.worldcom.ch/~jmlugrin/fesi/index.html</a> </td>
+<td valign="Top">juddi.jar</td>
+<td valign="Top">0.6.2 plus Cougaar mods</td>
+<td valign="Top">Java-based UDDI server used by YellowPages server components.  Original: <a href="http://sourceforge.net/projects/juddi/">
+http://sourceforge.net/projects/juddi/</a>. juddi in Cougaar source tree has some (temporary) minor changes to make it more useful for Cougaar. Previously, we had used soapuddi for this purpose.</td>
 </tr>
-
 <tr>
- <td valign="Top"> grappa1_2.jar </td>
- <td valign="Top"> 1.2 </td>
- <td valign="Top"> Original may be downloaded at 	<a href="http://www.research.att.com/sw/tools/graphviz/packages/grappa.html">
-http://www.research.att.com/sw/tools/graphviz/packages/grappa.html</a> </td>
+<td valign="Top">junit.jar</td>
+<td valign="Top">3.8</td>
+<td valign="Top">(required at build-time only) <a href="http://www.junit.org/">http://www.junit.org/</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> hsqldb.jar </td>
- <td valign="Top"> 1.7.1 plus Cougaar mods </td>
- <td valign="Top"> 100% Java Database Engine. Cougaar version in yp module.  Original: <a href="http://hsqldb.sourceforge.net/">
-http://hsqldb.sourceforge.net/</a><br> Used by YellowPages. </td>
+<td valign="Top">log4j.jar</td>
+<td valign="Top">1.2.7</td>
+<td valign="Top">Full Log4j jar file. <a href="http://jakarta.apache.org/log4j/docs/index.html">http://jakarta.apache.org/log4j/docs/index.html</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> icu4j.jar </td>
- <td valign="Top"> ? </td>
- <td valign="Top"> Used by Jena2. </td>
+<td valign="Top">servlet.jar</td>
+<td valign="Top">3.2.3</td>
+<td valign="Top">Java Servlet Development kit (now Jakarta Tomcat). Includes Java Servlet 2.3 and JSP 1.2 specifications. <a href="http://jakarta.apache.org/tomcat/index.html">
+http://jakarta.apache.org/tomcat/index.html</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> jakarta-oro-2.0.5.jar </td>
- <td valign="Top"> 2.0.5 </td>
- <td valign="Top"> Used by Jena2. </td>
+ <td valign="Top">smack.jar</td>
+ <td valign="Top">?</td>
+ <td valign="Top">SMACK XMPP libraries
+<a href="http://www.igniterealtime.org/downloads/index.jsp">http://www.igniterealtime.org/downloads/index.jsp</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> jasper-runtime.jar </td>
- <td valign="Top"> 4.0.3 </td>
- <td valign="Top"> Optional runtime JSP support for precompiled JSP servlets (<a href="https://www.alpine.bbn.com/bugzilla/show_bug.cgi?id=1092">bug 1092</a>).  Matches <a href="#tomcat">tomcat_40.jar</a>. </td>
- </tr>
-
-<tr>
- <td valign="Top"> jaxr-api.jar </td>
- <td valign="Top"> Summer-02_01 </td>
- <td valign="Top"> JAXR api only </td>
+ <td valign="Top">SNMP4J.jar</td>
+ <td valign="Top">1.9RC2</td>
+ <td valign="Top">Object Oriented SNMP API for Java Managers and Agents
+<a href="http://www.snmp4j.org/">http://www.snmp4j.org/</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> jcchart.jar </td>
- <td valign="Top"> 6.3 (August 2005)</td>
- <td valign="Top"> JClass Chart: developers of jcchart software must purchase a license, 
-but users of cougaar and developers of non-jcchart software may use the jar
-without fee. <a href="http://java.quest.com/jclass/chart.shtml">
-http://java.quest.com/jclass/chart.shtml</a> </td>
+<td valign="Top">tomcat_40.jar</td>
+<td valign="Top">4.0.6, merged</td>
+<td valign="Top">BBN merge of 14 Tomcat 4.0.6 jars taken on 10/8/02, required to run the Tomcat implementation of ServletService. The merged jar contains all 15 "server/lib/*" jars excluding commons-logging, the 2 "common/lib/naming*" jars, and the "bin/bootstrap.jar".  Minor modifications were made to
+"org.apache.tomcat.core.Standard[Engine|Service]" to suppress
+needless debugging output.<a href="http://jakarta.apache.org/tomcat/index.html">
+http://jakarta.apache.org/tomcat/index.html</a></td>
 </tr>
-
 <tr>
- <td valign="Top"> jena.jar </td>
- <td valign="Top"> 2.0 (+)</td>
- <td valign="Top"> Jena is a Java API for manipulating RDF
-	      models. <em>NOTE: The included jar file has been modified
-		to include the full vocabularies and etc directories
-	      that are distributed in the Jena2 installation. The code
-	      has not been modified.</em> See <a href="http://jena.sourceforge.net/">http://jena.sourceforge.net/</a>. </td>
- </tr>
-
-<tr>
- <td valign="Top"> jms-1.1.jar </td>
- <td valign="Top"> 1.1 </td>
- <td valign="Top"> Java Message Service <a href="http://java.sun.com/products/jms/">http://java.sun.com/products/jms/</a> </td>
+<td valign="Top">uddi4j.jar</td>
+<td valign="Top">2.0.1</td>
+<td valign="Top">Open source Java API for accessing a UDDI registry.
+<a href="http://www.uddi4j.org"> http://www.uddi4j.org</a> <em>Link is broken as of 2012.</em>  Previous releases of cougaar required a modified uddi4j release - this is no longer required.  Cougaar version is in uddi4j module in the Cougaar source tree.</td>
 </tr>
-	 
 <tr>
- <td valign="Top"> jpython.jar </td>
- <td valign="Top"> ? </td>
- <td valign="Top"> JPython <a href="http://www.jython.org/">http://www.jython.org/</a> </td>
+<td valign="Top">xercesImpl.jar, xml-apis.jar</td>
+<td valign="Top">2.6.2</td>
+<td valign="Top">Apache xerces version 2.  With this version, the API and implementation have been split into two jars.
+<a href="http://xml.apache.org/xerces2-j/"> http://xml.apache.org/xerces2-j/</a></td>
 </tr>
-
-<tr>
- <td valign="Top"> juddi.jar </td>
- <td valign="Top"> 0.6.2 plus Cougaar mods </td>
- <td valign="Top"> Java-based UDDI server used by
-	    YellowPages server components. Original: <a href="http://sourceforge.net/projects/juddi/">
-http://sourceforge.net/projects/juddi/</a>.  Cougaar version> has some
-	    (temporary) minor changes to make it more useful for
-	    Cougaar.  Previously, we had used soapuddi for this purpose. </td>
-</tr>
-
-<tr>
- <td valign="Top"> junit.jar </td>
- <td valign="Top"> 3.8 </td>
- <td valign="Top"> (required at build-time only) <a href="http://www.junit.org/">http://www.junit.org/</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> log4j.jar </td>
- <td valign="Top"> 1.2.7 </td>
- <td valign="Top"> Full Log4j jar file. <a href="http://jakarta.apache.org/log4j/docs/index.html">http://jakarta.apache.org/log4j/docs/index.html</a></td>
-</tr>
-
-<tr>
- <td valign="Top"> mail.jar </td>
- <td valign="Top"> 1.3.2 </td>
- <td valign="Top"> <a
- href="http://java.sun.com/products/javamail/">JavaMail API</a> Used by Robustness, webaxis.</td>
-</tr>
-
-<tr>
- <td valign="Top"> mm-mysql-2.jar </td>
- <td valign="Top"> 2.0.14 </td>
- <td valign="Top"> MySQL driver (required for runtime only) <a href="http://mmmysql.sourceforge.net/">
-http://mmmysql.sourceforge.net/</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> openmap.jar </td>
- <td valign="Top"> 4.6.3</td>
- <td valign="Top"> <a href="http://openmap.bbn.com/">http://openmap.bbn.com/</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> rdf-api-2001-01-19.jar </td>
- <td valign="Top"> 2001-01-19 </td>
- <td valign="Top"> RDF API: Used by Jena2.  </td>
-</tr>
-
-<tr>
- <td valign="Top"> servlet.jar </td>
- <td valign="Top"> 3.2.3 </td>
- <td valign="Top"> Java Servlet Development kit (now Jakarta Tomcat).  Includes Java 	
- Servlet 2.3 and JSP 1.2 specifications. <a href="http://jakarta.apache.org/tomcat/index.html">
-http://jakarta.apache.org/tomcat/index.html</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> silk.jar </td>
- <td valign="Top"> 200111081200</td>
- <td valign="Top"> SILK/JScheme CVS version as of 11/8/2001 12:00
-	    EST.  Will be updated when the next numbered release is
-	    available.  Use the "downloading from the cvs server"
-	    instructions in the the following link to get and build it.
-<a href="http://silk.sourceforge.net/silk/silkweb/doc/resources/HOWTO.html">http://silk.sourceforge.net/silk/silkweb/doc/resources/HOWTO.html</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> SNMP4J.jar </td>
- <td valign="Top"> 1.9RC2 </td>
- <td valign="Top"> Object Oriented SNMP API for Java Managers and Agents
-<a href="http://www.snmp4j.org/">http://www.snmp4j.org/</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> tomcat_40.jar </td>
- <td valign="Top"> 4.0.6, merged </td>
- <td valign="Top"> 
-   <a name="tomcat">
-   BBN merge of 14 Tomcat 4.0.6 jars taken on 10/8/02, required to run
-   the Tomcat implementation of ServletService.  The merged jar 
-   contains all 15 "server/lib/*" jars excluding commons-logging, the 2 
-   "common/lib/naming*" jars, and the "bin/bootstrap.jar".
-   Minor modifications were made to 
-   "org.apache.tomcat.core.Standard[Engine|Service]" to suppress
-   needless debugging output.
- <a href="http://jakarta.apache.org/tomcat/index.html">
-http://jakarta.apache.org/tomcat/index.html</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> tools.jar </td>
- <td valign="Top"> 1.4.2_03 </td>
- <td valign="Top"> Standard jdk tools.jar, included so custom Taglets work for Javadoc. </td>
-</tr>
-
-<tr>
- <td valign="Top"> uddi4j.jar </td>
- <td valign="Top"> 2.0.1 </td>
- <td valign="Top"> Open source Java API for accessing a UDDI registry.
- <a href="http://www.uddi4j.org"> http://www.uddi4j.org</a>
-Previous releases of cougaar required a modified uddi4j release - this is no longer required. </td>
-</tr>
-
-<tr>
- <td valign="Top"> vgj.jar </td>
- <td valign="Top"> ? </td>
- <td valign="Top"> <a href="http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html">
-http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html</a> </td>
-</tr>
-
-<tr>
- <td valign="Top"> vishnuServer.jar </td>
- <td valign="Top"> ? (August 2006)</td>
- <td valign="Top"> Vishnu server core.  BBN proprietary code for the Vishnu server and gui. </td>
-</tr>
-
-<tr>
- <td valign="Top"> xercesImpl.jar, xml-apis.jar </td>
- <td valign="Top"> 2.6.2 </td>
- <td valign="Top"> Apache xerces version 2.  With this version, the
-	    API and implementation have been split into two jars. 
-	    <a href="http://xml.apache.org/xerces2-j/"> http://xml.apache.org/xerces2-j/</a> </td>
-</tr>
-  
 </tbody>
 </table>
-</p>
+<hr>
+<h1>Versions and download locations for standard third-party jar files contained in Cougaar Release 12.4 and 12.6</h1>
+<table border="1">
+<tbody>
+<tr>
+<td valign="Top">activation.jar</td>
+<td valign="Top">1.0.2</td>
+<td valign="Top"><a href="hhttp://www.oracle.com/technetwork/java/javase/downloads/index-135046.html">JavaBeans Activation Framework</a> Used by Robustness, webaxis.</td>
+</tr>
+<tr>
+<td valign="Top">antlr.jar</td>
+<td valign="Top">?</td>
+<td valign="Top">Used by Jena2.</td>
+</tr>
+<tr>
+<td valign="Top">axis_1_2_beta.jar</td>
+<td valign="Top">1.2 beta, merged</td>
+<td valign="Top">BBN merge of 7 Axis WebServices jars:axis.jar
+<ol>
+	<li>axis-ant.jar</li>
+	<li>wsdl4j.jar</li>
+	<li>saaj.jar</li>
+	<li>jaxrpc.jar</li>
+	<li>commons-logging.jar</li>
+	<li>commons-discovery.jar</li>
+</ol>
+This merge helps reduce clutter, but the jars could be separated out again if there is developer demand to do so.</td>
+</tr>
+<tr>
+<td valign="Top">sh.jar</td>
+<td valign="Top">1.3b2</td>
+<td valign="Top">Bean Shell, interactive Java interpreter, very handy
+for debugging. See <a href="http://www.beanshell.org/">http://www.beanshell.org/</a></td>
+</tr>
+<tr>
+<td valign="Top">chart.jar</td>
+<td valign="Top">July 2000</td>
+<td valign="Top">IBM Lightweight Chart Beans <a href="http://www.alphaworks.ibm.com/ab.nsf/bean/Lightweight+Chart+Beans">http://www.alphaworks.ibm.com/ab.nsf/bean/Lightweight+Chart+Beans</a></td>
+</tr>
+<tr>
+<td valign="Top">concurrent.jar</td>
+<td valign="Top">1.3.2</td>
+<td valign="Top">Doug Lea's Concurrent package - basis for JSR-166 <a href="http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html">http://gee.cs.oswego.edu/dl/classes/EDU/oswego/cs/dl/util/concurrent/intro.html</a></td>
+</tr>
+<tr>
+<td valign="Top">fesi-111.jar</td>
+<td valign="Top">1.1.1</td>
+<td valign="Top">Free EcmaScript Interpreter <a href="http://www.lugrin.ch/fesi/">http://www.lugrin.ch/fesi/</a><br>Only used in glm/mlm module.</td>
+</tr>
+<tr>
+<td valign="Top">grappa1_2.jar</td>
+<td valign="Top">1.2</td>
+<td valign="Top">Original may be downloaded at <a href="http://www.research.att.com/sw/tools/graphviz/packages/grappa.html">http://www.research.att.com/sw/tools/graphviz/packages/grappa.html</a></td>
+</tr>
+<tr>
+<td valign="Top">hsqldb.jar</td>
+<td valign="Top">1.7.1 plus Cougaar mods</td>
+<td valign="Top">100% Java Database Engine. Cougaar version in our source tree module hsqldb. Original: <a href="http://hsqldb.sourceforge.net/">http://hsqldb.sourceforge.net/</a>
+Used by YellowPages.</td>
+</tr>
+<tr>
+<td valign="Top">icu4j.jar</td>
+<td valign="Top">?</td>
+<td valign="Top">Used by Jena2.</td>
+</tr>
+<tr>
+<td valign="Top">jakarta-oro-2.0.5.jar</td>
+<td valign="Top">2.0.5</td>
+<td valign="Top">Used by Jena2.</td>
+</tr>
+<tr>
+<td valign="Top">jasper-runtime.jar</td>
+<td valign="Top">4.0.3</td>
+<td valign="Top">Optional runtime JSP support for precompiled JSP servlets.  Jasper is part of Apache Tomcat.<br>Used by bol2 and securitycore/securityservices.</td>
+</tr>
+<tr>
+<td valign="Top">jaxr-api.jar</td>
+<td valign="Top">Summer-02_01</td>
+<td valign="Top">JAXR api only</td>
+</tr>
+<tr>
+<td valign="Top">jcchart.jar</td>
+<td valign="Top">6.3 (August 2005)</td>
+<td valign="Top"><a href="http://www.quest.com/jclass-desktopviews/chart.aspx">JClass Chart</a>: developers of jcchart software must purchase a license, but users of cougaar and developers of non-jcchart software may use the jar without fee.<br>Only used in CSMART UI, Logistics UI, and Microedition UI.</td>
+</tr>
+<tr>
+<td valign="Top">jena.jar</td>
+<td valign="Top">2.0 (+)</td>
+<td valign="Top">Jena is a Java API for manipulating RDF
+models.   See <a href="http://jena.sourceforge.net/">http://jena.sourceforge.net/</a>.  <em>NOTE: The included jar file has been modified
+to include the full vocabularies and etc directories
+that are distributed in the Jena2 installation. The code
+has not been modified.</em></td>
+</tr>
+<tr>
+<td valign="Top">jms-1.1.jar</td>
+<td valign="Top">1.1</td>
+<td valign="Top">Java Message Service <a href="http://www.oracle.com/technetwork/java/jms/index.html">http://java.sun.com/products/jms/</a></td>
+</tr>
+<tr>
+<td valign="Top">jpython.jar</td>
+<td valign="Top">?</td>
+<td valign="Top">JPython <a href="http://www.jython.org/">http://www.jython.org/</a></td>
+</tr>
+<tr>
+<td valign="Top">juddi.jar</td>
+<td valign="Top">0.6.2 plus Cougaar mods</td>
+<td valign="Top">Java-based UDDI server used by YellowPages server components.  Original: <a href="http://sourceforge.net/projects/juddi/">
+http://sourceforge.net/projects/juddi/</a>. juddi in Cougaar source tree has some (temporary) minor changes to make it more useful for Cougaar. Previously, we had used soapuddi for this purpose.</td>
+</tr>
+<tr>
+<td valign="Top">junit.jar</td>
+<td valign="Top">3.8</td>
+<td valign="Top">(required at build-time only) <a href="http://www.junit.org/">http://www.junit.org/</a></td>
+</tr>
+<tr>
+<td valign="Top">log4j.jar</td>
+<td valign="Top">1.2.7</td>
+<td valign="Top">Full Log4j jar file. <a href="http://jakarta.apache.org/log4j/docs/index.html">http://jakarta.apache.org/log4j/docs/index.html</a></td>
+</tr>
+<tr>
+<td valign="Top">mail.jar</td>
+<td valign="Top">1.3.2</td>
+<td valign="Top"><a href="http://java.sun.com/products/javamail/">JavaMail API</a> Used by Robustness, webaxis.</td>
+</tr>
+<tr>
+<td valign="Top">mm-mysql-2.jar</td>
+<td valign="Top">2.0.14</td>
+<td valign="Top">MySQL driver (required for runtime only) <a href="http://mmmysql.sourceforge.net/">
+http://mmmysql.sourceforge.net/</a></td>
+</tr>
+<tr>
+<td valign="Top">openmap.jar</td>
+<td valign="Top">4.6.3</td>
+<td valign="Top"><a href="http://openmap.bbn.com/">http://openmap.bbn.com/</a></td>
+</tr>
+<tr>
+<td valign="Top">quo-core.jar</td>
+<td valign="Top">n/a</td>
+<td valign="Top">This jar contains the classes required to use the quo (Quality Objects) quality-of-service framework.</td>
+</tr>
+<tr>
+<td valign="Top">rdf-api-2001-01-19.jar</td>
+<td valign="Top">2001-01-19</td>
+<td valign="Top">RDF API: Used by Jena2.</td>
+</tr>
+<tr>
+<td valign="Top">resource-status-service.jar</td>
+<td valign="Top">n/a</td>
+<td valign="Top">This jar contains the classes that support resource monitoring, as used by the default Metrics Service.</td>
+</tr>
+<tr>
+<td valign="Top">servlet.jar</td>
+<td valign="Top">3.2.3</td>
+<td valign="Top">Java Servlet Development kit (now Jakarta Tomcat). Includes Java Servlet 2.3 and JSP 1.2 specifications. <a href="http://jakarta.apache.org/tomcat/index.html">
+http://jakarta.apache.org/tomcat/index.html</a></td>
+</tr>
+<tr>
+<td valign="Top">silk.jar</td>
+<td valign="Top">200111081200</td>
+<td valign="Top">SILK/JScheme CVS version as of 11/8/2001 12:00 EST. Use the "downloading from the cvs server" instructions in the the following link to get and build it. <a href="http://tools.netsa.cert.org/silk/index.html">http://silk.sourceforge.net/silk/silkweb/doc/resources/HOWTO.html</a> <em>Link is broken as of 2012.</em></td>
+</tr>
+<tr>
+ <td valign="Top">smack.jar</td>
+ <td valign="Top">?</td>
+ <td valign="Top">SMACK XMPP libraries
+<a href="http://www.igniterealtime.org/downloads/index.jsp">http://www.igniterealtime.org/downloads/index.jsp</a></td>
+</tr>
+<tr>
+ <td valign="Top">SNMP4J.jar</td>
+ <td valign="Top">1.9RC2</td>
+ <td valign="Top">Object Oriented SNMP API for Java Managers and Agents
+<a href="http://www.snmp4j.org/">http://www.snmp4j.org/</a></td>
+</tr>
+<tr>
+<td valign="Top">tomcat_40.jar</td>
+<td valign="Top">4.0.6, merged</td>
+<td valign="Top">BBN merge of 14 Tomcat 4.0.6 jars taken on 10/8/02, required to run the Tomcat implementation of ServletService. The merged jar contains all 15 "server/lib/*" jars excluding commons-logging, the 2 "common/lib/naming*" jars, and the "bin/bootstrap.jar".  Minor modifications were made to
+"org.apache.tomcat.core.Standard[Engine|Service]" to suppress
+needless debugging output.<a href="http://jakarta.apache.org/tomcat/index.html">
+http://jakarta.apache.org/tomcat/index.html</a></td>
+</tr>
+<tr>
+<td valign="Top">tools.jar</td>
+<td valign="Top">1.4.2_03</td>
+<td valign="Top">Standard jdk tools.jar, included so custom Taglets work for Javadoc.</td>
+</tr>
+<tr>
+<td valign="Top">uddi4j.jar</td>
+<td valign="Top">2.0.1</td>
+<td valign="Top">Open source Java API for accessing a UDDI registry.
+<a href="http://www.uddi4j.org"> http://www.uddi4j.org</a> <em>Link is broken as of 2012.</em>  Previous releases of cougaar required a modified uddi4j release - this is no longer required.  Cougaar version is in uddi4j module in the Cougaar source tree.</td>
+</tr>
+<tr>
+<td valign="Top">vgj.jar</td>
+<td valign="Top">?</td>
+<td valign="Top">http://www.eng.auburn.edu/cse/research/research_groups/graph_drawing/graph_drawing.html</td>
+</tr>
+<tr>
+<td valign="Top">vishnuServer.jar</td>
+<td valign="Top">? (August 2006)</td>
+<td valign="Top">Vishnu server core.  BBN proprietary code for the Vishnu server and gui.</td>
+</tr>
+<tr>
+<td valign="Top">xercesImpl.jar, xml-apis.jar</td>
+<td valign="Top">2.6.2</td>
+<td valign="Top">Apache xerces version 2.  With this version, the API and implementation have been split into two jars.
+<a href="http://xml.apache.org/xerces2-j/"> http://xml.apache.org/xerces2-j/</a></td>
+</tr>
+</tbody>
+</table>
+
 </body>
 </html>
