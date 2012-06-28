@@ -18,7 +18,6 @@
 	<classpathentry exported="true" kind="lib" path="/jars/lib/xml-apis.jar"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/bootstrap"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/core"/>
-	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/datafeeds"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mtslinks"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mtsstd"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/planning"/>
