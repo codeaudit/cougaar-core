@@ -1,19 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/concurrent.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/fesi-111.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/hsqldb.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/icu4j.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/jena.jar"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/jms-1.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/juddi.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/junit.jar"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/log4j.jar"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/servlet.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/smack.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/SNMP4J.jar"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/tomcat_40.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/uddi4j.jar"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/xercesImpl.jar"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/xml-apis.jar"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/bootstrap"/>
