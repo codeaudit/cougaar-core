@@ -1,11 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/jms-1.1.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/log4j.jar"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/servlet.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/tomcat_40.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/xercesImpl.jar"/>
-	<classpathentry exported="true" kind="lib" path="/jars/lib/xml-apis.jar"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/bootstrap"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/core"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/mtslinks"/>
