@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
+	<classpathentry kind="src" path="resource"/>
 	<classpathentry exported="true" kind="lib" path="/jars/lib/servlet.jar"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/bootstrap"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/core"/>
@@ -13,5 +14,5 @@
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/webmicro"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/webserver"/>
 	<classpathentry combineaccessrules="false" exported="true" kind="src" path="/webtomcat"/>
-	<classpathentry kind="output" path="core/tmp/regress"/>
+	<classpathentry kind="output" path="tmp"/>
 </classpath>
