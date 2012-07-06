@@ -2,7 +2,7 @@
 <project basedir="." default="jar.build" name="cougaar">
    <property name="artifacts.dir" value="tmp" />
    <property name="classes.dir" value="${artifacts.dir}/classes" />
-   <property name="resource.dir" value="${basedir}/resource" />
+   <property name="resource.dir" value="resource" />
    <property name="jar.file" value="${artifacts.dir}/${ant.project.name}.jar" />
 
    <target name="init">
